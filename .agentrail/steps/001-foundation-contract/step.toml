@@ -1,0 +1,8 @@
+number = 1
+slug = "foundation-contract"
+status = "pending"
+description = "Saga 1, step 1: repository gate and the decision contract. Create justfile, m..."
+role = "production"
+context_files = []
+created_at = "2026-09-18T16:45:30"
+commits = []

@@ -1,0 +1,8 @@
+number = 4
+slug = "eliza-engine"
+status = "pending"
+description = "the classic keyword/rank/decomposition/reassembly engine in MLPL as a deterministic oracle, output pinned on a fixed transcript"
+role = "legacy"
+context_files = []
+created_at = "2026-09-18T16:45:30"
+commits = []

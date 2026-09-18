@@ -1,0 +1,8 @@
+number = 5
+slug = "response-table"
+status = "pending"
+description = "the ELIZA response table as committed data plus the byte-identity no-generation gate test"
+role = "legacy"
+context_files = []
+created_at = "2026-09-18T16:45:30"
+commits = []
