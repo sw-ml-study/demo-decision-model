@@ -1,0 +1,2558 @@
+look at https://typesafe.ai/blog/introducing-system-one-models-and-jev and design an implementation (since they have not provided an open one).   Just looking for a PoC for the approach described.  As a demo, an we construct a Jev-inspired modern-day Eliza that has the canned responses from the old-school Eliza but uses a Jev-like mechanism to choose each Eliza response based on the users input.  Does this seem like a good way of demoing Jev concepts?
+
+Yes. ELIZA is unusually well suited as a Jev/System-One demonstration, because it cleanly separates understanding/decision-making from text generation.
+
+The key is not to build a better chatbot. Build a modern implementation of the original ELIZA idea in which all words spoken by ELIZA remain deterministic, canned text, while a learned model replaces the pattern-matching machinery that decides which canned response/rule to invoke.
+
+TypeSafe describes Jev as “unstructured state in, typed probabilistic decisions out,” with predefined outputs, probabilities/confidence, and no generated strings. Their workflow examples explicitly decompose applications into narrow model judgments plus conventional program logic.
+
+TypeSafe: Introducing System One Models and Jev
+
+The experiment I would build
+
+Call it something like Jeviza for now:
+
+                         Jeviza
+                 "ELIZA without generation"
+
+ User
+   │
+   │ "My mother never understands me."
+   ▼
+┌─────────────────────────────┐
+│ Input / conversation state  │
+└──────────────┬──────────────┘
+               │
+               ▼
+       ┌────────────────┐
+       │ System-One-ish │
+       │ decision model │
+       └───────┬────────┘
+               │
+        probabilities
+               │
+       ┌───────▼─────────┐
+       │ response family │
+       │                 │
+       │ family   prob   │
+       │ MOTHER   .71    │
+       │ FAMILY   .17    │
+       │ FEELING  .07    │
+       │ DEFAULT  .05    │
+       └───────┬─────────┘
+               │
+               ▼
+       deterministic code
+               │
+               ▼
+     "Tell me more about your family."
+
+That gets remarkably close to the architectural point TypeSafe is making.
+
+The model never talks to the user.
+
+It makes a decision that software consumes.
+
+1. Why ELIZA makes a good demonstration
+
+Classic ELIZA already has roughly the architecture we want:
+
+text
+  ↓
+pattern recognition
+  ↓
+rule selection
+  ↓
+transform / substitution
+  ↓
+canned response
+
+A Jev-inspired version becomes:
+
+text
+  ↓
+learned classification
+  ↓
+typed probabilistic decision
+  ↓
+ordinary program logic
+  ↓
+canned response
+
+This demonstrates an important distinction much better than another customer-service classifier would.
+
+Generative LLM
+"My mother hates my job."
+       │
+       ▼
+     LLM
+       │
+       ▼
+"What makes you think your mother
+disapproves of your career?"
+
+Everything after the input is potentially generated.
+
+Jeviza
+"My mother hates my job."
+       │
+       ▼
+ decision model
+       │
+       ├── FAMILY       .78
+       ├── WORK         .11
+       ├── NEGATIVE     .07
+       └── DEFAULT      .04
+       │
+       ▼
+ FAMILY
+       │
+       ▼
+ deterministic response table
+       │
+       ▼
+"Tell me more about your family."
+
+The intelligence is being used as a fuzzy branch instruction, which is almost exactly TypeSafe's “smart if-statement” framing.
+
+And the demo has a wonderful property:
+
+The model literally cannot invent an ELIZA response.
+
+It can choose the wrong response, but it cannot generate a response outside the table.
+
+That is a much more precise demonstration of the “no hallucination” claim than simply saying the output is JSON. TypeSafe's claim should be interpreted this way too: schema conformance doesn't mean the decision is factually correct; it means the model cannot invent an output outside the permitted space.
+
+2. Don't try to clone Jev itself
+
+There is an important limitation.
+
+TypeSafe has disclosed the behavioral architecture, but not enough information to reproduce Jev's actual neural architecture. They say it involves a new model architecture, parallel sampler, and RLCD training, but haven't published weights or implementation details.
+
+So I would explicitly describe the project as:
+
+An open experimental implementation of System-One-style decision models inspired by the publicly described Jev interface.
+
+That gives us something scientifically useful rather than pretending we reverse-engineered Jev.
+
+I'd separate the research into three levels:
+
+Level	Goal
+0	reproduce the interface semantics
+1	build a tiny non-generative decision model
+2	investigate calibration/training similar in spirit to RLCD
+
+The ELIZA demo exercises all three.
+
+3. Start with three primitives
+
+TypeSafe's workflow evals expose three useful abstractions: Noul, Choice, and Score. Noul produces a probability for yes/no; Choice returns a distribution over predefined choices; Score produces a rating/distribution over an ordered scale.
+
+I'd implement our own generic Rust interface:
+
+pub trait SystemOne {
+    fn choice(
+        &self,
+        state: &State,
+        choices: &[Choice],
+    ) -> ChoiceResult;
+
+    fn score(
+        &self,
+        state: &State,
+        levels: &[Level],
+    ) -> ScoreResult;
+
+    fn noul(
+        &self,
+        state: &State,
+        proposition: &str,
+    ) -> Probability;
+}
+
+Conceptually:
+
+struct ChoiceResult {
+    selected: ChoiceId,
+    probabilities: Vec<f32>,
+    confidence: f32,
+}
+
+Notice what is not present:
+
+generate(prompt) -> String
+
+That's fundamental.
+
+4. Jeviza can use all three primitives
+
+This is where the demo becomes more interesting than merely replacing regexes with a classifier.
+
+Given:
+
+“Sometimes I think my mother doesn't understand me.”
+
+we could evaluate several independent properties in parallel.
+
+Noul
+mentions_family?
+mentions_self?
+contains_question?
+negative_sentiment?
+mentions_dream?
+mentions_computer?
+
+Results:
+
+mentions_family       .97
+mentions_self         .81
+contains_question     .03
+negative_sentiment    .74
+mentions_dream        .01
+mentions_computer     .01
+Choice
+dominant_topic:
+
+FAMILY       .73
+SELF         .12
+EMOTION      .08
+RELATIONSHIP .04
+OTHER        .03
+Score
+emotional_intensity:
+
+LOW       .08
+MEDIUM    .57
+HIGH      .35
+
+score = 1.27
+
+Then Rust code, rather than the model, determines what happens:
+
+if family > .70
+    → FAMILY response group
+
+else if emotion > .70 && intensity > 1.5
+    → EMOTION response group
+
+else if self > .70
+    → SELF response group
+
+else
+    → DEFAULT
+
+That's significantly closer to TypeSafe's demonstrated workflows. Their examples explicitly perform multiple narrow judgments and then let normal program logic combine those probabilities into actions.
+
+5. But I would build an even simpler V0 first
+
+Before Noul/Choice/Score, prove the central idea.
+
+Use perhaps 32 ELIZA response classes.
+
+GREETING
+GOODBYE
+FAMILY
+MOTHER
+FATHER
+FEELING
+DESIRE
+BELIEF
+MEMORY
+DREAM
+FEAR
+COMPUTER
+YES
+NO
+WHY
+BECAUSE
+ALWAYS
+EVERYONE
+SORRY
+...
+DEFAULT
+
+Input:
+
+"I don't think my father likes me."
+
+Model output:
+
+FATHER       .62
+FAMILY       .21
+FEELING      .08
+BELIEF       .05
+DEFAULT      .04
+
+Rust:
+
+responses[FATHER].next()
+
+Output:
+
+Tell me more about your father.
+
+That alone proves the concept.
+
+6. The tiny model can be really tiny
+
+This dovetails nicely with your tiny-model work.
+
+We don't need a 1B parameter LLM.
+
+A first implementation could simply be:
+
+token IDs
+   ↓
+embedding
+   ↓
+pool
+   ↓
+MLP
+   ↓
+32 logits
+   ↓
+softmax
+   ↓
+32 probabilities
+
+Something like:
+
+vocabulary       4K
+embedding        64
+hidden           128
+classes          32
+
+Rough parameter count:
+
+embedding:
+4096 × 64                = 262K
+
+MLP:
+64 × 128                 =   8K
+
+classifier:
+128 × 32                 =   4K
+
+--------------------------------
+                         ≈274K
+
+FP32:
+
+~1.1 MB
+
+INT8:
+
+~274 KB
+
+That gets into exactly the territory you've been interested in: browser/WASM, MCU-class experiments, old CPUs and eventually FPGA/NPU inference.
+
+And importantly, this isn't an LLM with generation disabled. It really is a classifier architecture.
+
+7. Then make it more Jev-like
+
+V1:
+
+encoder
+   │
+   ├─────────┬──────────┬─────────┐
+   ▼         ▼          ▼         ▼
+ family    emotion    intent    intensity
+ head       head       head       head
+
+Instead of:
+
+one model call
+    ↓
+one answer
+
+we get:
+
+                 shared encoder
+                      │
+        ┌─────────────┼──────────────┐
+        │             │              │
+        ▼             ▼              ▼
+      Noul          Choice          Score
+     heads           heads           heads
+        │             │              │
+        └─────────────┼──────────────┘
+                      ▼
+              typed decisions
+
+One forward pass.
+
+No token-generation loop.
+
+That's an important part of TypeSafe's public description: Jev generates its outputs in parallel rather than autoregressively.
+
+8. Calibration is where the experiment becomes research
+
+Simply applying softmax doesn't give us what TypeSafe claims.
+
+A neural classifier might say:
+
+MOTHER = .93
+
+while being correct only 72% of the time when it reports ~.93.
+
+That's not calibrated.
+
+We therefore want to measure:
+
+predicted confidence     actual accuracy
+
+0.50–0.60                 0.56
+0.60–0.70                 0.64
+0.70–0.80                 0.76
+0.80–0.90                 0.85
+0.90–1.00                 0.94
+
+That gives us an opportunity to implement and compare:
+
+raw softmax
+temperature scaling
+Platt scaling
+isotonic calibration
+Brier-score optimization
+ECE calibration
+
+And later an experimental RLCD-inspired training stage.
+
+I would not initially claim that this reproduces TypeSafe's RLCD; they have not published enough detail for that. Their public claim is that RLCD optimizes for calibrated decisions.
+
+But we can independently ask:
+
+Can training directly against proper scoring rules produce better calibrated decision probabilities?
+
+That's a legitimate experiment.
+
+9. The best UI would expose everything
+
+This should not look like ChatGPT.
+
+I'd make the main display resemble a diagnostic instrument.
+
+┌──────────────────────────────────────────────────────────┐
+│ JEVIZA — System-One ELIZA                               │
+├────────────────────────────┬─────────────────────────────┤
+│ Conversation               │ Decision Instrument         │
+│                            │                             │
+│ YOU:                       │ Choice                      │
+│ My mother doesn't          │ ─────────────────────────   │
+│ understand me.             │ MOTHER ████████████  .68   │
+│                            │ FAMILY ████          .19   │
+│ ELIZA:                     │ SELF   ██            .08   │
+│ Tell me more about         │ OTHER  █             .05   │
+│ your family.               │                             │
+│                            │ Confidence: .68             │
+│                            │                             │
+│                            │ Noul                        │
+│                            │ family?            .96      │
+│                            │ negative emotion?  .71      │
+│                            │ question?          .02      │
+│                            │                             │
+│                            │ Score                       │
+│                            │ intensity          1.38     │
+├────────────────────────────┴─────────────────────────────┤
+│ Rule: family > .65 → FAMILY_RESPONSE_03                 │
+└──────────────────────────────────────────────────────────┘
+
+Now someone watching can see:
+
+text → probabilities → code → canned text.
+
+That's much more educational than a black-box chat window.
+
+10. Add a classic-ELIZA comparison mode
+
+This is where I think the demo gets particularly strong.
+
+Run two engines side-by-side:
+
+                    INPUT
+                      │
+             ┌────────┴────────┐
+             ▼                 ▼
+       ELIZA 1966-ish       Jeviza
+             │                 │
+       keyword/pattern      neural model
+             │                 │
+       deterministic       probabilities
+       rule choice             │
+             │                 │
+             └────────┬────────┘
+                      ▼
+             SAME RESPONSE TABLE
+
+So:
+
+Input	Classic selector	Learned selector
+“my mother hates me”	MOTHER	MOTHER .91
+“mom never listens”	fallback	MOTHER .86
+“the woman who raised me worries”	fallback	FAMILY .74
+“I dreamed about mom”	DREAM	DREAM .52 / MOTHER .44
+
+This reveals precisely what the learned component contributes.
+
+The old ELIZA machinery is brittle pattern matching.
+
+The System-One model gives us a probabilistic semantic matcher.
+
+11. And include deliberately ambiguous inputs
+
+Those may be the most instructive part.
+
+Consider:
+
+“I dreamed my mother was a computer.”
+
+A generative LLM just produces something plausible.
+
+Jeviza could expose:
+
+DREAM       .37
+MOTHER      .31
+COMPUTER    .27
+OTHER       .05
+
+Now we can demonstrate policy separately from prediction.
+
+For example:
+
+if confidence < 0.50 {
+    choose(DEFAULT);
+}
+
+or:
+
+if dream > 0.30 {
+    choose(DREAM);
+}
+
+or:
+
+if mother + family > 0.50 {
+    choose(FAMILY);
+}
+
+This demonstrates TypeSafe's point that code controls thresholds and side effects rather than handing control flow over to the model. Their own site describes setting thresholds for autonomous action versus escalation/review.
+
+12. That leads to a very useful progression
+
+I would structure the project as an experimental ladder:
+
+00-classic
+   Original-style ELIZA rules
+        │
+        ▼
+01-classifier
+   Tiny learned response selector
+        │
+        ▼
+02-probabilities
+   expose complete distribution
+        │
+        ▼
+03-calibration
+   calibrated probabilities
+        │
+        ▼
+04-primitives
+   Choice / Noul / Score
+        │
+        ▼
+05-parallel
+   multi-head single-pass inference
+        │
+        ▼
+06-workflow
+   probabilities + deterministic policy
+        │
+        ▼
+07-browser
+   WASM interactive microscope
+        │
+        ▼
+08-tiny-hardware
+   MCU / NPU / FPGA experiments
+
+That makes the repository a System-One-model microscope, rather than merely an ELIZA novelty.
+
+13. Training data is pleasantly tractable
+
+We already know the desired outputs because ELIZA's rules define them.
+
+Generate a corpus such as:
+
+"My mother worries about me."       → MOTHER
+"I don't get along with mom."       → MOTHER
+"My dad never calls."               → FATHER
+"My parents worry."                 → FAMILY
+"I dreamed I was flying."           → DREAM
+"I feel miserable."                 → FEELING
+"I want a new computer."            → DESIRE
+"Computers scare me."               → COMPUTER
+
+Then deliberately add:
+
+paraphrases,
+misspellings,
+indirect references,
+irrelevant sentences,
+multiple intents,
+adversarial ambiguity.
+
+The classic ELIZA rules can generate seed labels, while another model could generate paraphrases offline to expand training data.
+
+But inference remains completely generative-model-free.
+
+14. One particularly interesting experiment
+
+Train it on meaning, not ELIZA keywords.
+
+Hold these out of training:
+
+mom
+mommy
+mama
+
+Train primarily with:
+
+mother
+parent
+family
+
+Then test:
+
+"Mom won't leave me alone."
+
+If the tiny model chooses:
+
+MOTHER .82
+
+while classic ELIZA falls through, we've demonstrated a concrete advantage of learned fuzzy decisions.
+
+Then try:
+
+"The woman who raised me never approved."
+
+If it produces:
+
+MOTHER .51
+FAMILY .37
+
+that becomes a surprisingly good demonstration of tiny learned semantic decision-making without language generation.
+
+15. It also connects very well to sw-atlas
+
+There's a deeper connection to your browser docent idea.
+
+Jeviza:
+
+user sentence
+      ↓
+tiny System-One model
+      ↓
+ELIZA response ID
+      ↓
+canned response
+
+Atlas:
+
+user sentence
+      ↓
+tiny System-One model
+      ↓
+destination ID
+      ↓
+campus application
+
+For example:
+
+"I want to learn how old computers
+read punched
+
+Yes. I think this exposes an important architectural point: the Jev-like model should make decisions about memory; it should not itself be the memory system.
+
+For the ELIZA demo, I would explicitly add conversation-memory retrieval as the next capability after simple response selection.
+
+1. Separate decision from retrieval
+
+Suppose the conversation is:
+
+U1: My mother worries about me.
+E1: Tell me more about your family.
+
+U2: I bought a new car.
+E2: Why is the car important to you?
+
+U3: Work has been stressful.
+E3: How does that make you feel?
+
+...
+
+U12: I don't know what else to talk about.
+
+The decision model could produce:
+
+response:
+    recall_earlier     .81
+    tell_me_more       .09
+    ask_feeling        .06
+    generic            .04
+
+memory_topic:
+    family             .54
+    work               .31
+    possession         .10
+    other              .05
+
+The program sees recall_earlier=.81 and decides to perform a memory lookup.
+
+                    current input
+                         │
+                         ▼
+                  Decision Model
+                         │
+             ┌───────────┴──────────┐
+             │                      │
+       response intent          memory intent
+             │                      │
+      recall_earlier .81        family .54
+             │                      │
+             └──────────┬───────────┘
+                        ▼
+                 deterministic
+                 memory retrieval
+                        │
+                        ▼
+             "My mother worries..."
+                        │
+                        ▼
+               ELIZA template
+                        │
+                        ▼
+     "Earlier you said your mother
+      worries about you..."
+
+That already seems considerably more interesting than randomly selecting an old utterance.
+
+2. But your second idea is even more Jev-like
+
+Rather than expecting the first pass to solve everything, let the application dynamically formulate another typed question.
+
+This seems closer to the architecture TypeSafe is advocating.
+
+Pass 1 asks something equivalent to:
+
+What should ELIZA do?
+
+[ REFLECT_CURRENT,
+  ASK_QUESTION,
+  RECALL_EARLIER,
+  GENERIC,
+  OTHER ]
+
+Result:
+
+RECALL_EARLIER  .84
+
+Now the program, not the model, knows what additional information is required.
+
+It searches conversation history and obtains plausible candidates:
+
+M1 = "My mother worries about me."
+M2 = "I bought a new car."
+M3 = "Work has been stressful."
+M4 = "I haven't been sleeping well."
+
+Then make a second decision:
+
+Given the current conversational state,
+which earlier statement is most useful to recall?
+
+[ M1, M2, M3, M4, NONE ]
+
+Output:
+
+M1      .62
+M3      .24
+M4      .08
+M2      .03
+NONE    .03
+
+Then deterministic ELIZA machinery produces the response.
+
+That's much better than giving the model arbitrary access to conversation history and asking it to produce text.
+
+3. This becomes a general pattern: Decide → Gather → Decide
+
+I'd actually make this one of the principal lessons in demo-eliza.
+
+                     USER
+                      │
+                      ▼
+              ┌──────────────┐
+              │ Decision #1  │
+              │ What to do?  │
+              └──────┬───────┘
+                     │
+              RECALL = .84
+                     │
+                     ▼
+              ┌──────────────┐
+              │ Normal code  │
+              │ searches     │
+              │ history      │
+              └──────┬───────┘
+                     │
+           M1 M2 M3 M4 NONE
+                     │
+                     ▼
+              ┌──────────────┐
+              │ Decision #2  │
+              │ Which memory?│
+              └──────┬───────┘
+                     │
+                   M1 .62
+                     │
+                     ▼
+              ┌──────────────┐
+              │ Normal code  │
+              │ transforms + │
+              │ templates    │
+              └──────┬───────┘
+                     │
+                     ▼
+                   ELIZA
+
+This is an important contrast with an LLM:
+
+LLM approach
+
+conversation history
+       +
+current message
+       ↓
+ giant context
+       ↓
+ generate arbitrary tokens
+       ↓
+ response
+
+versus:
+
+System-One-ish approach
+
+state
+  ↓
+bounded decision
+  ↓
+program obtains required data
+  ↓
+bounded decision
+  ↓
+program acts
+
+That is a much more compelling demonstration.
+
+4. NONE is essential
+
+I would always include an abstention/none choice in dynamically generated candidate sets.
+
+Suppose the available memories are:
+
+A  "I ate cereal."
+B  "It rained yesterday."
+C  "My printer is broken."
+D  "I saw a dog."
+E  NONE
+
+and none is relevant.
+
+You want:
+
+A       .03
+B       .04
+C       .02
+D       .03
+NONE    .88
+
+rather than forcing the classifier to pick the least-wrong memory.
+
+This is where probability becomes especially useful:
+
+if NONE > .60:
+    don't recall anything
+
+or even:
+
+if max(candidate probabilities) < .50:
+    don't recall anything
+
+Those are application policies, not learned behavior.
+
+5. I'd go one step beyond your candidate idea
+
+Don't necessarily present every previous utterance to the decision model.
+
+Use a cheap deterministic retrieval stage first.
+
+For example:
+
+Conversation
+   100 previous turns
+          │
+          ▼
+ cheap retrieval/index
+          │
+          ▼
+  top 4 candidates
+          │
+     ┌────┴─────┐
+     │ Jev-like │
+     │ decision │
+     └────┬─────┘
+          │
+          ▼
+ M3 .71 / NONE .12 / ...
+
+The first-stage retriever could initially be extremely simple:
+
+keyword overlap
+bag-of-words similarity
+topic tags
+recency
+later, embeddings
+
+That gives you a nice distinction between retrieval and decision.
+
+6. And ELIZA has a natural reason to retain structured memories
+
+Instead of storing only:
+
+"My mother worries about me."
+
+the deterministic processing can extract:
+
+Memory {
+    turn: 1,
+    text: "My mother worries about me.",
+    keywords: ["mother", "worries"],
+    class: Family,
+    age: 11,
+}
+
+Now candidate generation can be mundane software.
+
+current decision says:
+
+memory_topic:
+    FAMILY .72
+
+So:
+
+history
+   │
+   ├─ WORK
+   ├─ POSSESSION
+   ├─ FAMILY ──┐
+   ├─ HEALTH   │
+   ├─ FAMILY ──┤
+   └─ WORK     │
+               ▼
+           candidates
+
+Then the learned decision mechanism only has to answer:
+
+Which of these is appropriate?
+
+That is a much easier bounded problem.
+
+7. There is an even more interesting recursive version
+
+Your idea about re-asking suggests a tiny decision machine.
+
+Instead of one gigantic schema containing every possible decision, have typed states:
+
+enum ElizaAction {
+    Respond(ResponseClass),
+    Recall,
+    Clarify,
+    Fallback,
+}
+
+Recall transitions the program into another state:
+
+enum RecallChoice {
+    Candidate(usize),
+    None,
+}
+
+Conceptually:
+
+              Conversation
+                   │
+                   ▼
+              ACTION HEAD
+                   │
+          ┌────────┼─────────┐
+          ▼        ▼         ▼
+       RESPOND   RECALL    FALLBACK
+                  │
+                  ▼
+             retrieve()
+                  │
+                  ▼
+            RECALL HEAD
+                  │
+           ┌──────┼──────┐
+           ▼      ▼      ▼
+          M1     M2     NONE
+           │
+           ▼
+         RESPOND
+
+Now we're getting into territory that I think would make the experiment much more valuable than merely "ELIZA with a classifier."
+
+It's a probabilistic finite-state controller.
+
+8. That could become the central visualization
+
+Imagine stepping through:
+
+User: I don't know. Everything just seems difficult lately.
+
+The visualization starts:
+
+ACTION
+
+Reflect current       ████          .18
+Ask question          ██            .09
+Recall earlier        ████████████  .61
+Fallback              ██            .12
+
+                          ↓
+
+                     RECALL
+
+Then the UI visibly pans to the conversation-memory area:
+
+MEMORY RETRIEVAL
+
+#2  "My mother..."        keyword FAMILY
+#5  "Work has..."         keyword WORK
+#8  "I can't sleep..."    keyword SLEEP
+#9  "My boss..."          keyword WORK
+
+                          ↓
+
+Then:
+
+MEMORY DECISION
+
+#2 mother             ███           .12
+#5 work               ███████████   .48
+#8 sleep              ██████        .27
+#9 boss               ██            .08
+NONE                  █             .05
+
+                          ↓
+
+And finally:
+
+DETERMINISTIC ELIZA
+
+memory #5
+   +
+pronoun transformation
+   +
+RECALL template
+
+          ↓
+
+"Earlier you said that work has
+ been stressful. Tell me more
+ about that."
+
+That's an excellent microscope example because we can watch the application construct the next question for the model.
+
+9. It also gives us an interesting comparison with MoE
+
+There's a nice conceptual resemblance but an important difference:
+
+MoE routing
+
+token/state
+    ↓
+ router
+    ↓
+expert 3
+    ↓
+compute
+
+versus:
+
+Decision routing
+
+conversation state
+       ↓
+   action head
+       ↓
+     RECALL
+       ↓
+ program retrieves candidates
+       ↓
+   memory head
+       ↓
+    memory 3
+       ↓
+ program acts
+
+Both use conditional routing, but at very different semantic levels.
+
+That makes the ELIZA experiment relevant to moe-microscope without forcing it to be an MoE.
+
+I would therefore change the proposed demo-eliza progression
+
+Rather than stopping at "learned ELIZA response selector," I'd make the educational progression:
+
+Step	Mechanism	What it demonstrates
+E0	Original ELIZA rules	symbolic baseline
+E1	Fixed typed responses	bounded output space
+E2	Probabilistic response head	learned decision
+E3	Confidence + OTHER	abstention
+E4	Structured conversation memory	state outside model
+E5	RECALL decision	model requests an operation
+E6	candidate retrieval	ordinary software gathers state
+E7	second decision	dynamically constructed choices
+E8	response composition	deterministic action
+E9	MoE decision model	conditional compute comparison
+
+E5–E8 are where I think this stops being merely "neural ELIZA" and becomes a genuinely useful demonstration of the Jev-like architecture.
+
+The key insight is that earlier you said... doesn't require a giant context window or a generative model remembering the conversation. The first decision can effectively say "I need memory"; ordinary code retrieves a bounded set of memories; a second typed probabilistic decision selects among {M1, M2, M3, M4, NONE}; and deterministic code turns that choice into an ELIZA response.
+
+That Decide → Gather → Decide → Act loop is the piece I'd emphasize visually and architecturally. It also opens a path later to tools, search, campus navigation, or coding-agent decisions without changing the fundamental mechanism.
+
+So how do we train a model (not a GPT, not a reasoning model) to work like (black box) Jev?  Is it just a classifier or more?  Can we guess what approach might be closest and use that to train our Eliza model?
+
+Yes—but I would characterize our target as more than a conventional classifier, while still much simpler than a GPT.
+
+The public information does not reveal Jev's architecture or RLCD algorithm, so we shouldn't pretend we can reproduce it. TypeSafe does reveal enough behavioral constraints to design a plausible Jev-inspired architecture: unstructured state in; predefined typed outputs; probabilities/confidence; multiple questions answered in parallel; no autoregressive string generation; and, interestingly, a two-stage process for very high-cardinality choices.
+
+My best hypothesis
+
+I would start here:
+
+                         shared encoder
+                    ┌────────────────────┐
+text / state ──────►│ learned state repr │
+                    └─────────┬──────────┘
+                              │ h
+             ┌────────────────┼────────────────┐
+             │                │                │
+             ▼                ▼                ▼
+       action head        topic head       memory head
+             │                │                │
+          softmax           softmax           sigmoid
+             │                │                │
+        probabilities     probabilities      probability
+             │                │                │
+             └────────────────┼────────────────┘
+                              │
+                         typed results
+
+That's fundamentally a multi-task discriminative model, not a language model.
+
+But there are several things that make it more interesting than "just a classifier."
+
+1. Train an encoder, not a generator
+
+For ELIZA we need to map arbitrary text:
+
+"Sometimes I feel like nobody really understands what I'm trying to do."
+
+into a compact learned representation:
+
+$$ h = Encoder(x) $$
+
+For the PoC, I'd deliberately make this encoder tiny. For example:
+
+tokens
+  ↓
+embedding lookup
+  ↓
+pool / small state-space / tiny attention
+  ↓
+64-dimensional h
+
+Then stop.
+
+There is no vocabulary projection and no next-token prediction.
+
+Instead, h feeds decision heads.
+
+For example:
+
+$$ P(action|x)=softmax(W_a h+b_a) $$ $$ P(topic|x)=softmax(W_t h+b_t) $$ $$ P(recall|x)=sigmoid(w_r^T h+b_r) $$
+
+So one forward pass might produce:
+
+ACTION
+  reflect       .09
+  ask           .14
+  recall        .71
+  fallback      .06
+
+TOPIC
+  family        .61
+  work          .17
+  feelings      .14
+  other         .08
+
+RECALL?
+  true          .83
+
+That parallels TypeSafe's description of answering many decomposed questions from the same state in parallel.
+
+2. The interesting part is that the questions should be inputs
+
+There's an important problem with the architecture above.
+
+If we hard-code:
+
+action_head
+topic_head
+recall_head
+
+we've built a specialized ELIZA classifier.
+
+Jev appears more general than that. Its interface accepts a state and structured questions, with the legal answers defined by the query. TypeSafe explicitly describes possible outputs as defined in advance for a query and says their demos submit multiple questions against shared state.
+
+So a closer PoC would encode both state and question:
+
+                    ┌─────────────┐
+conversation ──────►│ state       │──► h
+                    │ encoder     │
+                    └─────────────┘
+                           │
+                           │
+question ──────────────────┼──► scorer
+                           │
+candidate A ───────────────┤
+candidate B ───────────────┤
+candidate C ───────────────┤
+                           ▼
+                      probabilities
+
+Conceptually:
+
+$$ s_i = f(h_{state}, h_{question}, h_{choice_i}) $$
+
+then
+
+$$ P(choice_i)=softmax(s_i) $$
+
+That's significantly more Jev-like.
+
+3. Train on (state, question, choices, answer)
+
+Instead of an ELIZA dataset like:
+
+"My mother hates me" → FAMILY_RESPONSE
+
+make the training representation general:
+
+STATE:
+    "My mother hates me."
+
+QUESTION:
+    "What should ELIZA do next?"
+
+CHOICES:
+    REFLECT
+    FAMILY
+    ASK
+    RECALL
+    FALLBACK
+
+TARGET:
+    FAMILY
+
+But the same state produces other training examples:
+
+QUESTION:
+    "What is the primary topic?"
+
+CHOICES:
+    FAMILY
+    WORK
+    SELF
+    POSSESSION
+    OTHER
+
+TARGET:
+    FAMILY
+
+and:
+
+QUESTION:
+    "Would recalling an earlier statement help?"
+
+CHOICES:
+    YES
+    NO
+
+TARGET:
+    NO
+
+Now we've stopped training a conventional single-purpose classifier.
+
+We're training a conditional decision model:
+
+$$ P(y\mid state, question, choices) $$
+
+That's the abstraction I would build.
+
+4. Candidate choices should also be semantic inputs
+
+This becomes particularly important for your earlier-memory example.
+
+Don't make the model have outputs:
+
+MEMORY_0
+MEMORY_1
+MEMORY_2
+...
+
+Instead score arbitrary candidates.
+
+Suppose ordinary code retrieves:
+
+A: "My mother worries about me."
+B: "My job has been stressful."
+C: "I bought a car."
+D: NONE
+
+The model receives approximately:
+
+STATE:
+    current conversation state
+
+QUESTION:
+    Which previous statement would be
+    most useful to recall now?
+
+CHOICES:
+    A "My mother worries about me."
+    B "My job has been stressful."
+    C "I bought a car."
+    D NONE
+
+The model scores each:
+
+$$ score_i = f(state, question, candidate_i) $$
+
+giving:
+
+A    .13
+B    .68
+C    .04
+NONE .15
+
+This is much more powerful than a fixed classification head because the classes did not exist during training.
+
+That's an important property I'd try to achieve.
+
+5. That suggests a dual/cross-encoder architecture
+
+For our tiny model, I'd experiment with two designs.
+
+A. Cross encoder — more capable
+
+Encode everything together:
+
+[state]
+[question]
+[candidate]
+      │
+      ▼
+ tiny encoder
+      │
+      ▼
+    score
+
+Run once per candidate.
+
+Good accuracy, but duplicated computation.
+
+B. Shared state encoder — more Jev-like computationally
+                 STATE
+                   │
+                   ▼
+             state encoder
+                   │
+                   h
+       ┌───────────┼───────────┐
+       │           │           │
+       ▼           ▼           ▼
+   question A  question B  question C
+       │           │           │
+       ▼           ▼           ▼
+    choices      choices      choices
+       │           │           │
+       ▼           ▼           ▼
+    scores       scores       scores
+
+Compute expensive state representation once.
+
+Then the decision scorer is cheap:
+
+$$ score(h,q,c) $$
+
+That fits TypeSafe's claim that many independent questions can be answered in parallel against the same state. We don't know whether Jev literally does this, but it's a reasonable architectural inference from the published behavior.
+
+6. Training starts as supervised learning
+
+I would not start by trying to invent RLCD.
+
+First train with ordinary cross entropy:
+
+$$ L_{choice}=-\log P(y) $$
+
+For binary questions:
+
+$$ L_{binary}=BCE(y,p) $$
+
+For several questions from the same state:
+
+$$ L=\sum_q L_q $$
+
+This establishes whether the architecture can learn the task at all.
+
+For ELIZA, generating thousands of examples is easy because the original rules can become a teacher.
+
+For example:
+
+ELIZA rule engine
+       │
+       │ generate/paraphrase inputs
+       ▼
+"My mom is always..."
+       │
+       ▼
+classic rule engine
+       │
+       ▼
+FAMILY_RESPONSE
+
+Thus the original symbolic ELIZA becomes the ground-truth oracle.
+
+That's pedagogically delightful:
+
+1966 symbolic program
+        │
+        │ teacher
+        ▼
+2026 tiny neural decision model
+7. Then calibration becomes the critical experiment
+
+Ordinary classification training optimizes:
+
+Was the correct answer ranked highest?
+
+But Jev's major claim is stronger:
+
+Does .80 actually mean approximately an 80% chance of correctness?
+
+TypeSafe calls its method Reinforcement Learning for Calibrated Decisions (RLCD) and emphasizes epistemically honest probabilities. They haven't publicly described enough of the algorithm for us to reproduce it.
+
+But we can reproduce the objective.
+
+Suppose the model says .8 on 100 held-out examples.
+
+Approximately 80 should be correct.
+
+So measure:
+
+Brier score
+$$ BS=\frac{1}{N}\sum(p-y)^2 $$
+Negative log likelihood
+$$ NLL=-\frac1N\sum \log P(y) $$
+Expected Calibration Error
+
+Bucket predictions:
+
+confidence     actual accuracy
+
+.50-.60          .54
+.60-.70          .63
+.70-.80          .76
+.80-.90          .83
+.90-1.0          .94
+
+And draw a reliability plot:
+
+accuracy
+1.0 |                         *
+ .8 |                   *
+ .6 |             *
+ .4 |
+ .2 |
+    +---------------------------
+       .2 .4 .6 .8 1.0
+             confidence
+
+       ideal = diagonal
+
+This belongs naturally in your microscope.
+
+8. Then invent our own "RLCD-like" second training phase
+
+Once supervised learning works, then we can experimentally optimize calibration.
+
+I wouldn't call ours RLCD because we don't know their algorithm.
+
+Call it something like calibration fine-tuning.
+
+A simple objective could combine classification and calibration:
+
+$$ L = L_{CE} +\lambda L_{Brier} $$
+
+Or use a proper scoring rule directly.
+
+Then compare:
+
+                   accuracy    ECE     Brier
+
+cross entropy        .91       .14      .10
++ temperature        .91       .05      .08
++ Brier training     .90       .03      .07
+
+Temperature scaling is particularly useful as a baseline because it can improve calibration without retraining the encoder.
+
+Then we'd know whether the exotic training technique is even necessary at our tiny scale.
+
+9. OTHER/NONE needs explicit training
+
+This is one area where I'd depart from a naïve classifier.
+
+Train negative examples deliberately.
+
+Given:
+
+QUESTION:
+Which previous statement should ELIZA recall?
+
+A family...
+B work...
+C automobile...
+NONE
+
+sometimes the correct training answer must be:
+
+NONE
+
+Moreover, create hard negatives:
+
+current:
+"My job has become unbearable."
+
+candidate:
+"My boss gave me a promotion."
+
+candidate:
+"I don't like my mother."
+
+candidate:
+"My commute is exhausting."
+
+NONE
+
+The system has to learn semantic appropriateness, not keyword matching.
+
+This makes the problem substantially more interesting.
+
+10. High-cardinality selection gives us another clue
+
+There's one especially revealing detail in TypeSafe's post.
+
+They say Jev supports choice cardinality up to 255, and for higher-cardinality cases they use a two-stage system: independently score candidates, then make an explicit choice.
+
+That is remarkably close to what we independently proposed for ELIZA memory retrieval.
+
+For 100 previous statements:
+
+                100 memories
+                     │
+                     ▼
+              independent scorer
+                     │
+            relevance for each
+                     │
+                     ▼
+                 top-k
+              e.g. 4 memories
+                     │
+                     ▼
+              explicit chooser
+                     │
+          ┌──────────┼──────────┐
+          M7        M23        M81
+         .11        .72        .17
+
+So I'd absolutely implement that.
+
+It gives us:
+
+Stage A — independent scoring
+$$ r_i = sigmoid(f(state,q,c_i)) $$
+
+This can be massively parallel.
+
+Stage B — comparative choice
+
+Take top-k:
+
+$$ P(c_i|C_{top-k})=softmax(g(state,q,C)) $$
+
+That's more sophisticated than "just classification."
+
+Our tiny "System One" architecture
+
+I therefore think our target should look like this:
+
+                         STATE
+                           │
+                           ▼
+                  ┌─────────────────┐
+                  │  Tiny Encoder   │
+                  │                 │
+                  │ attention, SSM, │
+                  │ or simple pool  │
+                  └────────┬────────┘
+                           │
+                     representation
+                           │
+             ┌─────────────┼─────────────┐
+             │             │             │
+             ▼             ▼             ▼
+           Q1              Q2            Q3
+      "what action?"   "what topic?"  "recall?"
+             │             │             │
+          choices        choices       yes/no
+             │             │             │
+             └─────────────┼─────────────┘
+                           │
+                   parallel scoring
+                           │
+             ┌─────────────┼─────────────┐
+             ▼             ▼             ▼
+       probabilities probabilities  probability
+             │             │             │
+             └─────────────┼─────────────┘
+                           ▼
+                  typed decision state
+                           │
+                           ▼
+                    NORMAL PROGRAM
+                           │
+               ┌───────────┴───────────┐
+               │                       │
+          enough info?            need memory?
+               │                       │
+               │                       ▼
+               │                 retrieve top-k
+               │                       │
+               │                       ▼
+               │                second decision
+               │                       │
+               └───────────┬───────────┘
+                           ▼
+                         ACT
+And crucially: no decoder
+
+A GPT roughly has:
+
+encoder-ish transformer computation
+          ↓
+next-token distribution
+          ↓
+sample token
+          ↓
+append token
+          ↓
+repeat
+          ↓
+string
+
+Our model has:
+
+state
+  ↓
+representation
+  ↓
+decision heads/scorer
+  ↓
+probabilities
+  ↓
+DONE
+
+That is where the huge conceptual and computational difference comes from.
+
+What I'd actually build first in demo-eliza
+
+I would make four experimentally comparable models, rather than betting immediately on one architecture:
+
+Model	Purpose
+R0 ELIZA	original symbolic baseline
+D0 Fixed Classifier	tiny encoder → fixed response classes
+D1 Conditional Decision Model	(state, question, choices) → probabilities
+D2 Calibrated Decision Model	D1 + calibration training/evaluation
+
+Then:
+
+D3 Two-stage selector
+
+adds the independent-score → top-k → choose mechanism for "earlier you said...".
+
+Only after those work would I add:
+
+D4 MoE encoder
+D5 SSM encoder
+D6 Engram/memory augmentation
+
+Those become experiments rather than assumptions.
+
+The most important experiment
+
+I'd actually make this the project's headline question:
+
+Can a tiny non-generative model learn to replace ELIZA's hand-written decision rules while retaining deterministic, type-safe application behavior and useful calibrated uncertainty?
+
+That is scientifically much cleaner than:
+
+"Can we clone Jev?"
+
+And then the microscope lets us literally watch:
+
+                ELIZA 1966
+
+text ──► keyword ──► rule ──► response
+
+
+             OUR SYSTEM-ONE MODEL
+
+                  ┌─ FAMILY .91
+text ──► model ───┼─ WORK   .04
+                  ├─ SELF   .03
+                  └─ OTHER  .02
+                         │
+                         ▼
+                       rule
+                         │
+                         ▼
+                     response
+
+Then graduate to:
+
+text
+ │
+ ▼
+model ──► RECALL .87
+             │
+             ▼
+        normal program
+             │
+        retrieve memories
+             │
+             ▼
+model ──► M17 .73
+             │
+             ▼
+        normal program
+             │
+             ▼
+"Earlier you said..."
+
+That's the version I'd build. It starts as a classifier, but the interesting generalization is a question-conditioned, candidate-conditioned, calibrated decision network with a shared state representation and optional two-stage selection. That's about the closest architecture I think we can responsibly infer from Jev's currently disclosed external behavior without claiming knowledge of TypeSafe's proprietary internals.
+
+TypeSafe's System One/Jev announcement
+
+Is System One an industry term?  general or brand-specific?  How do we "distill" our model from a GPT "teacher".  Let's say we have a local model that is good enough to emulate the classic Eliza, so it would refer-back, ask for more, change the subject, give a canned response for yes, no, I don't know inputs.  Then that GPT creates a training data set that we can use to train our classifier (and/or other non GPT model).  How do we get this to be cheap, fast, and "accurate?"
+
+Yes. I think teacher-generated synthetic data is probably the right way to build the first serious version. And ELIZA gives us an unusual advantage: unlike most distillation projects, we can also construct a cheap deterministic oracle for much of the task.
+
+First: is "System One" a general industry term?
+
+"System 1" is a general cognitive-science/psychology term, especially associated with Daniel Kahneman's popularization of fast/intuitive versus slow/deliberative thinking.
+
+But "System One Model" is currently TypeSafe's terminology for their new model category, introduced with Jev. TypeSafe explicitly says the name is inspired by Kahneman and describes it as a new class of models.
+
+So I would avoid naming our implementation:
+
+System One Model
+
+as though we're implementing their architecture.
+
+I'd use something descriptive such as:
+
+Decision Model
+Fast Decision Model
+Typed Decision Model
+Calibrated Decision Model
+
+For the code, I increasingly like TDM — Typed Decision Model.
+
+Then documentation can say:
+
+A small non-generative typed decision model inspired by the public behavior of TypeSafe's Jev/System One Models.
+
+That is both accurate and future-proof.
+
+Distilling ELIZA from a GPT teacher
+
+I think your proposed pipeline is exactly the right experiment, with one modification:
+
+Don't ask the GPT teacher to generate ELIZA responses. Ask it to make ELIZA decisions.
+
+That's a major distinction.
+
+The teacher's job becomes:
+
+conversation
+     │
+     ▼
+large local GPT teacher
+     │
+     ▼
+structured decisions
+
+For example:
+
+{
+  "action": "RECALL",
+  "topic": "FAMILY",
+  "response_style": "QUESTION",
+  "recall_turn": 3,
+  "confidence": 0.91
+}
+
+The student learns those decisions.
+
+The application still owns the canned ELIZA text.
+
+1. Define the decision vocabulary first
+
+I'd start with perhaps 8–12 actions, not dozens.
+
+Something like:
+
+Action	Meaning
+GREET	greeting response
+YES	response to affirmation
+NO	response to negation
+DONT_KNOW	uncertainty response
+REFLECT	reflect current statement
+ASK_MORE	ask user to elaborate
+RECALL	mention earlier statement
+TOPIC_SHIFT	move conversation elsewhere
+KEYWORD	classic ELIZA keyword response
+FALLBACK	generic canned response
+
+Then separate dimensions:
+
+ACTION:
+    RECALL
+
+TOPIC:
+    FAMILY
+
+TONE:
+    NEUTRAL
+
+QUESTION:
+    true
+
+MEMORY_REQUIRED:
+    true
+
+Don't create:
+
+RECALL_FAMILY_NEUTRAL_QUESTION
+
+as one giant class.
+
+That causes combinatorial explosion.
+
+Instead we want factorized decisions.
+
+2. Make the GPT teacher play ELIZA
+
+Give the local GPT a fairly strict system prompt describing classic ELIZA behavior.
+
+Then generate conversations.
+
+For example:
+
+USER:
+My mother calls me too often.
+
+TEACHER:
+{
+  action: KEYWORD,
+  topic: FAMILY,
+  recall: false
+}
+
+Later:
+
+USER:
+I don't know.
+
+TEACHER:
+{
+  action: RECALL,
+  topic: FAMILY,
+  recall: true
+}
+
+Then separately ask:
+
+Which previous utterance should be recalled?
+
+0: "My mother calls me too often."
+1: "I went shopping yesterday."
+2: "The weather has been nice."
+NONE
+
+Teacher:
+
+0
+
+Now we've generated a supervised training example.
+
+3. But don't use only GPT-generated conversations
+
+This is where I think we can make the project substantially stronger.
+
+Use three sources of training data:
+
+                   training corpus
+
+       ┌───────────────┼────────────────┐
+       │               │                │
+       ▼               ▼                ▼
+ Classic ELIZA      templates       GPT teacher
+     rules          + mutation      conversations
+       │               │                │
+       └───────────────┼────────────────┘
+                       ▼
+               canonical labels
+                       │
+                       ▼
+                 train student
+A. Classic ELIZA oracle
+
+This gives us exact labels for classic cases.
+
+B. Programmatically generated examples
+
+Generate variations:
+
+My mother hates me.
+My mother likes me.
+My mother worries about me.
+I worry about my mother.
+My mom keeps calling.
+Mom doesn't understand me.
+
+These can cheaply produce enormous datasets.
+
+C. GPT-generated paraphrases and difficult examples
+
+This is where the expensive teacher earns its keep.
+
+Ask it for things like:
+
+Produce 50 ways someone might indirectly discuss their mother without using "mother", "mom", "parent", etc.
+
+You might get:
+
+The woman who raised me never understood me.
+She was always critical when I was growing up.
+Growing up, I could never please her.
+...
+
+Now the student has to learn semantics rather than keywords.
+
+4. Teacher-generated data should deliberately attack the rules
+
+This is important.
+
+Don't have the GPT simply produce random ELIZA conversations.
+
+Have it generate curriculum categories.
+
+For example:
+
+easy
+    explicit keyword
+
+paraphrase
+    semantic equivalent without keyword
+
+ambiguous
+    two plausible actions
+
+negative
+    keyword present but wrong interpretation
+
+memory
+    appropriate earlier statement
+
+memory-negative
+    no earlier statement worth recalling
+
+topic-shift
+    conversation has become repetitive
+
+short-input
+    yes / no / maybe / dunno
+
+adversarial
+    misleading keyword overlap
+
+Then we know what the student is learning.
+
+5. The GPT teacher should output distributions, too
+
+Instead of:
+
+ACTION = RECALL
+
+ask:
+
+RECALL       .70
+ASK_MORE     .20
+REFLECT      .07
+TOPIC_SHIFT  .03
+
+Now we're doing soft-label distillation.
+
+This is much better than throwing away the teacher's uncertainty.
+
+The student minimizes something like:
+
+$$ L_{KD}=KL(P_{teacher}\Vert P_{student}) $$
+
+instead of merely:
+
+$$ L_{CE}=-\log P_{student}(y) $$
+
+So if the teacher thinks:
+
+RECALL       .51
+ASK_MORE     .45
+
+we don't lie to the student and tell it:
+
+RECALL = absolute truth
+
+That is especially relevant to the Jev-inspired calibration objective.
+
+6. But don't trust GPT confidence
+
+This distinction is critical.
+
+A GPT saying:
+
+confidence = .93
+
+does not mean the event has a calibrated 93% probability.
+
+TypeSafe explicitly identifies overconfidence and inconsistent confidence as a weakness of conventional LLMs and makes calibrated probability part of its alternative design.
+
+So I'd distinguish:
+
+Teacher distribution
+
+Useful training signal:
+
+RECALL      .55
+ASK_MORE    .40
+OTHER       .05
+
+from:
+
+Ground-truth calibration
+
+Measured empirically against held-out examples.
+
+We should never assume the former provides the latter.
+
+7. Multiple teachers would be even better
+
+Since we're doing offline data generation, inference speed doesn't matter much.
+
+Suppose you have three suitable local models:
+
+             training example
+                    │
+        ┌───────────┼───────────┐
+        ▼           ▼           ▼
+     Teacher A   Teacher B   Teacher C
+        │           │           │
+      RECALL      RECALL      ASK_MORE
+       .72         .61          .55
+        │           │           │
+        └───────────┼───────────┘
+                    ▼
+               aggregate
+
+Disagreement is valuable information.
+
+If all three agree:
+
+RECALL
+RECALL
+RECALL
+
+that's probably a good training example.
+
+If:
+
+RECALL
+ASK_MORE
+REFLECT
+
+mark it ambiguous.
+
+You can either:
+
+retain the soft distribution;
+reduce its training weight;
+manually inspect it;
+or make it part of the difficult evaluation set.
+
+This can improve dataset quality substantially.
+
+8. We can get a lot of data cheaply
+
+And here's where this becomes particularly attractive for your hardware.
+
+The teacher runs offline once.
+
+Imagine generating:
+
+100,000 training examples
+
+Even if that takes hours overnight, that's fine.
+
+The resulting dataset might only be tens of MB.
+
+Then we throw the GPT away.
+
+The deployed model might have something like:
+
+vocabulary              4K
+embedding dimension       64
+hidden dimension          64
+encoder layers             2
+decision heads             5
+
+We're potentially talking hundreds of thousands rather than billions of parameters.
+
+Perhaps:
+
+~0.2M – 2M parameters
+
+depending on how sophisticated we make the encoder.
+
+That's exactly what I'd explore experimentally rather than prematurely optimizing.
+
+9. Start ridiculously small
+
+I wouldn't even start with a transformer.
+
+I'd establish a progression:
+
+Student	Approximate complexity	Purpose
+Bag-of-words logistic regression	tiny	floor
+Embedding + mean pooling	tiny	semantic-ish baseline
+MLP	tiny	nonlinear baseline
+CNN text encoder	small	local phrase detection
+GRU	small	sequential context
+tiny attention encoder	small	contextual
+tiny SSM	small	your Mamba connection
+MoE encoder	variable	conditional compute
+
+This would fit your existing moe-microscope philosophy extremely well.
+
+We might discover something surprising:
+
+A 150K-parameter model is sufficient for ELIZA decisions.
+
+If so, that's a much more interesting result than immediately constructing a 10M model.
+
+10. My first student would be extremely simple
+
+Something approximately:
+
+tokens
+   │
+   ▼
+embedding[4096][64]
+   │
+   ▼
+mean pooling
+   │
+   ▼
+64-d state
+   │
+   ├────────► ACTION head
+   │
+   ├────────► TOPIC head
+   │
+   ├────────► RECALL head
+   │
+   └────────► QUESTION head
+
+Parameter budget:
+
+Embedding:
+
+$$ 4096\times64 = 262,144 $$
+
+Then the heads are almost noise by comparison.
+
+Maybe ~270K parameters.
+
+FP32:
+
+$$ 270K\times4\approx1.08MB $$
+
+INT8:
+
+$$ \approx270KB $$
+
+INT4:
+
+$$ \approx135KB $$
+
+Now we're talking about something genuinely interesting for browser/WASM, MCU/NPU experimentation, etc.
+
+Those are illustrative design numbers, not measured results.
+
+11. Then solve memory separately
+
+The "earlier you said..." problem shouldn't force the main model to ingest the entire conversation.
+
+Instead:
+
+current state
+     │
+     ▼
+TDM
+     │
+RECALL=.91
+     │
+     ▼
+cheap retrieval
+     │
+     ▼
+4 candidates
+     │
+     ▼
+candidate scorer
+     │
+     ▼
+M3=.73
+
+The candidate scorer could use the same encoder.
+
+Encode:
+
+current state → h_s
+
+candidate → h_c
+
+then something as cheap as:
+
+$$ score = h_s \cdot h_c $$
+
+Initially, cosine/dot-product similarity may be enough.
+
+Later:
+
+$$ score=f(h_s,h_c,q) $$
+
+with a tiny MLP.
+
+This means conversation length doesn't substantially increase model cost.
+
+12. Distillation can be iterative
+
+Here's where this gets particularly powerful.
+
+Start:
+
+GPT teacher
+    ↓
+100K examples
+    ↓
+student v1
+
+Evaluate student.
+
+Suppose it fails mostly on:
+
+implicit family references
+ambiguous recall
+sarcasm
+very short answers
+topic changes
+
+Don't blindly generate another million random examples.
+
+Ask the GPT teacher specifically for those.
+
+student failures
+       │
+       ▼
+failure clustering
+       │
+       ▼
+GPT generates difficult examples
+       │
+       ▼
++20K targeted examples
+       │
+       ▼
+student v2
+
+Repeat.
+
+That's essentially active/curriculum distillation.
+
+And it's much cheaper.
+
+13. Better yet: let the student select what the teacher labels
+
+Generate huge amounts of unlabeled synthetic text cheaply.
+
+Run the student.
+
+If:
+
+P = [.99, .005, ...]
+
+probably don't spend GPT inference on it.
+
+If:
+
+P = [.31, .29, .24, .16]
+
+send it to the expensive teacher.
+
+So:
+
+                    synthetic inputs
+                          │
+                          ▼
+                    cheap student
+                          │
+              ┌───────────┴───────────┐
+              │                       │
+          confident                uncertain
+              │                       │
+            skip                      ▼
+                               expensive GPT
+                                      │
+                                      ▼
+                                  new label
+                                      │
+                                      ▼
+                                   retrain
+
+That could reduce teacher inference dramatically.
+
+14. We also have a better oracle than the GPT
+
+For classic ELIZA behavior, we know the actual program.
+
+Therefore I'd make the hierarchy:
+
+               LABEL AUTHORITY
+
+               classic rule
+                    │
+              highest authority
+                    │
+                    ▼
+            human-reviewed cases
+                    │
+                    ▼
+            teacher consensus
+                    │
+                    ▼
+           single GPT teacher
+
+This prevents "distillation" from accidentally teaching the student some modern chatbot behavior instead of ELIZA.
+
+The GPT is primarily there to supply linguistic diversity and semantic generalization, not define what ELIZA is.
+
+That's a very useful distinction.
+
+15. Accuracy needs several definitions
+
+Don't just report "94% accuracy".
+
+For this project I'd measure:
+
+action accuracy
+topic accuracy
+recall decision accuracy
+memory selection accuracy
+
+plus:
+
+top-2 accuracy
+NLL
+Brier score
+ECE
+
+and then the most practically interesting measurement:
+
+Accuracy versus coverage
+
+For example:
+
+Threshold	Answers automatically	Accuracy
+0.50	99%	91%
+0.60	94%	94%
+0.70	85%	97%
+0.80	70%	98%
+0.90	51%	99%
+
+Illustrative numbers only.
+
+Then code can say:
+
+if decision.confidence() >= 0.80 {
+    act(decision);
+} else {
+    fallback();
+}
+
+That's much more meaningful than maximizing classification accuracy alone.
+
+16. And this is probably where our "Jev-like" training differs from ordinary distillation
+
+The objective isn't:
+
+Make tiny model imitate big model.
+
+It's:
+
+Make the smallest model whose probability distribution is sufficiently accurate and calibrated for software to make decisions from it.
+
+That gives us a multi-objective optimization:
+
+$$ \text{minimize} \quad \begin{cases} \text{classification error}\\ \text{calibration error}\\ \text{parameters}\\ \text{latency}\\ \text{active bytes}\\ \text{energy} \end{cases} $$
+
+That's almost tailor-made for moe-microscope.
+
+A concrete development plan
+
+I'd structure the first experiments like this:
+
+E00  Classic ELIZA
+     establish deterministic oracle
+
+E01  Dataset generator
+     rule-generated examples
+
+E02  GPT teacher
+     semantic paraphrases + difficult cases
+
+E03  Teacher ensemble
+     disagreement / soft labels
+
+E04  250K-ish student
+     embedding + pooling + heads
+
+E05  Distillation
+     soft teacher distributions
+
+E06  Calibration
+     Brier / ECE / reliability plot
+
+E07  Abstention
+     confidence → coverage curve
+
+E08  Conversation memory
+     RECALL decision
+
+E09  Candidate scorer
+     choose M1..Mn/NONE
+
+E10  Active distillation
+     teacher labels student uncertainty
+
+E11  Encoder comparison
+     pooling / CNN / GRU / attention / SSM
+
+E12  MoE
+     conditional compute
+
+And every experiment records:
+
+parameters
+weight bytes
+active bytes
+training examples
+training time
+teacher cost
+inference µs
+accuracy
+Brier
+ECE
+coverage @ 95% accuracy
+
+That would make this much more than an ELIZA novelty.
+
+The experiment I'm most interested in
+
+There's a particularly appealing feedback loop:
+
+                BIG GPT
+              expensive/slow
+                    │
+                    │ distill
+                    ▼
+              tiny TDM v1
+                    │
+                    │ find uncertainty
+                    ▼
+               hard cases
+                    │
+                    └──────────► BIG GPT
+                                   │
+                              label only these
+                                   │
+                                   ▼
+                              tiny TDM v2
+                                   │
+                                   ▼
+                                  ...
+
+Eventually teacher usage should fall dramatically because the tiny model already handles the easy decision surface.
+
+And unlike normal LLM distillation, we don't care whether the student can speak English. It only needs to learn a few very specific decision boundaries.
+
+That's why I think the parameter count could become surprisingly small—and why ELIZA is a particularly strong first experiment. It gives us a deterministic reference implementation, essentially unlimited synthetic examples, GPT-generated linguistic diversity, objectively measurable decisions, memory/tool-like branching, and canned output that prevents generative ability from hiding failures.
+
+The natural end goal is not "tiny ELIZA." It's demonstrating a general GPT → distilled Typed Decision Model pipeline where a large generative model is used offline as a teacher, while the deployed system is a tiny, fast, non-generative probabilistic decision engine. That generalizes directly from ELIZA to the campus docent/navigation problem and eventually to decision points inside agents and workflows.
+
