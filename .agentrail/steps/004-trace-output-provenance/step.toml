@@ -1,0 +1,9 @@
+number = 4
+slug = "trace-output-provenance"
+status = "completed"
+description = "Fix an over-narrow design in decision-trace-v1 found by user review. The inva..."
+role = "production"
+context_files = []
+created_at = "2026-09-18T19:26:06"
+completed_at = "2026-09-19T06:56:21"
+commits = ["3823dad6f296f3196783a28c6d82a5925312e656"]
