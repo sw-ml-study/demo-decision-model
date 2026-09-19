@@ -1,0 +1,17 @@
+# Q2 reproducer: a gradient flows through a two-argument user function inside grad, at the exact shape PR05's dynamic-choice-set primitive uses -- a bilinear scorer f(h_state, h_choice) = h_s W h_c^T over a shared weight. The gradient with respect to W is the outer product of the two encoded rows, so scoring a choice set that did not exist during training is trainable. Checked by scripts/run-probes and asserted in tests/test_capability_probes.mlpl.
+q2_W = param[3, 3];
+q2_W = reshape([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0], [3, 3]);
+q2_state = reshape([1.0, 2.0, 3.0], [1, 3]);
+q2_choice = reshape([0.5, 1.5, 2.5], [1, 3]);
+
+def u:q2_bilinear(state_row, choice_row) {
+  "Score one encoded state row against one encoded choice row through the shared weight: state W choice-transposed.";
+  reduce_add(matmul(state_row, q2_W) * choice_row)
+}
+
+q2_grad = grad(u:q2_bilinear(q2_state, q2_choice), q2_W);
+q2_expected = matmul(transpose(q2_state), q2_choice);
+q2_error = reduce_add(abs(q2_grad - q2_expected));
+print("Q2 two-argument scorer gradient", reshape(q2_grad, [9]));
+print("Q2 expected outer product", reshape(q2_expected, [9]));
+print("Q2 answer: the gradient is exact, total absolute error", q2_error)

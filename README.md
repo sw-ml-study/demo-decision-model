@@ -76,8 +76,15 @@ no model exists yet.
 Nothing has been measured yet. Every number in this README will cite a
 [results row](docs/reference/results.md) or be removed.
 
-Next: the three sw-MLPL language probes, then the `decision-trace-v1` schema and
-the `tdm-trace` crate, then demo 01's rule oracle and response table.
+- [`probes/`](probes/) — three sw-MLPL capability reproducers, all green:
+  `freeze` holds a frozen encoder at exactly zero delta, a two-argument bilinear
+  scorer differentiates to exactly the outer product (so dynamic choice sets
+  will train), and an `experiment`-wrapped `train` loop runs inside a user
+  function. Caveats found and written down in
+  [`docs/reference/sw-mlpl-findings.md`](docs/reference/sw-mlpl-findings.md).
+
+Next: the `decision-trace-v1` schema and the `tdm-trace` crate, then demo 01's
+rule oracle and response table.
 
 ## What it will look like
 

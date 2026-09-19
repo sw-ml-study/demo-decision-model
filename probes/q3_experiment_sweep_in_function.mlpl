@@ -1,0 +1,30 @@
+# Q3 reproducer: an experiment block wrapping a train loop runs inside a user function, so the calibration-lambda and encoder-ladder sweeps can be one callable per configuration. Records two constraints the sweep lessons must design around: the experiment name is a string LITERAL (not a parameter), so every run of one sweep function shares a name; and runs are therefore told apart by recording the swept setting as its own *_metric, which experiment_metric returns as a column aligned with the outcome column, in run order. Checked by scripts/run-probes and asserted in tests/test_capability_probes.mlpl.
+q3_m = linear(2, 1, 5);
+q3_x = reshape([1.0, 2.0], [1, 2]);
+q3_y = reshape([1.0], [1, 1]);
+
+def u:q3_loss() {
+  "Squared error of the probe model on one fixed row.";
+  d = apply(q3_m, q3_x) - q3_y;
+  reduce_add(d * d)
+}
+
+def u:q3_run(steps, lr) {
+  "One swept run: train inside a named experiment block, recording both the swept setting and the outcome so the runs are self-describing.";
+  experiment "q3-sweep" {
+    train steps {
+      adam(u:q3_loss(), q3_m, lr, 0.9, 0.999, 0.00000001);
+      u:q3_loss()
+    };
+    lr_metric = lr;
+    loss_metric = u:q3_loss();
+    loss_metric
+  }
+}
+
+q3_a = u:q3_run(5, 0.01);
+q3_b = u:q3_run(5, 0.20);
+q3_c = u:q3_run(5, 0.50);
+print("Q3 swept setting column", experiment_metric("lr_metric"));
+print("Q3 outcome column", experiment_metric("loss_metric"));
+print("Q3 answer: three runs recorded in run order, columns aligned", eq(reduce_mul(shape(experiment_metric("lr_metric"))), 3))

@@ -1,0 +1,25 @@
+# Q1 reproducer: freeze(model) holds a model's parameters fixed in place while a separate head keeps training, which is the shape the calibration lessons need (fit a post-hoc map over a frozen encoder). Also records the binding gotcha: freeze is a statement, not an expression -- it returns nothing bindable, so the original identifier must keep being used. Checked by scripts/run-probes and asserted in tests/test_capability_probes.mlpl.
+q1_enc = linear(2, 2, 7);
+q1_head = linear(2, 1, 9);
+q1_x = reshape([1.0, 2.0], [1, 2]);
+q1_y = reshape([1.0], [1, 1]);
+q1_ref = reshape([1.0, 1.0], [1, 2]);
+
+def u:q1_loss() {
+  "Squared error of the head over the encoder for one fixed probe row.";
+  d = apply(q1_head, apply(q1_enc, q1_x)) - q1_y;
+  reduce_add(d * d)
+}
+
+enc_before = reduce_add(apply(q1_enc, q1_x));
+head_before = reduce_add(apply(q1_head, q1_ref));
+freeze(q1_enc);
+train 5 {
+  adam(u:q1_loss(), [q1_enc, q1_head], 0.1, 0.9, 0.999, 0.00000001);
+  u:q1_loss()
+};
+enc_delta = abs(reduce_add(apply(q1_enc, q1_x)) - enc_before);
+head_delta = abs(reduce_add(apply(q1_head, q1_ref)) - head_before);
+print("Q1 freeze: encoder delta", enc_delta, "head delta", head_delta);
+print("Q1 answer: freeze holds the encoder at zero delta while the head trains", gt(head_delta, 0) * eq(enc_delta, 0));
+print("Q1 gotcha: freeze is a statement; 'fe = freeze(m)' leaves fe undefined, so keep using the original name")
