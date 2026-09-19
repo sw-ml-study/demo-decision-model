@@ -31,3 +31,11 @@ catalog:
 # Check that every relative documentation link resolves.
 doc-links:
     ./scripts/check-doc-links
+
+# Rust gate for the microscope crates: formatting, pedantic clippy, and tests.
+rust:
+    ./scripts/check-rust
+
+# Validate every committed decision trace against decision-trace-v1.
+traces:
+    ./scripts/check-traces

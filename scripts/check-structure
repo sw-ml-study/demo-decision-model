@@ -20,12 +20,16 @@ for path in \
     docs/reference/sw-mlpl-findings.md \
     docs/implementation/cross-repo-handoffs.md \
     lib/decision.mlpl \
-    tests/test_decision.mlpl
+    tests/test_decision.mlpl \
+    Cargo.toml \
+    schemas/decision-trace-v1.schema.json \
+    crates/tdm-trace/src/lib.rs \
+    fixtures/traces/example-turn-v1.json
 do
     [ -f "$repo_root/$path" ] || { echo "missing required file: $path" >&2; exit 1; }
 done
 
-for dir in lib demos tests probes scripts catalog docs fixtures; do
+for dir in lib demos tests probes scripts catalog docs fixtures crates schemas; do
     [ -d "$repo_root/$dir" ] || { echo "missing required directory: $dir" >&2; exit 1; }
 done
 

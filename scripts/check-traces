@@ -1,0 +1,24 @@
+#!/bin/sh
+# Every committed decision trace parses and validates against decision-trace-v1.
+# The validator enforces the no-generation invariant, so this is the gate that
+# proves every recorded output was quoted from a table the trace itself carries.
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+
+if [ -z "$(find "$repo_root/fixtures/traces" -maxdepth 1 -name '*.json' -print -quit 2>/dev/null)" ]; then
+    echo "traces: none recorded yet"
+    exit 0
+fi
+
+# The crate's own test suite include_str!s every committed trace and asserts it
+# validates; running the suite is therefore the check. Kept as its own gate
+# entry so a trace failure reads as a trace failure, not a Rust failure.
+cd "$repo_root"
+if ! command -v cargo >/dev/null 2>&1; then
+    echo "traces: cargo not on PATH; skipping" >&2
+    exit 0
+fi
+cargo test --quiet -p tdm-trace --test validation the_committed_example >/dev/null
+count=$(find "$repo_root/fixtures/traces" -maxdepth 1 -name '*.json' | wc -l | tr -d ' ')
+echo "PASS decision traces validate ($count)"

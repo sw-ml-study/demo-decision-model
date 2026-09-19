@@ -22,9 +22,22 @@ function with a free deterministic oracle, not the point.
 
 ## Implementation
 
+- [`implementation/rust-conventions.md`](implementation/rust-conventions.md) — what the
+  microscope crates honour, and the one `sw-checklist` deviation we accept.
 - [`implementation/cross-repo-handoffs.md`](implementation/cross-repo-handoffs.md)
   — work belonging to a sibling repository, written down rather than committed
   there.
+
+## The trace format
+
+- [`../schemas/decision-trace-v1.schema.json`](../schemas/decision-trace-v1.schema.json)
+  — what a run leaves behind. Renderer- and application-neutral, with two
+  invariants that carry the project's claim: exactly three decision kinds, and
+  every output string reconstructible from a table the trace itself carries.
+- [`../crates/tdm-trace`](../crates/tdm-trace) — the Rust parser and validator.
+- [`../fixtures/traces/example-turn-v1.json`](../fixtures/traces/example-turn-v1.json)
+  — one worked turn, hand-written before any model existed so the format was
+  fixed first. Illustrative numbers, not measurements.
 
 ## Reading the contract
 

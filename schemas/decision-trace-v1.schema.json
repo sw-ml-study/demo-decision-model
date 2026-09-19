@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sw-ml-study.github.io/demo-decision-model/schemas/decision-trace-v1.schema.json",
+  "title": "sw-ml-study typed decision trace",
+  "description": "What a decision model's run leaves behind: per turn, the state that went in, the choices offered, the typed decisions out, the policy rule that consumed them, and the output that resulted. Renderer-neutral and application-neutral: label names, policy text and output strings are data, never types. Two invariants carry the project's central claim -- there are exactly three decision kinds, and every output string must be reconstructible from an entry of a table the trace itself carries.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "version", "provenance", "demo", "tables", "turns"],
+  "properties": {
+    "schema": { "const": "sw-ml-study.decision-trace" },
+    "version": { "const": 1 },
+    "provenance": { "$ref": "#/$defs/provenance" },
+    "demo": { "$ref": "#/$defs/text", "description": "Which application produced this trace. A label for the reader; nothing branches on it." },
+    "tables": {
+      "type": "array", "maxItems": 64, "items": { "$ref": "#/$defs/table" },
+      "description": "The bounded output space. Every turn's text is quoted from here by index."
+    },
+    "turns": { "type": "array", "maxItems": 4096, "items": { "$ref": "#/$defs/turn" } }
+  },
+  "$defs": {
+    "text": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "probability": { "type": "number", "minimum": 0, "maximum": 1 },
+    "provenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["producer", "producer_revision", "generated_at", "source_description"],
+      "properties": {
+        "producer": { "$ref": "#/$defs/text" },
+        "producer_revision": { "$ref": "#/$defs/text" },
+        "generated_at": { "$ref": "#/$defs/text" },
+        "source_description": { "$ref": "#/$defs/text" }
+      }
+    },
+    "table": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "entries"],
+      "properties": {
+        "name": { "$ref": "#/$defs/text" },
+        "entries": { "type": "array", "maxItems": 4096, "items": { "$ref": "#/$defs/text" } }
+      }
+    },
+    "turn": {
+      "type": "object", "additionalProperties": false,
+      "required": ["index", "state", "decisions", "policy", "output"],
+      "properties": {
+        "index": { "type": "integer", "minimum": 0, "description": "Strictly increasing across the trace." },
+        "state": { "$ref": "#/$defs/state" },
+        "decisions": { "type": "array", "maxItems": 64, "items": { "$ref": "#/$defs/decision" } },
+        "policy": { "$ref": "#/$defs/policy" },
+        "output": { "$ref": "#/$defs/output" }
+      }
+    },
+    "state": {
+      "type": "object", "additionalProperties": false,
+      "required": ["text"],
+      "properties": {
+        "text": { "$ref": "#/$defs/text", "description": "The unstructured input this turn decided over." },
+        "features": {
+          "type": "array", "maxItems": 256, "items": { "$ref": "#/$defs/text" },
+          "description": "What the encoder actually saw, for display beside the decision."
+        },
+        "memory": {
+          "type": "array", "maxItems": 256, "items": { "$ref": "#/$defs/memory" },
+          "description": "Structured state the program keeps outside the model."
+        }
+      }
+    },
+    "memory": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "text", "age_turns"],
+      "properties": {
+        "id": { "$ref": "#/$defs/text" },
+        "text": { "$ref": "#/$defs/text" },
+        "tag": { "$ref": "#/$defs/text" },
+        "age_turns": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "decision": {
+      "type": "object", "additionalProperties": false,
+      "description": "One typed decision. The shape is uniform across all three kinds so one validator, one schema and one renderer serve them all; p and expectation are the only kind-specific fields. selected, confidence and margin are derived from probs and are checked against it, so a trace cannot disagree with itself.",
+      "required": ["kind", "question", "labels", "probs", "selected", "confidence", "margin", "calibration"],
+      "properties": {
+        "kind": {
+          "enum": ["choice", "noul", "scale"],
+          "description": "There is deliberately no fourth kind. The absence of a generation primitive is the central claim of the project, so it is enforced here."
+        },
+        "question": { "$ref": "#/$defs/text", "description": "The question asked; for a noul, the proposition." },
+        "labels": { "type": "array", "minItems": 1, "maxItems": 256, "items": { "$ref": "#/$defs/text" } },
+        "probs": { "type": "array", "minItems": 1, "maxItems": 256, "items": { "$ref": "#/$defs/probability" } },
+        "selected": { "type": "integer", "minimum": 0 },
+        "confidence": { "$ref": "#/$defs/probability", "description": "Probability of the selected label." },
+        "margin": { "$ref": "#/$defs/probability", "description": "Gap between the two most probable labels; 1 for a single-label set. Reported beside confidence because the two are different doubts." },
+        "calibration": { "$ref": "#/$defs/calibration" },
+        "p": { "$ref": "#/$defs/probability", "description": "Noul only: probability that the proposition holds. Equals probs[1]." },
+        "expectation": { "type": "number", "minimum": 0, "description": "Scale only: expected level index over the ordered labels." }
+      }
+    },
+    "calibration": {
+      "type": "object", "additionalProperties": false,
+      "required": ["method"],
+      "properties": {
+        "method": { "$ref": "#/$defs/text", "description": "\"none\" for a raw model output, or the name of the map applied." },
+        "t": { "type": "number", "exclusiveMinimum": 0, "description": "The fitted scalar, when the method is a temperature." }
+      }
+    },
+    "policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["rule", "branch"],
+      "properties": {
+        "rule": { "$ref": "#/$defs/text", "description": "The rule as written in the application. Thresholds belong to the program, not the model, so they are shown." },
+        "branch": { "$ref": "#/$defs/text" }
+      }
+    },
+    "output": {
+      "type": "object", "additionalProperties": false,
+      "required": ["table", "index", "text"],
+      "description": "The result, quoted. text MUST equal tables[table].entries[index] with its {} placeholders filled, in order, by slots; an entry with no placeholder must match byte for byte. Slots exist because a canned frame may splice quoted input back into itself; the frame is still a fixed literal and the slot is text the program already had, so nothing is generated, but the format does not pretend the output is byte-identical when it is not.",
+      "properties": {
+        "table": { "$ref": "#/$defs/text" },
+        "index": { "type": "integer", "minimum": 0 },
+        "text": { "$ref": "#/$defs/text" },
+        "slots": {
+          "type": "array", "maxItems": 16, "items": { "$ref": "#/$defs/text" },
+          "description": "Values spliced into the entry's {} placeholders, in order. The count must equal the number of placeholders."
+        }
+      }
+    }
+  }
+}

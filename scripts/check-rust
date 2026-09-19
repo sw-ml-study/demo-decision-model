@@ -1,0 +1,22 @@
+#!/bin/sh
+# Rust gate for the microscope crates: formatting, pedantic clippy, and tests.
+# sw-checklist applies to Rust code in this repository and is run separately.
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+
+if [ ! -f "$repo_root/Cargo.toml" ]; then
+    echo "rust: no workspace yet"
+    exit 0
+fi
+
+if ! command -v cargo >/dev/null 2>&1; then
+    echo "rust: cargo not on PATH; skipping (install a Rust toolchain to run this check)" >&2
+    exit 0
+fi
+
+cd "$repo_root"
+cargo fmt --check
+cargo clippy --all-targets --quiet
+cargo test --quiet
+echo "PASS rust crates (fmt, clippy, tests)"

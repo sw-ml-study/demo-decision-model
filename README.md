@@ -83,8 +83,13 @@ Nothing has been measured yet. Every number in this README will cite a
   function. Caveats found and written down in
   [`docs/reference/sw-mlpl-findings.md`](docs/reference/sw-mlpl-findings.md).
 
-Next: the `decision-trace-v1` schema and the `tdm-trace` crate, then demo 01's
-rule oracle and response table.
+- [`schemas/decision-trace-v1.schema.json`](schemas/decision-trace-v1.schema.json)
+  and [`crates/tdm-trace`](crates/tdm-trace) — the trace format and its
+  validator, fixed before the first model so no lesson invents its own. The
+  validator rejects a fourth decision kind, and rejects any output text it
+  cannot rebuild from a table the trace itself carries.
+
+Next: demo 01's rule oracle and its response table.
 
 ## What it will look like
 
@@ -136,8 +141,8 @@ schemas/                     decision-trace-v1 JSON schema
 scripts/  justfile           Thin gate and tool-selection scripts
 ```
 
-Directories arrive as their saga does; `crates/`, `schemas/`, and the demos
-are still to come.
+Directories arrive as their saga does; the demos and the instrument crates are
+still to come.
 
 ## Build and run
 
