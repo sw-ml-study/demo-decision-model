@@ -41,81 +41,190 @@
       "state": {
         "text": "I don't know. Everything just seems difficult lately.",
         "features": [
-          "i", "dont", "know", "everything", "just", "seems", "difficult", "lately",
-          "i_dont", "dont_know", "know_everything", "everything_just",
-          "just_seems", "seems_difficult", "difficult_lately"
+          "i",
+          "dont",
+          "know",
+          "everything",
+          "just",
+          "seems",
+          "difficult",
+          "lately",
+          "i_dont",
+          "dont_know",
+          "know_everything",
+          "everything_just",
+          "just_seems",
+          "seems_difficult",
+          "difficult_lately"
         ],
         "memory": [
-          { "id": "M1", "text": "my mother worries about me", "tag": "FAMILY", "age_turns": 10 },
-          { "id": "M2", "text": "work has been stressful", "tag": "WORK", "age_turns": 7 },
-          { "id": "M3", "text": "I have not been sleeping well", "tag": "HEALTH", "age_turns": 4 },
-          { "id": "M4", "text": "my boss rewrote my review", "tag": "WORK", "age_turns": 3 }
+          {
+            "id": "M1",
+            "text": "my mother worries about me",
+            "tag": "FAMILY",
+            "age_turns": 10
+          },
+          {
+            "id": "M2",
+            "text": "work has been stressful",
+            "tag": "WORK",
+            "age_turns": 7
+          },
+          {
+            "id": "M3",
+            "text": "I have not been sleeping well",
+            "tag": "HEALTH",
+            "age_turns": 4
+          },
+          {
+            "id": "M4",
+            "text": "my boss rewrote my review",
+            "tag": "WORK",
+            "age_turns": 3
+          }
         ]
       },
       "decisions": [
         {
           "kind": "choice",
           "question": "action",
-          "labels": ["GREET", "YES", "NO", "DONT_KNOW", "REFLECT", "ASK_MORE", "RECALL", "TOPIC_SHIFT", "KEYWORD", "FALLBACK"],
-          "probs": [0.005, 0.005, 0.005, 0.04, 0.18, 0.09, 0.61, 0.03, 0.015, 0.02],
+          "labels": [
+            "GREET",
+            "YES",
+            "NO",
+            "DONT_KNOW",
+            "REFLECT",
+            "ASK_MORE",
+            "RECALL",
+            "TOPIC_SHIFT",
+            "KEYWORD",
+            "FALLBACK"
+          ],
+          "probs": [
+            0.005,
+            0.005,
+            0.005,
+            0.04,
+            0.18,
+            0.09,
+            0.61,
+            0.03,
+            0.015,
+            0.02
+          ],
           "selected": 6,
           "confidence": 0.61,
           "margin": 0.43,
-          "calibration": { "method": "temperature", "t": 1.37 }
+          "calibration": {
+            "method": "temperature",
+            "t": 1.37
+          }
         },
         {
           "kind": "noul",
           "question": "memory_required?",
-          "labels": ["false", "true"],
-          "probs": [0.17, 0.83],
+          "labels": [
+            "false",
+            "true"
+          ],
+          "probs": [
+            0.17,
+            0.83
+          ],
           "selected": 1,
           "confidence": 0.83,
           "margin": 0.66,
-          "calibration": { "method": "temperature", "t": 1.37 },
+          "calibration": {
+            "method": "temperature",
+            "t": 1.37
+          },
           "p": 0.83
         },
         {
           "kind": "noul",
           "question": "short_answer?",
-          "labels": ["false", "true"],
-          "probs": [0.29, 0.71],
+          "labels": [
+            "false",
+            "true"
+          ],
+          "probs": [
+            0.29,
+            0.71
+          ],
           "selected": 1,
           "confidence": 0.71,
           "margin": 0.42,
-          "calibration": { "method": "temperature", "t": 1.37 },
+          "calibration": {
+            "method": "temperature",
+            "t": 1.37
+          },
           "p": 0.71
         },
         {
           "kind": "noul",
           "question": "contains_question?",
-          "labels": ["false", "true"],
-          "probs": [0.98, 0.02],
+          "labels": [
+            "false",
+            "true"
+          ],
+          "probs": [
+            0.98,
+            0.02
+          ],
           "selected": 0,
           "confidence": 0.98,
           "margin": 0.96,
-          "calibration": { "method": "temperature", "t": 1.37 },
+          "calibration": {
+            "method": "temperature",
+            "t": 1.37
+          },
           "p": 0.02
         },
         {
           "kind": "scale",
           "question": "emotional_intensity",
-          "labels": ["LOW", "MEDIUM", "HIGH"],
-          "probs": [0.08, 0.57, 0.35],
+          "labels": [
+            "LOW",
+            "MEDIUM",
+            "HIGH"
+          ],
+          "probs": [
+            0.08,
+            0.57,
+            0.35
+          ],
           "selected": 1,
           "confidence": 0.57,
           "margin": 0.22,
-          "calibration": { "method": "none" },
+          "calibration": {
+            "method": "none"
+          },
           "expectation": 1.27
         },
         {
           "kind": "choice",
           "question": "which earlier statement is worth recalling?",
-          "labels": ["M1", "M2", "M3", "M4", "NONE"],
-          "probs": [0.12, 0.48, 0.27, 0.08, 0.05],
+          "labels": [
+            "M1",
+            "M2",
+            "M3",
+            "M4",
+            "NONE"
+          ],
+          "probs": [
+            0.12,
+            0.48,
+            0.27,
+            0.08,
+            0.05
+          ],
           "selected": 1,
           "confidence": 0.48,
           "margin": 0.21,
-          "calibration": { "method": "temperature", "t": 1.37 }
+          "calibration": {
+            "method": "temperature",
+            "t": 1.37
+          }
         }
       ],
       "policy": {
@@ -123,10 +232,13 @@
         "branch": "RECALL_T03"
       },
       "output": {
+        "source": "table",
         "table": "recall",
         "index": 3,
         "text": "Earlier you said that work has been stressful. Tell me more about that.",
-        "slots": ["work has been stressful"]
+        "slots": [
+          "work has been stressful"
+        ]
       }
     }
   ]

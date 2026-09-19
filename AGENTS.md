@@ -293,7 +293,8 @@ forcing function with a free deterministic oracle, not the subject.
 [`docs/plan.md`](docs/plan.md) is the authority for scope.
 
 There is no generation path and there never will be: every string a user sees is
-a literal in a committed table, reached by index, and a gate test enforces it.
+exactly one of the candidates the program offered the model, and a gate test
+enforces it. The model ranks bounded choices; it composes nothing.
 
 ## Closing every step
 

@@ -32,9 +32,9 @@ make it visible and measurable.
 smallest realistic application that demands all three primitives *and* memory at
 once, and it comes with a free, exact, deterministic oracle (the 1966 rules) to
 label training data with. It also has a property no other demo has — every word
-it speaks is a literal in a fixed table, so "the model cannot invent an output
-outside the permitted space" stops being a slogan and becomes something a test
-can enforce byte for byte. When demo 02 arrives (campus navigation, in the
+it speaks is chosen from a bounded set the program built, so "the model cannot
+invent an output outside the permitted space" stops being a slogan and becomes
+something a test can enforce. When demo 02 arrives (campus navigation, in the
 manner of `../moe-microscope`'s docent), nothing in `lib/` should have to change.
 That is the acceptance test for whether the primitives are real abstractions or
 ELIZA-shaped ones.
@@ -96,10 +96,24 @@ The source discussion is retained verbatim at [`research.txt`](research.txt).
                  an action, or a string the program owned all along
 ```
 
-Nothing in this repository may add a generation path. In demo 01 every string a
-user sees is a literal in a committed response table, reached by index. A gate
-test asserts that every emitted utterance is byte-identical to a table entry, so
-the central claim is enforced by the build rather than by intention.
+Nothing in this repository may add a generation path. **Every string a user sees
+is exactly one of the candidates the program offered the model.** The model
+ranks or scores those candidates; it composes nothing.
+
+Two ways to build a candidate set are both legitimate, and demo 01 uses both:
+
+1. **Composed candidates.** Ordinary code assembles the options in full — `Tell
+   me more.`, `Why do you say that?`, `Earlier you said you bought a new car.` —
+   and one Choice ranks them. The output is byte-identical to the candidate that
+   won. Nothing is templated at any point.
+2. **Frame plus retrieved text.** Code picks a frame from a response table and
+   splices in text it already had (a stored memory, the user's own words after a
+   deterministic pronoun transform). The frame is a fixed literal; the slot is
+   quoted, never produced.
+
+A gate test asserts the invariant in whichever form a turn used: the text equals
+the selected candidate, or it equals the frame with its recorded slots filled.
+Either way the central claim is enforced by the build rather than by intention.
 
 ## Builtin first, from scratch where it teaches
 
@@ -540,9 +554,11 @@ Two run modes, one UI:
   proven in `../demo-extensions` and streams fresh traces. Same view model, same
   renderer.
 
-An acceptance test asserts that `output.text` is byte-identical to the entry at
-`output.index` of the committed response table. The instrument cannot display a
-string the table does not contain, and neither can the demo.
+An acceptance test asserts that `output.text` is exactly one of the candidates
+the program offered: for `source: "choice"`, byte-identical to the selected label
+of the decision it cites; for `source: "table"`, equal to the frame at
+`output.index` with its recorded slots filled. The instrument cannot display a
+string the program did not construct, and neither can the demo.
 
 ## Visual and measurement contract
 
@@ -858,9 +874,10 @@ was learned and what was not.
   first-expression docstring, and canonical formatting is checked before commit
   and push with `scripts/check-mlpl-style`.
 - **The no-generation gate.** A test asserts that every string the demo can emit
-  is byte-identical to a committed table entry, reached by index. It runs on
-  every commit. It is the repository's central claim, so it is enforced
-  mechanically rather than trusted.
+  is exactly one of the candidates the program offered the model — the selected
+  candidate, or a committed frame with deterministically retrieved text spliced
+  into it. It runs on every commit. It is the repository's central claim, so it
+  is enforced mechanically rather than trusted.
 - **The abstraction gate.** No ELIZA identifier may appear in `lib/` or in
   `crates/`. Checked by a script, not by review.
 - Every lesson satisfies the visual and measurement contract and adds a catalog
@@ -882,7 +899,7 @@ was learned and what was not.
 - A better chatbot. Response quality in demo 01 is fixed by a 1966 table and is
   not an objective; only *decision* quality is measured.
 - Any generative path at inference. No decoder, no sampling into text, no string
-  the response table does not contain.
+  the program did not construct before the model was asked.
 - Reproducing Jev, its architecture, or RLCD. We reproduce the published
   *behavioral contract* and the *objective*, and say so every time.
 - Claiming schema conformance implies correctness. A typed output cannot fall

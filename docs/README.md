@@ -33,7 +33,7 @@ function with a free deterministic oracle, not the point.
 - [`../schemas/decision-trace-v1.schema.json`](../schemas/decision-trace-v1.schema.json)
   — what a run leaves behind. Renderer- and application-neutral, with two
   invariants that carry the project's claim: exactly three decision kinds, and
-  every output string reconstructible from a table the trace itself carries.
+  every output string exactly one of the candidates the program offered.
 - [`../crates/tdm-trace`](../crates/tdm-trace) — the Rust parser and validator.
 - [`../fixtures/traces/example-turn-v1.json`](../fixtures/traces/example-turn-v1.json)
   — one worked turn, hand-written before any model existed so the format was

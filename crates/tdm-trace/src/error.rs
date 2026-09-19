@@ -31,8 +31,11 @@ pub enum ValidationError {
     /// The turn supplied a different number of slots than the entry has
     /// placeholders.
     SlotCount(u32),
-    /// The output text could not be rebuilt from the table entry it cited and
-    /// the slots it recorded. This is the invariant that makes the
-    /// no-generation claim checkable from the artifact alone.
-    TextNotInTable(u32),
+    /// A chosen output cited a decision index this turn does not have.
+    UnknownDecision(u32),
+    /// The output text was not one of the candidates the program offered: it was
+    /// neither the selected label of the decision it cited, nor the table entry
+    /// it cited with its recorded slots filled. This is the invariant that makes
+    /// the bounded-output claim checkable from the artifact alone.
+    TextNotOffered(u32),
 }

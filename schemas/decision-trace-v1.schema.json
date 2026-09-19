@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://sw-ml-study.github.io/demo-decision-model/schemas/decision-trace-v1.schema.json",
   "title": "sw-ml-study typed decision trace",
-  "description": "What a decision model's run leaves behind: per turn, the state that went in, the choices offered, the typed decisions out, the policy rule that consumed them, and the output that resulted. Renderer-neutral and application-neutral: label names, policy text and output strings are data, never types. Two invariants carry the project's central claim -- there are exactly three decision kinds, and every output string must be reconstructible from an entry of a table the trace itself carries.",
+  "description": "What a decision model's run leaves behind: per turn, the state that went in, the choices offered, the typed decisions out, the policy rule that consumed them, and the output that resulted. Renderer-neutral and application-neutral: label names, policy text and output strings are data, never types. Two invariants carry the project's central claim -- there are exactly three decision kinds, and every output string must be exactly one of the candidates the program offered the model -- either the composed candidate a decision selected, or a table frame with deterministically retrieved text spliced into it.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema", "version", "provenance", "demo", "tables", "turns"],
@@ -13,7 +13,7 @@
     "demo": { "$ref": "#/$defs/text", "description": "Which application produced this trace. A label for the reader; nothing branches on it." },
     "tables": {
       "type": "array", "maxItems": 64, "items": { "$ref": "#/$defs/table" },
-      "description": "The bounded output space. Every turn's text is quoted from here by index."
+      "description": "Reusable response frames. A turn whose output used the table pattern quotes one of these by index. A trace whose candidates are composed in full may carry no tables at all."
     },
     "turns": { "type": "array", "maxItems": 4096, "items": { "$ref": "#/$defs/turn" } }
   },
@@ -111,17 +111,35 @@
       }
     },
     "output": {
+      "description": "Where the turn's text came from. The invariant is not that output text matches some fixed catalogue; it is that the output is exactly one of the candidates THE PROGRAM offered the model. The model ranks or scores those candidates and does nothing else. Two composition patterns are both legitimate, and a trace declares which it used.",
+      "oneOf": [
+        { "$ref": "#/$defs/output_table" },
+        { "$ref": "#/$defs/output_choice" }
+      ]
+    },
+    "output_table": {
       "type": "object", "additionalProperties": false,
-      "required": ["table", "index", "text"],
-      "description": "The result, quoted. text MUST equal tables[table].entries[index] with its {} placeholders filled, in order, by slots; an entry with no placeholder must match byte for byte. Slots exist because a canned frame may splice quoted input back into itself; the frame is still a fixed literal and the slot is text the program already had, so nothing is generated, but the format does not pretend the output is byte-identical when it is not.",
+      "description": "The program chose a frame from a table and spliced deterministically retrieved text into its {} placeholders. text MUST equal that entry with slots filled, in order; an entry with no placeholder must match byte for byte, and the slot count must equal the placeholder count.",
+      "required": ["source", "table", "index", "text"],
       "properties": {
+        "source": { "const": "table" },
         "table": { "$ref": "#/$defs/text" },
         "index": { "type": "integer", "minimum": 0 },
         "text": { "$ref": "#/$defs/text" },
         "slots": {
           "type": "array", "maxItems": 16, "items": { "$ref": "#/$defs/text" },
-          "description": "Values spliced into the entry's {} placeholders, in order. The count must equal the number of placeholders."
+          "description": "Values spliced into the frame, in order. These are text the program already had -- retrieved memory, quoted input -- not text any model produced."
         }
+      }
+    },
+    "output_choice": {
+      "type": "object", "additionalProperties": false,
+      "description": "The program built the candidate list as fully-composed strings and the model chose among them. text MUST be byte-identical to the selected label of the decision at the given index.",
+      "required": ["source", "decision", "text"],
+      "properties": {
+        "source": { "const": "choice" },
+        "decision": { "type": "integer", "minimum": 0, "description": "Index into this turn's decisions array." },
+        "text": { "$ref": "#/$defs/text" }
       }
     }
   }

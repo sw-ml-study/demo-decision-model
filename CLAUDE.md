@@ -297,8 +297,10 @@ deterministic oracle, not the point. Demo 02 (campus navigation) must run with
 ### Rules that are enforced, not merely intended
 
 - **No generation path, ever.** There is no `generate(prompt) -> String`. Every
-  string a user sees is a literal in a committed table, reached by index, and a
-  gate test asserts byte identity.
+  string a user sees is exactly one of the candidates the program offered the
+  model — either the composed candidate a Choice selected, or a committed frame
+  with deterministically retrieved text spliced in. The model ranks; it never
+  composes. A gate test asserts this in whichever form the turn used.
 - **No demo identifiers in `lib/` or `crates/`.** `lib/` knows about decisions;
   `demos/eliza/` knows about ELIZA; the Rust crates know about traces. Checked
   by script.

@@ -37,7 +37,7 @@ fn base() -> Value {
                 "calibration": { "method": "none" }
             }],
             "policy": { "rule": "r", "branch": "b" },
-            "output": { "table": "t", "index": 0, "text": "plain" }
+            "output": { "source": "table", "table": "t", "index": 0, "text": "plain" }
         }]
     })
 }
@@ -85,6 +85,7 @@ fn the_committed_example_validates_and_reads_back() {
     assert_eq!(recall.prob_of("M9"), None);
 
     // The no-generation invariant, on the case that actually needs slots.
+    assert_eq!(turn.output().table(), Some("recall"));
     assert_eq!(turn.output().slots(), ["work has been stressful"]);
     assert_eq!(
         turn.output().text(),
@@ -266,7 +267,7 @@ fn output_text_must_be_rebuildable_from_the_table_it_cites() {
     // however plausible it looks.
     let mut v = base();
     v["turns"][0]["output"]["text"] = json!("something the model made up");
-    expect_err(&v, &ValidationError::TextNotInTable(0));
+    expect_err(&v, &ValidationError::TextNotOffered(0));
 
     let mut v = base();
     v["turns"][0]["output"]["table"] = json!("nonexistent");
@@ -281,26 +282,27 @@ fn output_text_must_be_rebuildable_from_the_table_it_cites() {
 fn slots_fill_placeholders_in_order_and_must_be_counted_exactly() {
     let mut v = base();
     v["turns"][0]["output"] = json!({
-        "table": "t", "index": 1, "text": "framed VALUE", "slots": ["VALUE"]
+        "source": "table", "table": "t", "index": 1, "text": "framed VALUE", "slots": ["VALUE"]
     });
     parse(&v).expect("one placeholder, one slot, rendered exactly");
 
     // Right slot, wrong rendering.
     let mut v = base();
     v["turns"][0]["output"] = json!({
-        "table": "t", "index": 1, "text": "framed something else", "slots": ["VALUE"]
+        "source": "table", "table": "t", "index": 1, "text": "framed something else", "slots": ["VALUE"]
     });
-    expect_err(&v, &ValidationError::TextNotInTable(0));
+    expect_err(&v, &ValidationError::TextNotOffered(0));
 
     // A frame with a placeholder and no slot supplied.
     let mut v = base();
-    v["turns"][0]["output"] = json!({ "table": "t", "index": 1, "text": "framed {}" });
+    v["turns"][0]["output"] =
+        json!({ "source": "table", "table": "t", "index": 1, "text": "framed {}" });
     expect_err(&v, &ValidationError::SlotCount(0));
 
     // A frame with no placeholder cannot absorb a slot.
     let mut v = base();
     v["turns"][0]["output"] = json!({
-        "table": "t", "index": 0, "text": "plain", "slots": ["VALUE"]
+        "source": "table", "table": "t", "index": 0, "text": "plain", "slots": ["VALUE"]
     });
     expect_err(&v, &ValidationError::SlotCount(0));
 }
@@ -353,4 +355,79 @@ fn a_choice_set_may_exceed_what_any_fixed_head_would_have() {
     decision(&mut v)["labels"] = json!(labels);
     decision(&mut v)["probs"] = json!(probs);
     expect_err(&v, &ValidationError::LabelCount(0));
+}
+
+/// The composition pattern where ordinary code builds the candidate list as
+/// fully-composed strings and the model only ranks them. The output is then
+/// byte-identical to the candidate that won, and nothing was templated at all.
+fn composed_candidates() -> Value {
+    let mut v = base();
+    v["turns"][0]["decisions"][0] = json!({
+        "kind": "choice",
+        "question": "what should the reply be?",
+        "labels": [
+            "Tell me more.",
+            "Why do you say that?",
+            "Earlier you said you bought a new car. How does that connect?",
+            "Earlier you said work has been stressful. Tell me more about that."
+        ],
+        "probs": [0.19, 0.12, 0.21, 0.48],
+        "selected": 3,
+        "confidence": 0.48,
+        "margin": 0.27,
+        "calibration": { "method": "none" }
+    });
+    v["turns"][0]["output"] = json!({
+        "source": "choice",
+        "decision": 0,
+        "text": "Earlier you said work has been stressful. Tell me more about that."
+    });
+    v
+}
+
+#[test]
+fn an_output_may_be_a_composed_candidate_the_model_ranked() {
+    let v = composed_candidates();
+    let trace = parse(&v).expect("a composed candidate set is a legitimate output");
+    let turn = &trace.turns()[0];
+    assert_eq!(
+        turn.output().text(),
+        "Earlier you said work has been stressful. Tell me more about that."
+    );
+    // Nothing was templated, so there is no table and no slot to account for.
+    assert_eq!(turn.output().table(), None);
+    assert_eq!(turn.output().index(), None);
+    assert!(turn.output().slots().is_empty());
+    assert_eq!(turn.output().decision(), Some(0));
+}
+
+#[test]
+fn a_composed_output_must_be_the_candidate_that_actually_won() {
+    // A candidate that was offered but lost is still not what happened.
+    let mut v = composed_candidates();
+    v["turns"][0]["output"]["text"] = json!("Tell me more.");
+    expect_err(&v, &ValidationError::TextNotOffered(0));
+
+    // A plausible sentence that was never offered at all.
+    let mut v = composed_candidates();
+    v["turns"][0]["output"]["text"] = json!("Earlier you said your mother worries. Go on.");
+    expect_err(&v, &ValidationError::TextNotOffered(0));
+
+    // A decision index this turn does not have.
+    let mut v = composed_candidates();
+    v["turns"][0]["output"]["decision"] = json!(7);
+    expect_err(&v, &ValidationError::UnknownDecision(0));
+}
+
+#[test]
+fn an_output_must_declare_which_pattern_composed_it() {
+    // No source discriminator at all.
+    let mut v = base();
+    v["turns"][0]["output"] = json!({ "table": "t", "index": 0, "text": "plain" });
+    expect_err(&v, &ValidationError::Malformed);
+
+    // Table fields on a chosen output, or the reverse, are not a mix-and-match.
+    let mut v = composed_candidates();
+    v["turns"][0]["output"]["table"] = json!("t");
+    expect_err(&v, &ValidationError::Malformed);
 }

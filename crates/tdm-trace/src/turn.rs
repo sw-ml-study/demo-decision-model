@@ -48,15 +48,34 @@ pub struct Policy {
     pub(crate) branch: String,
 }
 
+/// Where a turn's text came from.
+///
+/// The invariant is not that output text matches some fixed catalogue; it is
+/// that the output is exactly one of the candidates *the program* offered the
+/// model. The model ranks or scores those candidates and nothing else. Two
+/// composition patterns are both legitimate, and a trace says which it used.
 #[derive(Clone, Debug, PartialEq, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Output {
-    pub(crate) table: String,
-    pub(crate) index: usize,
-    pub(crate) text: String,
-    /// Values spliced into the entry's `{}` placeholders, in order.
-    #[serde(default)]
-    pub(crate) slots: Vec<String>,
+#[serde(tag = "source", rename_all = "snake_case", deny_unknown_fields)]
+pub enum Output {
+    /// The program chose a frame from a table and spliced deterministically
+    /// retrieved text into its `{}` placeholders. `text` must equal the entry
+    /// with `slots` filled in order.
+    Table {
+        table: String,
+        index: usize,
+        text: String,
+        /// Values spliced into the entry's placeholders, in order.
+        #[serde(default)]
+        slots: Vec<String>,
+    },
+    /// The program built the candidate list as fully-composed strings and the
+    /// model chose among them. `text` must be byte-identical to the selected
+    /// label of the decision at `decision`.
+    Choice {
+        /// Index into this turn's `decisions`.
+        decision: usize,
+        text: String,
+    },
 }
 
 impl Turn {
@@ -128,20 +147,43 @@ impl Policy {
 }
 
 impl Output {
-    #[must_use]
-    pub fn table(&self) -> &str {
-        &self.table
-    }
-    #[must_use]
-    pub const fn index(&self) -> usize {
-        self.index
-    }
+    /// The text the user saw, however it was composed.
     #[must_use]
     pub fn text(&self) -> &str {
-        &self.text
+        match self {
+            Self::Table { text, .. } | Self::Choice { text, .. } => text,
+        }
     }
+    /// The table a framed output drew from, or `None` for a chosen candidate.
+    #[must_use]
+    pub fn table(&self) -> Option<&str> {
+        match self {
+            Self::Table { table, .. } => Some(table),
+            Self::Choice { .. } => None,
+        }
+    }
+    /// The entry index within that table.
+    #[must_use]
+    pub const fn index(&self) -> Option<usize> {
+        match self {
+            Self::Table { index, .. } => Some(*index),
+            Self::Choice { .. } => None,
+        }
+    }
+    /// Values spliced into the frame, in order. Empty for a chosen candidate.
     #[must_use]
     pub fn slots(&self) -> &[String] {
-        &self.slots
+        match self {
+            Self::Table { slots, .. } => slots,
+            Self::Choice { .. } => &[],
+        }
+    }
+    /// Which decision selected this candidate, for a chosen output.
+    #[must_use]
+    pub const fn decision(&self) -> Option<usize> {
+        match self {
+            Self::Choice { decision, .. } => Some(*decision),
+            Self::Table { .. } => None,
+        }
     }
 }

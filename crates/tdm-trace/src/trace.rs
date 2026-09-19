@@ -134,7 +134,8 @@ impl Trace {
             }
             bounded_text(&turn.policy.rule, "policy rule")?;
             bounded_text(&turn.policy.branch, "policy branch")?;
-            validate_output(&turn.output, self.table(&turn.output.table), turn.index)?;
+            let table = turn.output.table().and_then(|name| self.table(name));
+            validate_output(&turn.output, &turn.decisions, table, turn.index)?;
         }
         Ok(())
     }

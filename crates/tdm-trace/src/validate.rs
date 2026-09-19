@@ -142,27 +142,67 @@ fn validate_choice(d: &Decision) -> Result<(), ValidationError> {
     Ok(())
 }
 
-/// The no-generation invariant: a turn's text must be rebuildable from an entry
-/// of a table the trace itself carries, plus the slots it recorded.
+/// The bounding invariant: a turn's text is exactly one of the candidates the
+/// program offered the model. Either it was chosen from a composed candidate
+/// set, in which case it must be byte-identical to that decision's selected
+/// label; or it was framed from a table entry, in which case it must equal that
+/// entry with the turn's recorded slots filled in order.
+///
+/// In both cases the program built the options and the model only ranked them.
 pub(crate) fn validate_output(
     output: &Output,
+    decisions: &[Decision],
     table: Option<&Table>,
     turn: u32,
 ) -> Result<(), ValidationError> {
-    let Some(table) = table else {
-        return Err(ValidationError::UnknownTable(output.table.clone()));
+    match output {
+        Output::Choice { decision, text } => validate_chosen(*decision, text, decisions, turn),
+        Output::Table {
+            index, text, slots, ..
+        } => validate_framed(*index, text, slots, table, output, turn),
+    }
+}
+
+/// The output was one of the composed candidates a decision offered.
+fn validate_chosen(
+    decision: usize,
+    text: &str,
+    decisions: &[Decision],
+    turn: u32,
+) -> Result<(), ValidationError> {
+    let Some(d) = decisions.get(decision) else {
+        return Err(ValidationError::UnknownDecision(turn));
     };
-    let Some(entry) = table.entries.get(output.index) else {
+    if d.labels[d.selected].as_bytes() != text.as_bytes() {
+        return Err(ValidationError::TextNotOffered(turn));
+    }
+    Ok(())
+}
+
+/// The output was a table frame with deterministically retrieved text spliced in.
+fn validate_framed(
+    index: usize,
+    text: &str,
+    slots: &[String],
+    table: Option<&Table>,
+    output: &Output,
+    turn: u32,
+) -> Result<(), ValidationError> {
+    let Some(table) = table else {
+        let name = output.table().unwrap_or_default().to_owned();
+        return Err(ValidationError::UnknownTable(name));
+    };
+    let Some(entry) = table.entries.get(index) else {
         return Err(ValidationError::IndexOutOfTable(turn));
     };
-    for slot in &output.slots {
+    for slot in slots {
         bounded_text(slot, "output slot")?;
     }
-    if entry.matches(PLACEHOLDER).count() != output.slots.len() {
+    if entry.matches(PLACEHOLDER).count() != slots.len() {
         return Err(ValidationError::SlotCount(turn));
     }
-    if render(entry, &output.slots).as_bytes() != output.text.as_bytes() {
-        return Err(ValidationError::TextNotInTable(turn));
+    if render(entry, slots).as_bytes() != text.as_bytes() {
+        return Err(ValidationError::TextNotOffered(turn));
     }
     Ok(())
 }

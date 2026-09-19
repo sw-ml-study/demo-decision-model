@@ -50,11 +50,16 @@ pattern-matching machinery that decides *which* canned response to use.
    "Tell me more about your family."
 ```
 
-The model can choose wrongly. It cannot invent an utterance that is not in the
-table — and a gate test asserts that byte for byte on every commit. That is a
-sharper demonstration of the "no hallucination" claim than any statement about
-JSON schemas: schema conformance does not mean the decision is correct, it means
-the output cannot fall outside the permitted space.
+The model can choose wrongly. It cannot say anything the program did not already
+construct — and a gate test asserts that on every commit. Sometimes the options
+are assembled in full by ordinary code (`Tell me more.`, `Earlier you said you
+bought a new car.`) and the model simply ranks them; sometimes code splices a
+stored memory into a fixed frame. Either way the model ranks bounded choices and
+composes nothing.
+
+That is a sharper demonstration of the "no hallucination" claim than any
+statement about JSON schemas: schema conformance does not mean the decision is
+correct, it means the output cannot fall outside the permitted space.
 
 Demo 02 (campus navigation) must run with `lib/` unchanged. That is the test of
 whether the primitives are real abstractions or ELIZA-shaped ones.
@@ -86,8 +91,8 @@ Nothing has been measured yet. Every number in this README will cite a
 - [`schemas/decision-trace-v1.schema.json`](schemas/decision-trace-v1.schema.json)
   and [`crates/tdm-trace`](crates/tdm-trace) — the trace format and its
   validator, fixed before the first model so no lesson invents its own. The
-  validator rejects a fourth decision kind, and rejects any output text it
-  cannot rebuild from a table the trace itself carries.
+  validator rejects a fourth decision kind, and rejects any output text that was
+  not one of the candidates the program offered.
 
 Next: demo 01's rule oracle and its response table.
 
