@@ -1,8 +1,9 @@
 number = 3
 slug = "trace-schema"
-status = "pending"
+status = "completed"
 description = "schemas/decision-trace-v1.schema.json with a provenance block, the crates/tdm-trace Rust crate, and a hand-written example trace that validates"
 role = "legacy"
 context_files = []
 created_at = "2026-09-18T16:45:30"
-commits = []
+completed_at = "2026-09-18T19:20:16"
+commits = ["1e4c1b28aaa0eaf941a3e4ab551ec68d6a4314d2"]
