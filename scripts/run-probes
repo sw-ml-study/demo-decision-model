@@ -1,0 +1,24 @@
+#!/bin/sh
+# Re-run the upstream-finding reproducers and require the documented outcome.
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+
+if [ -z "$(find "$repo_root/probes" -maxdepth 1 -name '*.mlpl' -print -quit 2>/dev/null)" ]; then
+    echo "probes: none recorded yet"
+    exit 0
+fi
+
+mlpl=$("$repo_root/scripts/select-mlpl")
+status=0
+for probe in "$repo_root"/probes/*.mlpl; do
+    if "$mlpl" --source-dir "$repo_root" "$probe" >/dev/null 2>&1; then
+        echo "  ok   ${probe#"$repo_root/"}"
+    else
+        echo "  FAIL ${probe#"$repo_root/"}" >&2
+        status=1
+    fi
+done
+
+[ "$status" -eq 0 ] || exit 1
+echo "PASS probes"

@@ -1,0 +1,32 @@
+#!/bin/sh
+# The directory contract from docs/plan.md: the files every later saga assumes exist.
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+
+for path in \
+    README.md \
+    CLAUDE.md \
+    AGENTS.md \
+    COPYRIGHT \
+    LICENSE \
+    justfile \
+    mlplunit.conf \
+    catalog/lessons.toml \
+    docs/README.md \
+    docs/plan.md \
+    docs/research.txt \
+    docs/reference/results.md \
+    docs/reference/sw-mlpl-findings.md \
+    docs/implementation/cross-repo-handoffs.md \
+    lib/decision.mlpl \
+    tests/test_decision.mlpl
+do
+    [ -f "$repo_root/$path" ] || { echo "missing required file: $path" >&2; exit 1; }
+done
+
+for dir in lib demos tests probes scripts catalog docs fixtures; do
+    [ -d "$repo_root/$dir" ] || { echo "missing required directory: $dir" >&2; exit 1; }
+done
+
+echo "PASS repository structure"

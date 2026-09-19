@@ -1,0 +1,14 @@
+schema = "sw-ml-study.decision-model-lessons"
+version = 1
+
+# One entry per accepted lesson. Required keys: id, slug, title, source, test,
+# implementation, memory, speed, quality, status.
+#
+# implementation: "builtin" (calls shipped sw-MLPL features), "from-scratch"
+# (the mechanism is the lesson), or "both" (a detailed form and a pragmatic form
+# with a parity check between them).
+#
+# memory/speed/quality are the three measurement axes required by the visual and
+# measurement contract in docs/plan.md. No lesson is "accepted" without all three.
+#
+# Lessons arrive as their saga lands; see docs/plan.md for the full progression.

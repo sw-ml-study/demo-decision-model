@@ -1,0 +1,13 @@
+#!/bin/sh
+# The full pre-commit gate. Grows one line per lesson as sagas land.
+set -eu
+
+repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+
+"$repo_dir/scripts/check-structure"
+"$repo_dir/scripts/check-abstraction"
+"$repo_dir/scripts/check-doc-links"
+"$repo_dir/scripts/check-catalog"
+"$repo_dir/scripts/check-mlpl-style"
+"$repo_dir/scripts/run-tests"
+"$repo_dir/scripts/run-probes"

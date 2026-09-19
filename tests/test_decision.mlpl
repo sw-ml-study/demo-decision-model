@@ -1,0 +1,158 @@
+# The typed decision contract. These tests exist to stop the Decision shape drifting underneath a lesson that has already been measured, so they pin field names and arithmetic, not just behaviour.
+include "lib/decision.mlpl";
+
+@test {name: "a Choice carries every field a consumer may rely on", tags: ["decision", "contract"]}
+def u:test_choice_fields() {
+  "The field set is the contract. A later saga that needs a new field adds it here first.";
+  d = u:choice("action", ["REFLECT", "RECALL", "FALLBACK"], [0.0, 2.0, 1.0]);
+  u:assert_text_eq(d.kind, "choice", "kind")?;
+  u:assert_text_eq(d.question, "action", "question")?;
+  u:assert_eq(list_len(d.labels), 3, "one label per choice offered")?;
+  u:assert_eq(u:decision_size(d.probs), 3, "one probability per label")?;
+  u:assert_eq(has_field(d, "selected"), 1, "selected")?;
+  u:assert_eq(has_field(d, "confidence"), 1, "confidence")?;
+  u:assert_eq(has_field(d, "margin"), 1, "margin")?;
+  u:assert_eq(has_field(d, "calibration"), 1, "calibration provenance")?;
+  u:assert_eq(has_field(d, "expectation"), 0, "only an ordered Scale carries an expectation")?;
+  u:assert_eq(u:decision_valid(d), 1, "well formed")
+}
+
+@test {name: "a Choice distribution is normalized and its selection is the mode", tags: ["decision", "contract"]}
+def u:test_choice_arithmetic() {
+  "Probabilities sum to one, selected is the argmax, confidence is the selected probability.";
+  d = u:choice("action", ["A", "B", "C"], [0.0, 2.0, 1.0]);
+  u:assert_approx(reduce_add(d.probs), 1, 0.000000001, "sums to one")?;
+  u:assert_eq(d.selected, 1, "B is the mode")?;
+  u:assert_text_eq(u:decision_label(d), "B", "selected label as text")?;
+  u:assert_approx(d.confidence, u:decision_prob(d, 1), 0.000000001, "confidence is the selected probability")?;
+  u:assert_approx(d.confidence, 0.6652409557748219, 0.000000001, "softmax of [0, 2, 1] at index 1")
+}
+
+@test {name: "confidence and margin are different doubts", tags: ["decision", "contract"]}
+def u:test_confidence_versus_margin() {
+  "The reason both are reported everywhere: equal confidence, very different decisions. One is uncertain, the other is a coin flip between two candidates, and a policy may treat them differently.";
+  uncertain = u:choice_from_probs("q", ["A", "B", "C"], [0.48, 0.27, 0.25], u:decision_uncalibrated());
+  coin_flip = u:choice_from_probs("q", ["A", "B", "C"], [0.48, 0.47, 0.05], u:decision_uncalibrated());
+  u:assert_approx(uncertain.confidence, coin_flip.confidence, 0.000000001, "same confidence")?;
+  u:assert_approx(uncertain.margin, 0.21, 0.000000001, "uncertain keeps a clear lead")?;
+  u:assert_approx(coin_flip.margin, 0.01, 0.000000001, "the coin flip does not")?;
+  u:assert_eq(u:decision_acts(uncertain, 0.4, 0.1), 1, "policy may act on the uncertain one")?;
+  u:assert_eq(u:decision_acts(coin_flip, 0.4, 0.1), 0, "and must not act on the coin flip")?;
+  u:assert_eq(u:decision_abstains(coin_flip, 0.4, 0.1), 1, "abstention is the complement")
+}
+
+@test {name: "a single-label Choice has margin 1", tags: ["decision", "contract"]}
+def u:test_single_label_margin() {
+  "A degenerate choice set still has to produce a well-formed decision; retrieval can legitimately return one candidate.";
+  d = u:choice("recall", ["NONE"], [0.0]);
+  u:assert_approx(d.confidence, 1, 0.000000001, "the only label takes all the mass")?;
+  u:assert_approx(d.margin, 1, 0.000000001, "nothing to be second")?;
+  u:assert_eq(u:decision_valid(d), 1, "well formed")
+}
+
+@test {name: "a Noul is one probability carried as a two-label distribution", tags: ["decision", "contract"]}
+def u:test_noul() {
+  "One validator, one trace schema, and one renderer serve all three kinds, so a Noul is shaped like the others; p stays readable on its own.";
+  d = u:noul("memory_required?", 1.0);
+  u:assert_text_eq(d.kind, "noul", "kind")?;
+  u:assert_approx(d.p, 0.7310585786300049, 0.000000001, "sigmoid(1)")?;
+  u:assert_eq(list_len(d.labels), 2, "false and true")?;
+  u:assert_text_eq(unwrap(list_get(d.labels, d.selected)), "true", "selected reads as text")?;
+  u:assert_approx(d.confidence, d.p, 0.000000001, "confidence is the probability of the selected answer")?;
+  u:assert_approx(u:decision_prob_of(d, "true"), d.p, 0.000000001, "p is readable by name")?;
+  u:assert_eq(u:decision_valid(d), 1, "well formed")
+}
+
+@test {name: "a Noul below one half selects false, and confidence follows the selection", tags: ["decision", "contract"]}
+def u:test_noul_negative() {
+  "Confidence is never the probability of the proposition; it is the probability of the answer given.";
+  d = u:noul("contains_question?", 0 - 2.0);
+  u:assert_approx(d.p, 0.11920292202211755, 0.000000001, "sigmoid(-2)")?;
+  u:assert_text_eq(unwrap(list_get(d.labels, d.selected)), "false", "selects false")?;
+  u:assert_approx(d.confidence, 1 - d.p, 0.000000001, "confidence is the probability of false")?;
+  u:assert_approx(d.margin, 1 - 2 * d.p, 0.000000001, "margin is the gap between false and true")
+}
+
+@test {name: "a Scale carries an expectation over ordered levels", tags: ["decision", "contract"]}
+def u:test_scale() {
+  "A Scale differs from a Choice only in that its labels are ordered, which is what makes the expectation meaningful.";
+  d = u:scale_from_probs("emotional_intensity", ["LOW", "MEDIUM", "HIGH"], [0.08, 0.57, 0.35], u:decision_uncalibrated());
+  u:assert_text_eq(d.kind, "scale", "kind")?;
+  u:assert_eq(has_field(d, "expectation"), 1, "expectation present")?;
+  u:assert_approx(d.expectation, 1.27, 0.000000001, "0*.08 + 1*.57 + 2*.35")?;
+  u:assert_text_eq(u:decision_label(d), "MEDIUM", "the mode is still the selection")?;
+  u:assert_eq(u:decision_valid(d), 1, "well formed")
+}
+
+@test {name: "the expectation separates two distributions that share a mode", tags: ["decision", "contract"]}
+def u:test_scale_expectation_is_informative() {
+  "The reason a Scale is not just a Choice: same selected level, same confidence, different reading of the state.";
+  low = u:scale_from_probs("intensity", ["LOW", "MEDIUM", "HIGH"], [0.4, 0.5, 0.1], u:decision_uncalibrated());
+  high = u:scale_from_probs("intensity", ["LOW", "MEDIUM", "HIGH"], [0.1, 0.5, 0.4], u:decision_uncalibrated());
+  u:assert_eq(low.selected, high.selected, "same mode")?;
+  u:assert_approx(low.confidence, high.confidence, 0.000000001, "same confidence")?;
+  u:assert_approx(low.expectation, 0.7, 0.000000001, "leaning low")?;
+  u:assert_approx(high.expectation, 1.3, 0.000000001, "leaning high")
+}
+
+@test {name: "temperature softens a distribution and records the scalar it used", tags: ["decision", "calibration"]}
+def u:test_temperature() {
+  "The cheapest calibration map, and the baseline every other one has to beat. A trace must be able to say a distribution was calibrated and by what.";
+  raw = u:choice("action", ["A", "B", "C"], [0.0, 2.0, 1.0]);
+  soft = u:choice_tempered("action", ["A", "B", "C"], [0.0, 2.0, 1.0], 2.0);
+  identity = u:choice_tempered("action", ["A", "B", "C"], [0.0, 2.0, 1.0], 1.0);
+  u:assert_lt(soft.confidence, raw.confidence, "t above 1 softens")?;
+  u:assert_eq(soft.selected, raw.selected, "and never changes the ranking")?;
+  u:assert_approx(identity.confidence, raw.confidence, 0.000000001, "t of 1 is the identity")?;
+  u:assert_text_eq(raw.calibration.method, "none", "raw output says so")?;
+  u:assert_text_eq(soft.calibration.method, "temperature", "calibrated output says so")?;
+  u:assert_approx(soft.calibration.t, 2.0, 0.000000001, "and names the scalar")
+}
+
+@test {name: "policy reads a distribution by label name, never by position", tags: ["decision", "policy"]}
+def u:test_read_by_name() {
+  "A later saga may renumber a choice set. Policy that reads by name survives that; policy that reads by index does not.";
+  d = u:choice_from_probs("topic", ["FAMILY", "WORK", "SELF"], [0.7, 0.2, 0.1], u:decision_uncalibrated());
+  u:assert_approx(u:decision_prob_of(d, "FAMILY"), 0.7, 0.000000001, "by name")?;
+  u:assert_eq(u:decision_index_of(d, "WORK"), 1, "index of a present label")?;
+  u:assert_eq(u:decision_index_of(d, "DREAM"), 0 - 1, "a label the decision does not offer")?;
+  u:assert_approx(u:decision_prob_of(d, "DREAM"), 0, 0.000000001, "reads as zero, not as an error")
+}
+
+@test {name: "a choice set the model never saw is still a well-formed decision", tags: ["decision", "contract"]}
+def u:test_dynamic_choice_set() {
+  "Choices are an input, not a fixed output layer. Retrieval builds this set at call time, and NONE is always in it.";
+  labels = ["M1", "M2", "M3", "NONE"];
+  d = u:choice("which earlier statement is worth recalling?", labels, [0.1, 1.9, 0.4, 0.2]);
+  u:assert_eq(list_len(d.labels), 4, "four candidates offered")?;
+  u:assert_text_eq(u:decision_label(d), "M2", "the second is selected")?;
+  u:assert_gt(u:decision_prob_of(d, "NONE"), 0, "abstention always has mass")?;
+  u:assert_eq(u:decision_valid(d), 1, "well formed")
+}
+
+@test {name: "the validator rejects malformed decisions", tags: ["decision", "contract"]}
+def u:test_validator() {
+  "Cheap enough to assert on every decision a lesson records, so a broken distribution is caught where it is produced.";
+  good = u:choice("q", ["A", "B"], [1.0, 0.0]);
+  u:assert_eq(u:decision_valid(good), 1, "a good decision")?;
+  unnormalized = {kind: "choice", question: "q", labels: ["A", "B"], probs: [0.3, 0.3], selected: 0, confidence: 0.3, margin: 0, calibration: u:decision_uncalibrated()};
+  u:assert_eq(u:decision_valid(unnormalized), 0, "probabilities must sum to one")?;
+  mismatched = {kind: "choice", question: "q", labels: ["A", "B", "C"], probs: [0.5, 0.5], selected: 0, confidence: 0.5, margin: 0, calibration: u:decision_uncalibrated()};
+  u:assert_eq(u:decision_valid(mismatched), 0, "one probability per label")?;
+  negative = {kind: "choice", question: "q", labels: ["A", "B"], probs: [1.5, 0 - 0.5], selected: 0, confidence: 1.5, margin: 2, calibration: u:decision_uncalibrated()};
+  u:assert_eq(u:decision_valid(negative), 0, "no negative probability")?;
+  unknown = {kind: "generate", question: "q", labels: ["A", "B"], probs: [0.5, 0.5], selected: 0, confidence: 0.5, margin: 0, calibration: u:decision_uncalibrated()};
+  u:assert_eq(u:decision_valid(unknown), 0, "there are three kinds and generate is not one of them")
+}
+
+@test {name: "there are exactly three primitives", tags: ["decision", "contract"]}
+def u:test_kinds() {
+  "The absence of a fourth is the point of the repository, so it is asserted rather than assumed.";
+  u:assert_eq(list_len(u:decision_kinds()), 3, "choice, noul, scale")?;
+  u:assert_eq(u:decision_kind_known("choice"), 1, "choice")?;
+  u:assert_eq(u:decision_kind_known("noul"), 1, "noul")?;
+  u:assert_eq(u:decision_kind_known("scale"), 1, "scale")?;
+  u:assert_eq(u:decision_kind_known("generate"), 0, "no generation primitive")
+}
+
+u:run_registered_tests()

@@ -1,0 +1,28 @@
+#!/bin/sh
+# Every catalog entry names existing files and a declared implementation form.
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+catalog="$repo_root/catalog/lessons.toml"
+
+grep -q '^schema = "sw-ml-study.decision-model-lessons"$' "$catalog"
+grep -q '^version = 1$' "$catalog"
+
+count=$(grep -c '^\[\[lesson\]\]$' "$catalog" || true)
+if [ "$count" -eq 0 ]; then
+    echo "PASS lesson catalog (no lessons yet)"
+    exit 0
+fi
+
+ids=$(grep -c '^id = ' "$catalog" || true)
+[ "$ids" -eq "$count" ] || { echo "every [[lesson]] needs exactly one id" >&2; exit 1; }
+
+forms=$(grep -c '^implementation = ' "$catalog" || true)
+[ "$forms" -eq "$count" ] || { echo "every [[lesson]] needs an implementation form" >&2; exit 1; }
+grep -Eq '^implementation = "(builtin|from-scratch|both)"$' "$catalog"
+
+for path in $(grep -oE '"(demos|lib|tests|assets|fixtures|probes|schemas|crates)/[^"]+"' "$catalog" | tr -d '"' | sort -u); do
+    [ -f "$repo_root/$path" ] || { echo "catalog target missing: $path" >&2; exit 1; }
+done
+
+echo "PASS lesson catalog references existing artifacts ($count lessons)"

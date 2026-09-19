@@ -1,0 +1,17 @@
+#!/bin/sh
+# Every relative markdown link in tracked documentation resolves to a file that exists.
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+status=0
+
+for doc in $(find "$repo_root" -name '*.md' -not -path "$repo_root/.git/*" \
+        -not -path "$repo_root/target/*" -not -path "$repo_root/.agentrail/*" | sort); do
+    dir=$(dirname "$doc")
+    for link in $(grep -oE '\]\([^)#]+\)' "$doc" | sed -E 's/^\]\((.*)\)$/\1/' | grep -v '^[a-z][a-z0-9+.-]*:' || true); do
+        [ -e "$dir/$link" ] || { echo "broken link in ${doc#"$repo_root/"}: $link" >&2; status=1; }
+    done
+done
+
+[ "$status" -eq 0 ] || exit 1
+echo "PASS documentation links"

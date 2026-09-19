@@ -1,0 +1,31 @@
+#!/bin/sh
+# The architecture rule from docs/plan.md: lib/ knows decisions, demos/ know their demo.
+# No demo vocabulary may leak into lib/, crates/, or schemas/. Checked, not reviewed.
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+
+# Demo-01 vocabulary. Add a demo's words here when the demo is added.
+pattern='[Ee][Ll][Ii][Zz][Aa]|[Jj]eviza|MOTHER|FATHER|psychotherap|[Rr]ogerian'
+
+status=0
+for dir in lib crates schemas; do
+    [ -d "$repo_root/$dir" ] || continue
+    hits=$(grep -rnE "$pattern" "$repo_root/$dir" 2>/dev/null || true)
+    if [ -n "$hits" ]; then
+        echo "demo vocabulary leaked into $dir/ (see 'The architecture rule' in docs/plan.md):" >&2
+        echo "$hits" >&2
+        status=1
+    fi
+done
+
+# The other half of the rule: no generation primitive anywhere in the library.
+gen=$(grep -rnE 'def u:[a-z_]*generate|generate\(prompt' "$repo_root/lib" 2>/dev/null || true)
+if [ -n "$gen" ]; then
+    echo "a generation path appeared in lib/ (see 'The architecture rule' in docs/plan.md):" >&2
+    echo "$gen" >&2
+    status=1
+fi
+
+[ "$status" -eq 0 ] || exit 1
+echo "PASS abstraction boundary (no demo vocabulary in lib/, crates/, schemas/)"

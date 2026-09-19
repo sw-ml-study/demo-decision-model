@@ -1,0 +1,174 @@
+# The typed decision contract: the Decision record and the three primitives a decision model may expose (Choice, Noul, Scale). Fixed once and pinned by tests/test_decision.mlpl, because a lesson that has already been measured must not have the shape shift underneath it. There is no generation primitive in this file and there never will be: a decision model reports belief, and ordinary program code owns every threshold, every side effect, and every string a user sees.
+
+def u:decision_kinds() {
+  "The three legal decision kinds, in the order the documentation introduces them.";
+  ["choice", "noul", "scale"]
+}
+
+def u:decision_size(v) {
+  "Element count of a rank-1 array.";
+  reduce_mul(shape(v))
+}
+
+def u:decision_probs(logits) {
+  "Probabilities from a rank-1 logit vector.";
+  softmax(logits, 0)
+}
+
+def u:decision_temper(logits, t) {
+  "Temperature-scaled logits: t above 1 softens the distribution, t below 1 sharpens it, t of 1 is the identity. The cheapest calibration map there is, and the baseline every other one must beat.";
+  logits / t
+}
+
+def u:decision_selected(probs) {
+  "Index of the most probable label; ties go to the first.";
+  argmax(probs)
+}
+
+def u:decision_confidence(probs) {
+  "Probability of the selected label.";
+  take(probs, 0, argmax(probs))
+}
+
+def u:decision_margin(probs) {
+  "Gap between the two most probable labels, or 1 for a single-label set. Reported beside confidence everywhere because the two fail differently: .48 confidence with .21 margin is an uncertain decision, while .48 with .01 is a coin flip between two candidates, and a policy may reasonably treat those differently.";
+  n = u:decision_size(probs);
+  if lt(n, 2) {
+    1
+  } else {
+    ord = grade_down(probs);
+    take(probs, 0, take(ord, 0, 0)) - take(probs, 0, take(ord, 0, 1))
+  }
+}
+
+def u:decision_expectation(probs) {
+  "Expected level index of a distribution over ordered levels: the sum of i times p_i. Meaningful only when the labels are ordered, which is why only a Scale carries it.";
+  reduce_add(probs * range(u:decision_size(probs)))
+}
+
+def u:decision_uncalibrated() {
+  "The calibration record of a raw model output: no map has been applied.";
+  {method: "none", t: 1}
+}
+
+def u:decision_temperature_map(t) {
+  "The calibration record of a temperature-scaled output, naming the fitted scalar so a trace can be read back.";
+  {method: "temperature", t: t}
+}
+
+def u:decision_build(kind, question, labels, probs, calibration) {
+  "The one Decision constructor. Every field every consumer may rely on is set here, so no lesson invents its own shape: kind, question, labels, probs, selected, confidence, margin, and the calibration provenance.";
+  {kind: kind, question: question, labels: labels, probs: probs, selected: u:decision_selected(probs), confidence: u:decision_confidence(probs), margin: u:decision_margin(probs), calibration: calibration}
+}
+
+def u:choice_from_probs(question, labels, probs, calibration) {
+  "A Choice decision from a distribution that is already normalized, for replaying a recorded trace.";
+  u:decision_build("choice", question, labels, probs, calibration)
+}
+
+def u:choice(question, labels, logits) {
+  "A Choice decision over a labelled set: which one, with what probability. The choices are an input rather than a fixed output layer, so a caller may offer a set that did not exist during training.";
+  u:choice_from_probs(question, labels, u:decision_probs(logits), u:decision_uncalibrated())
+}
+
+def u:choice_tempered(question, labels, logits, t) {
+  "A Choice decision with temperature scaling applied, recording the scalar it used.";
+  u:choice_from_probs(question, labels, u:decision_probs(u:decision_temper(logits, t)), u:decision_temperature_map(t))
+}
+
+def u:noul_from_p(proposition, p, calibration) {
+  "A Noul decision from a probability that is already calibrated or replayed. Carried as a two-label distribution so that one validator, one trace schema, and one renderer serve all three kinds; p remains readable as its own field.";
+  d = u:decision_build("noul", proposition, ["false", "true"], [1 - p, p], calibration);
+  {kind: d.kind, question: d.question, labels: d.labels, probs: d.probs, selected: d.selected, confidence: d.confidence, margin: d.margin, calibration: d.calibration, p: p}
+}
+
+def u:noul(proposition, logit) {
+  "A Noul decision: one probability that a proposition holds of the state.";
+  u:noul_from_p(proposition, sigmoid(logit), u:decision_uncalibrated())
+}
+
+def u:noul_tempered(proposition, logit, t) {
+  "A Noul decision with temperature scaling applied, recording the scalar it used.";
+  u:noul_from_p(proposition, sigmoid(logit / t), u:decision_temperature_map(t))
+}
+
+def u:scale_from_probs(question, levels, probs, calibration) {
+  "A Scale decision from a distribution that is already normalized, for replaying a recorded trace.";
+  d = u:decision_build("scale", question, levels, probs, calibration);
+  {kind: d.kind, question: d.question, labels: d.labels, probs: d.probs, selected: d.selected, confidence: d.confidence, margin: d.margin, calibration: d.calibration, expectation: u:decision_expectation(probs)}
+}
+
+def u:scale(question, levels, logits) {
+  "A Scale decision over ordered levels: the distribution and its expectation. A Scale differs from a Choice only in that its labels are ordered, which is what makes the expectation meaningful and makes an adjacent error cheaper than a distant one.";
+  u:scale_from_probs(question, levels, u:decision_probs(logits), u:decision_uncalibrated())
+}
+
+def u:scale_tempered(question, levels, logits, t) {
+  "A Scale decision with temperature scaling applied, recording the scalar it used.";
+  u:scale_from_probs(question, levels, u:decision_probs(u:decision_temper(logits, t)), u:decision_temperature_map(t))
+}
+
+def u:decision_label(d) {
+  "The selected label as text.";
+  unwrap(list_get(d.labels, d.selected))
+}
+
+def u:decision_prob(d, i) {
+  "Probability of the label at index i.";
+  take(d.probs, 0, i)
+}
+
+def u:decision_index_of(d, name) {
+  "Index of a named label, or -1 when the decision does not offer it.";
+  n = list_len(d.labels);
+  found = 0 - 1;
+  i = 0;
+  while lt(i, n) {
+    found = if str_eq(unwrap(list_get(d.labels, i)), name) {
+      i
+    } else {
+      found
+    };
+    i = i + 1
+  };
+  found
+}
+
+def u:decision_prob_of(d, name) {
+  "Probability of a named label, or 0 when the decision does not offer it. This is how policy reads a distribution: by name, never by a position a later saga might renumber.";
+  i = u:decision_index_of(d, name);
+  if lt(i, 0) {
+    0
+  } else {
+    take(d.probs, 0, i)
+  }
+}
+
+def u:decision_acts(d, min_confidence, min_margin) {
+  "Whether application policy may act on this decision. Both thresholds belong to the caller: the model reports belief, and the program decides what belief is enough. Abstention is the complement.";
+  ge(d.confidence, min_confidence) * ge(d.margin, min_margin)
+}
+
+def u:decision_abstains(d, min_confidence, min_margin) {
+  "Whether application policy must fall back rather than act.";
+  1 - u:decision_acts(d, min_confidence, min_margin)
+}
+
+def u:decision_kind_known(kind) {
+  "Whether a kind string is one of the three legal kinds.";
+  ks = u:decision_kinds();
+  n = list_len(ks);
+  ok = 0;
+  i = 0;
+  while lt(i, n) {
+    ok = ok + str_eq(unwrap(list_get(ks, i)), kind);
+    i = i + 1
+  };
+  gt(ok, 0)
+}
+
+def u:decision_valid(d) {
+  "Whether a Decision is well formed: a known kind, one probability per label, at least one label, no negative probability, a distribution summing to one within 1e-9, a selected index in range, and the expectation present exactly when the kind is scale. Cheap enough to assert on every decision a lesson records.";
+  n = u:decision_size(d.probs);
+  u:decision_kind_known(d.kind) * eq(list_len(d.labels), n) * gt(n, 0) * ge(reduce(:min, d.probs), 0) * lt(abs(reduce_add(d.probs) - 1), 0.000000001) * ge(d.selected, 0) * lt(d.selected, n) * eq(has_field(d, "expectation"), str_eq(d.kind, "scale"))
+}

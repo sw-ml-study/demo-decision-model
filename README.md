@@ -61,18 +61,23 @@ whether the primitives are real abstractions or ELIZA-shaped ones.
 
 ## Status
 
-**Planning.** The delivery plan is written; no model exists yet.
+**Saga 1 in progress.** The decision contract and the repository gate are in;
+no model exists yet.
 
 - [`docs/plan.md`](docs/plan.md) — the delivery plan: primitives, architecture
   rule, ten sagas, the measurement contract, and the non-goals.
 - [`docs/research.txt`](docs/research.txt) — the source design discussion.
+- [`lib/decision.mlpl`](lib/decision.mlpl) — the `Decision` record and the three
+  primitives, with `confidence`, `margin`, and `expectation` defined once and
+  pinned by 13 tests so the shape cannot drift under a measured lesson.
+- `just check` — the gate: structure, the abstraction boundary, documentation
+  links, the catalog, MLPL style, tests, probes.
 
-Nothing has been measured yet. Every number in this README will cite a results
-row or be removed.
+Nothing has been measured yet. Every number in this README will cite a
+[results row](docs/reference/results.md) or be removed.
 
-Next: Saga 1 — the decision contract (`lib/decision.mlpl`), the
-`decision-trace-v1` schema, three sw-MLPL language probes, and the repository
-gate.
+Next: the three sw-MLPL language probes, then the `decision-trace-v1` schema and
+the `tdm-trace` crate, then demo 01's rule oracle and response table.
 
 ## What it will look like
 
@@ -124,7 +129,8 @@ schemas/                     decision-trace-v1 JSON schema
 scripts/  justfile           Thin gate and tool-selection scripts
 ```
 
-Directories arrive as their saga does; today only `docs/` is populated.
+Directories arrive as their saga does; `crates/`, `schemas/`, and the demos
+are still to come.
 
 ## Build and run
 
