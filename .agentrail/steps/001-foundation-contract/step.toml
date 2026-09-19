@@ -1,8 +1,9 @@
 number = 1
 slug = "foundation-contract"
-status = "pending"
+status = "completed"
 description = "Saga 1, step 1: repository gate and the decision contract. Create justfile, m..."
 role = "production"
 context_files = []
 created_at = "2026-09-18T16:45:30"
-commits = []
+completed_at = "2026-09-18T18:10:39"
+commits = ["d0561e82fce0a8de0dd9b0c0ccc31fc9087ad711"]
