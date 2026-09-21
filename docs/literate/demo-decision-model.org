@@ -29,9 +29,9 @@ test bench: the model decides which canned reply applies, and ordinary code
 quotes it. The live demo runs the model trained here, in the browser:
 [[https://sw-ml-study.github.io/demo-decision-model/][sw-ml-study.github.io/demo-decision-model]].
 Measured numbers quoted below are rows of the
-[[file:../reference/results.md][results table]] and entries of the
-[[file:../../catalog/lessons.toml][lesson catalog]]; the dialog probe that found
-the model's failures is [[file:../experiments/SL01-dialog-probe.md][SL01-dialog-probe]].
+[[https://github.com/sw-ml-study/demo-decision-model/blob/main/docs/reference/results.md][results table]] and entries of the
+[[https://github.com/sw-ml-study/demo-decision-model/blob/main/catalog/lessons.toml][lesson catalog]]; the dialog probe that found
+the model's failures is [[https://github.com/sw-ml-study/demo-decision-model/blob/main/docs/experiments/SL01-dialog-probe.md][SL01-dialog-probe]].
 
 ** Evaluating blocks
 
