@@ -1,0 +1,102 @@
+# Talk to demo 01. Loads the weights train.mlpl saved, turns each input into one Choice over the nine response classes, applies the confidence policy in ordinary code, and prints the canned reply together with the distribution that picked it. Every string it can say is an entry in eliza.mlpl's response table; the model only ranks. Usage: mlpl-repl -f demos/eliza/chat.mlpl -- "your sentence" (or pipe lines on stdin).
+include "../../lib/choice_model.mlpl";
+include "eliza.mlpl";
+
+ez_threshold = 0.4;
+
+def u:ez_bar(p, width) {
+  "A proportional bar: filled cells for the probability, dots for the rest.";
+  filled = floor(p * width + 0.5);
+  out = "";
+  i = 0;
+  while lt(i, width) {
+    out = str_concat(out, if lt(i, filled) {
+        "#"
+      } else {
+        "."
+      });
+    i = i + 1
+  };
+  out
+}
+
+def u:ez_round(x, places) {
+  "Round to a fixed number of decimal places for display.";
+  scale = pow(10, places);
+  floor(x * scale + 0.5) / scale
+}
+
+def u:ez_show_distribution(d, top) {
+  "Print the most probable classes with their bars, in descending order.";
+  order = grade_down(d.probs);
+  n = list_len(d.labels);
+  shown = if lt(top, n) {
+    top
+  } else {
+    n
+  };
+  i = 0;
+  while lt(i, shown) {
+    at = take(order, 0, i);
+    p = take(d.probs, 0, at);
+    print("     ", u:text_lg(d.labels, at), u:ez_bar(p, 20), u:ez_round(p, 3));
+    i = i + 1
+  };
+  1
+}
+
+def u:ez_turn(weights, text, turn) {
+  "One turn: decide, apply the policy, pick the reply, and print the whole chain.";
+  t0 = clock_ms();
+  r = u:cm_decide(weights, text, "what should the reply be?");
+  decide_ms = clock_ms() - t0;
+  d = r.decision;
+  acts = u:decision_acts(d, ez_threshold, 0);
+  chosen = if acts {
+    d.selected
+  } else {
+    u:ez_label_index("FALLBACK")
+  };
+  reply = u:ez_response(chosen, turn);
+  print("YOU:  ", text);
+  print("ELIZA:", reply.text);
+  print("");
+  print("      choice: what should the reply be?", list_len(d.labels), "offered");
+  dummy = u:ez_show_distribution(d, 4);
+  print("      confidence", u:ez_round(d.confidence, 3), " margin", u:ez_round(d.margin, 3), " decided in", u:ez_round(decide_ms, 3), "ms");
+  print("      policy:", if acts {
+      str_concat("confidence >= 0.4, act on ", u:ez_label(chosen))
+    } else {
+      "confidence < 0.4, abstain and fall back"
+    });
+  print("      reply:  table", reply.table, "entry", reply.index, "(verbatim, not composed)");
+  print("      matcher:", u:ez_label(u:ez_matcher(text)), "(1966 keyword list)");
+  print("      features:", r.tokens);
+  print("");
+  1
+}
+
+def u:ez_inputs() {
+  "Turns to run: the command-line arguments if any were given, else the non-empty lines piped on stdin.";
+  a = args();
+  if gt(list_len(a), 0) {
+    a
+  } else {
+    str_split(read_stdin(), "\n")
+  }
+}
+
+ez_weights = unwrap(u:cm_load("fixtures/eliza/choice-v0.bin"));
+ez_lines = u:ez_inputs();
+ez_n = list_len(ez_lines);
+ez_i = 0;
+while lt(ez_i, ez_n) {
+  ez_line = u:text_lg(ez_lines, ez_i);
+  ez_done = if gt(str_len(u:text_words(ez_line)), 0) {
+    u:ez_turn(ez_weights, ez_line, ez_i)
+  } else {
+    0
+  };
+  ez_i = ez_i + 1
+}
+print("")

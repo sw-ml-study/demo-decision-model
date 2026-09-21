@@ -24,7 +24,14 @@ for path in \
     Cargo.toml \
     schemas/decision-trace-v1.schema.json \
     crates/tdm-trace/src/lib.rs \
-    fixtures/traces/example-turn-v1.json
+    fixtures/traces/example-turn-v1.json \
+    lib/text.mlpl \
+    lib/choice_model.mlpl \
+    demos/eliza/eliza.mlpl \
+    demos/eliza/train.mlpl \
+    demos/eliza/chat.mlpl \
+    demos/eliza/transcript.txt \
+    fixtures/eliza/choice-v0.bin
 do
     [ -f "$repo_root/$path" ] || { echo "missing required file: $path" >&2; exit 1; }
 done

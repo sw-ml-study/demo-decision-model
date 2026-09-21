@@ -66,35 +66,100 @@ whether the primitives are real abstractions or ELIZA-shaped ones.
 
 ## Status
 
-**Saga 1 in progress.** The decision contract and the repository gate are in;
-no model exists yet.
+**Running.** There is a demo you can talk to, and a model that decides what it
+says.
 
-- [`docs/plan.md`](docs/plan.md) — the delivery plan: primitives, architecture
-  rule, ten sagas, the measurement contract, and the non-goals.
-- [`docs/research.txt`](docs/research.txt) — the source design discussion.
+```sh
+just eliza-train                              # about 25 s, writes the weights
+just chat "my mom never listens to me"
+just transcript                               # the committed nine-turn demo
+```
+
+```text
+YOU:   my mom never listens to me
+ELIZA: Tell me more about your family.
+
+      choice: what should the reply be? 9 offered
+      FAMILY #################### 1
+      DREAM  .................... 0
+      YES    .................... 0
+      DESIRE .................... 0
+      confidence 1  margin 1  decided in 1.041 ms
+      policy: confidence >= 0.4, act on FAMILY
+      reply:  table FAMILY entry 0 (verbatim, not composed)
+      matcher: FALLBACK (1966 keyword list)
+      features: my|mom|never|listens|to|me|my_mom|mom_never|never_listens|...
+```
+
+That is the whole thesis in one screen: text in, a distribution over nine
+bounded options, a threshold applied by ordinary code, and a reply quoted from a
+table. The 1966 keyword list falls through on `mom`, because nobody wrote `mom`
+down in 1966. The model learned it from examples.
+
+### What it measures
+
+A single Choice over nine response classes. 33,065 parameters
+(1,024 hash slots x 32 dimensions, plus a 32x9 head), deciding in **0.5 to
+2.1 ms**; the nine-turn transcript runs end to end in 0.11 s.
+
+**It starts from nothing.** The embedding table and head are seeded random
+values (`randn(...) * 0.1`), the bias is zero, and the only thing the model ever
+sees is the 232 generated sentences. No pretrained vectors, no downloaded
+weights, no teacher yet. That is also why `mom` works and `the woman who raised
+me` does not: `mom` was in the corpus, and a hash slot for a word the model never
+saw carries no meaning at all.
+
+**Training is a one-off.** 200 full-batch Adam steps over 232 examples,
+**23.9 s** wall clock on an M1 Max (`mlpl-repl 0.22.0`), writing a 264,688-byte
+weights file. It is deterministic: retraining reproduces the file byte for byte
+(verified by hash). The weights are committed, so a fresh clone can
+`just chat` immediately and never run training at all. Retraining is only needed
+when the classes, the corpus, or the hyperparameters change.
+
+| Split | Learned Choice | 1966 keyword matcher | Margin |
+|---|---|---|---|
+| train (232) | 1.000 | 0.526 | +0.474 |
+| val (58, held-out sentence frames) | 0.879 | 0.397 | +0.483 |
+| wild (20, hand-written) | 0.750 | 0.400 | +0.350 |
+
+### What it gets wrong, which matters more
+
+The model is **badly calibrated and confidently wrong off-distribution**:
+
+| Input | Model says | Truth | Matcher |
+|---|---|---|---|
+| `yeah` | `YES` 1.000 | `YES` | falls through |
+| `do you think robots have feelings` | `COMPUTER` 0.995 | `COMPUTER` | falls through |
+| `i bought a new car` | `DESIRE` 0.786 | `FALLBACK` | `FALLBACK`, correct |
+| `i dreamed my mother was a computer` | `DESIRE` 0.883 | `DREAM` | `DREAM`, correct |
+| `the woman who raised me never approved` | `DREAM` 0.705 | `FAMILY` | falls through |
+
+It reports `1.000` on most inputs. Those are not probabilities yet, which is
+precisely why calibration (`CB01`, `CB02`) and abstention (`AB01`) are their own
+sagas rather than a footnote. Validation `COMPUTER` scores 0.000: the held-out
+frame for that class is `i spend all day with {}`, and nothing in training
+prepared it.
+
+**This is a thin slice, marked `provisional`.** One Choice, no Noul, no Scale, no
+memory, no calibration, no browser UI. It exists so there is something real to
+judge before anything is deepened. Numbers: [`SL01`](docs/reference/results.md).
+
+### Foundations under it
+
+- [`docs/plan.md`](docs/plan.md) — the delivery plan and the authority for scope.
 - [`lib/decision.mlpl`](lib/decision.mlpl) — the `Decision` record and the three
-  primitives, with `confidence`, `margin`, and `expectation` defined once and
-  pinned by 13 tests so the shape cannot drift under a measured lesson.
-- `just check` — the gate: structure, the abstraction boundary, documentation
-  links, the catalog, MLPL style, tests, probes.
-
-Nothing has been measured yet. Every number in this README will cite a
-[results row](docs/reference/results.md) or be removed.
-
-- [`probes/`](probes/) — three sw-MLPL capability reproducers, all green:
-  `freeze` holds a frozen encoder at exactly zero delta, a two-argument bilinear
-  scorer differentiates to exactly the outer product (so dynamic choice sets
-  will train), and an `experiment`-wrapped `train` loop runs inside a user
-  function. Caveats found and written down in
-  [`docs/reference/sw-mlpl-findings.md`](docs/reference/sw-mlpl-findings.md).
-
+  primitives, pinned by 13 tests.
 - [`schemas/decision-trace-v1.schema.json`](schemas/decision-trace-v1.schema.json)
-  and [`crates/tdm-trace`](crates/tdm-trace) — the trace format and its
-  validator, fixed before the first model so no lesson invents its own. The
-  validator rejects a fourth decision kind, and rejects any output text that was
-  not one of the candidates the program offered.
+  and [`crates/tdm-trace`](crates/tdm-trace) — the trace format and validator.
+  It rejects a fourth decision kind, and rejects any output text that was not
+  one of the candidates the program offered.
+- [`probes/`](probes/) — four sw-MLPL capability reproducers. The fourth cost a
+  wrong number before it was caught: Adam's optimizer state is process-global, so
+  an in-process sweep reports whatever ran last as the winner. Every sweep here
+  runs one configuration per process.
 
-Next: demo 01's rule oracle and its response table.
+Next: the real `EZ01` rule engine as a labelling oracle, a corpus with proper
+curriculum categories, then Noul and Scale beside the Choice.
 
 ## What it will look like
 

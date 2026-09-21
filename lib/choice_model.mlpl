@@ -1,0 +1,92 @@
+# The smallest Choice model: hashed word-and-bigram slots, a learned embedding per slot, a masked mean pool, and one linear head over a fixed label set. Domain-neutral. Training runs over the caller's global params cm_E [slots, d], cm_W [d, k], and cm_b [k] (models and params cannot be passed into grad as arguments); inference runs over a plain weights record, so a trained model is just arrays that to_native can save and parse_native can load. Parity between the two forward passes is asserted in tests/test_choice_model.mlpl.
+include "text.mlpl";
+include "decision.mlpl";
+
+def u:cm_featurize(texts, slots, f) {
+  "Feature matrices for a string list: slot ids [N, f], the pooling weights [N, f, 1] (mask divided by the row's feature count, so the pool is a mean), and the counts [N]. Computed once, outside grad.";
+  n = list_len(texts);
+  ids = fill([0], 0);
+  w = fill([0], 0);
+  counts = fill([0], 0);
+  i = 0;
+  while lt(i, n) {
+    r = u:text_features(u:text_lg(texts, i), slots, f);
+    denom = if gt(r.n, 0) {
+      r.n
+    } else {
+      1
+    };
+    ids = concat(ids, r.ids);
+    w = concat(w, r.mask / denom);
+    counts = concat(counts, [r.n]);
+    i = i + 1
+  };
+  {ids: reshape(ids, [n, f]), wmask: reshape(w, [n, f, 1]), counts: counts}
+}
+
+def u:cm_logits(ids, wmask) {
+  "Training forward pass over the caller's global params: gather each slot's embedding, mean-pool with the precomputed weights, apply the head. Returns [N, k].";
+  matmul(reduce_add(gather_rows(cm_E, ids) * wmask, 1), cm_W) + cm_b
+}
+
+def u:cm_train(ids, wmask, y, steps, lr) {
+  "Full-batch Adam over the caller's global params for a fixed number of steps; returns the final training loss. The block holds only the adam call because adam returns the loss it stepped from, so the forward pass runs once per step rather than twice.";
+  train steps {
+    adam(cross_entropy(u:cm_logits(ids, wmask), y), [cm_E, cm_W, cm_b], lr, 0.9, 0.999, 0.00000001)
+  };
+  cross_entropy(u:cm_logits(ids, wmask), y)
+}
+
+def u:cm_infer(weights, ids, wmask) {
+  "Inference forward pass over a plain weights record {E, W, b}. Same arithmetic as cm_logits, no tape, no globals.";
+  matmul(reduce_add(gather_rows(weights.E, ids) * wmask, 1), weights.W) + weights.b
+}
+
+def u:cm_param_count(weights) {
+  "Trainable parameters in a weights record.";
+  reduce_mul(shape(weights.E)) + reduce_mul(shape(weights.W)) + reduce_mul(shape(weights.b))
+}
+
+def u:cm_save(path, weights) {
+  "Write a weights record (plus whatever metadata fields it carries) to a native binary file.";
+  write_bytes(path, unwrap(to_native(weights)))
+}
+
+def u:cm_load(path) {
+  "Read a weights record written by cm_save.";
+  parse_native(read_bytes(path)?)
+}
+
+def u:cm_decide(weights, text, question) {
+  "One Choice decision over one input, using the label set, slot count, and feature width stored with the weights. Returns the Decision plus the features the model actually saw, so a caller can show them.";
+  labels = str_split(weights.labels, "|");
+  r = u:text_features(text, weights.slots, weights.width);
+  denom = if gt(r.n, 0) {
+    r.n
+  } else {
+    1
+  };
+  wmask = reshape(r.mask / denom, [1, weights.width, 1]);
+  logits = reshape(u:cm_infer(weights, reshape(r.ids, [1, weights.width]), wmask), [list_len(labels)]);
+  {decision: u:choice(question, labels, logits), tokens: r.tokens, n_features: r.n}
+}
+
+def u:cm_accuracy_by_label(pred, y, k) {
+  "Per-label accuracy [k] and per-label counts [k] over parallel prediction and truth vectors; a label with no examples scores 0.";
+  hits = eq(pred, y);
+  acc = fill([k], 0);
+  cnt = fill([k], 0);
+  c = 0;
+  while lt(c, k) {
+    sel = eq(y, c);
+    m = reduce_add(sel);
+    cnt = scatter(cnt, c, m);
+    acc = scatter(acc, c, if gt(m, 0) {
+        reduce_add(hits * sel) / m
+      } else {
+        0
+      });
+    c = c + 1
+  };
+  {acc: acc, count: cnt}
+}

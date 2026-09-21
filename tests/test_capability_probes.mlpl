@@ -43,6 +43,23 @@ def u:p_sweep_run(steps, lr) {
   }
 }
 
+p_adam_W = param[2, 2];
+
+def u:p_adam_loss() {
+  "Toy squared loss over the Q4 probe weight.";
+  reduce_add(matmul(p_x, p_adam_W) * matmul(p_x, p_adam_W))
+}
+
+def u:p_adam_run() {
+  "Reinitialize to the same weights and take the same five Adam steps.";
+  p_adam_W = randn(5, [2, 2]);
+  before = u:p_adam_loss();
+  train 5 {
+    adam(u:p_adam_loss(), p_adam_W, 0.1, 0.9, 0.999, 0.00000001)
+  };
+  {start: before, end: u:p_adam_loss()}
+}
+
 @test {name: "Q1 freeze holds an encoder fixed while a separate head trains", tags: ["probe", "calibration"]}
 def u:test_q1_freeze() {
   "The shape the calibration lessons need: fit a post-hoc map over a frozen state representation. A vacuous pass is the risk here, so the head is asserted to have moved.";
@@ -78,6 +95,16 @@ def u:test_q3_experiment_sweep() {
   u:assert_approx(settings, [0.01, 0.2, 0.5], 0.000000001, "the swept setting column reads back")?;
   u:assert_shape(outcomes, [3], "one outcome per run, aligned with the settings")?;
   u:assert_lt(c, a, "and a larger step reached a lower loss in the same budget, so the sweep measured something")
+}
+
+@test {name: "Q4 Adam moment state persists across runs in one process", tags: ["probe", "sweep"]}
+def u:test_q4_adam_state_persists() {
+  "Found while training demo 01. Two runs with identical reinitialized weights start from the identical loss and still end differently, because Adam's per-parameter moments carried over. Any sweep that trains several configurations in one program is measuring the order it ran them in as much as the configurations, so sweeps run one configuration per process.";
+  a = u:p_adam_run();
+  b = u:p_adam_run();
+  u:assert_eq(a.start, b.start, "both runs start from exactly the same loss")?;
+  u:assert_gt(abs(a.end - b.end), 0, "yet they do not end at the same loss")?;
+  u:assert_lt(b.end, a.end, "the second run is further along, carrying the first run's momentum")
 }
 
 u:run_registered_tests()

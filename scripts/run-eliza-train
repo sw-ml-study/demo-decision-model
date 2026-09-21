@@ -1,0 +1,9 @@
+#!/bin/sh
+# Train demo 01's Choice model and write fixtures/eliza/choice-v0.bin.
+# Takes about 25 seconds; chat loads the result and does not retrain.
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+mlpl=$("$repo_root/scripts/select-mlpl")
+cd "$repo_root"
+exec "$mlpl" --source-dir "$repo_root" -f "$repo_root/demos/eliza/train.mlpl"

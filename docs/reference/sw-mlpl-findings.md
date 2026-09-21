@@ -75,6 +75,34 @@ per configuration.
 Also confirmed while checking: `adam` takes the six-argument form
 `adam(loss, params, lr, b1, b2, eps)`, and `params` may be a list of models.
 
+## Q4 — Adam's optimizer state is process-global
+
+Found while training demo 01, not while probing: a step-count sweep reported
+validation 0.948, and a fresh single run of the same configuration reported
+0.879. The sweep was wrong.
+
+`probes/q4_adam_state_persists_across_runs.mlpl` reduces it. Two runs
+reinitialize the weights identically and take the same five Adam steps. Both
+start from exactly the same loss. They do not end at the same loss: the second
+run is further along, because Adam's per-parameter moment state persisted across
+the two calls.
+
+This directly contaminates the Q3 idiom pinned above. An in-process sweep
+measures the order its configurations ran in as much as the configurations
+themselves, and the bias favours whatever ran last — which is exactly the shape
+of result that looks like a successful tuning run.
+
+**Workaround, and it is a requirement for every sweep in this repository: run one
+configuration per process.** The calibration-lambda sweep (`CB02`) and the
+encoder ladder (`EN01`) are both affected, and both must drive their
+configurations from a script rather than from a loop inside one program. Q3's
+`experiment` block remains the right way to *record* a run; it is not a way to
+isolate one.
+
+Not filed upstream: this is standard optimizer behaviour, not a defect. It is
+recorded here because it is a trap that produced a wrong number in this
+repository before it was caught.
+
 ## Gate note
 
 `mlpl-repl` exits non-zero on an evaluation error, so `scripts/run-probes`

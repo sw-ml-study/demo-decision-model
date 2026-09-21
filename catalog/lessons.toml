@@ -12,3 +12,17 @@ version = 1
 # measurement contract in docs/plan.md. No lesson is "accepted" without all three.
 #
 # Lessons arrive as their saga lands; see docs/plan.md for the full progression.
+
+[[lesson]]
+id = "SL01"
+slug = "thin-slice-chat"
+title = "One Choice replaces a keyword list, and is confidently wrong off-distribution"
+source = "demos/eliza/train.mlpl"
+library = ["lib/decision.mlpl", "lib/text.mlpl", "lib/choice_model.mlpl", "demos/eliza/eliza.mlpl"]
+test = ["tests/test_text.mlpl", "tests/test_choice_model.mlpl", "tests/test_eliza.mlpl"]
+fixture = "fixtures/eliza/choice-v0.bin"
+implementation = "from-scratch"
+memory = "33,065 parameters (embedding 1,024x32 = 32,768; head 32x9 = 288; bias 9); 264,688 bytes as f64 in the saved native file; 24 padded features per input over 1,024 hash slots"
+speed = "200 full-batch Adam steps over 232 examples in 23.5 s (mlpl-repl 0.22.0, M1 Max, about 88 ms per step); inference 0.5 to 2.1 ms per decision, 9-turn transcript end to end in 0.11 s including process start"
+quality = "one Choice over 9 classes. train 1.000, val 0.879, wild 0.750; keyword matcher on the same rows 0.526 / 0.397 / 0.400; margin +0.474 / +0.483 / +0.350. Val per class: all 1.000 except COMPUTER 0.000 and NO 0.833. CALIBRATION NOT MEASURED -- the model is visibly overconfident (1.000 on most inputs, 0.786 while wrong on 'i bought a new car'); that is CB01's subject."
+status = "provisional"

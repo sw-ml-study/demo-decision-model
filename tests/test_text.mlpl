@@ -1,0 +1,39 @@
+# The text featurizer: normalization, words, and hashed feature slots.
+include "lib/text.mlpl";
+
+@test {name: "cleaning lowercases, drops apostrophes, and spaces out punctuation", tags: ["text"]}
+def u:test_clean() {
+  "Apostrophes are deleted rather than spaced so don't stays one word; everything else non-alphanumeric becomes a separator.";
+  u:assert_text_eq(u:text_words("  My MOTHER doesn't listen!! "), "my mother doesnt listen", "normalized")?;
+  u:assert_text_eq(u:text_words("Hello, world."), "hello world", "punctuation separates")?;
+  u:assert_text_eq(u:text_words("   "), "", "whitespace alone has no words")
+}
+
+@test {name: "features are the words then the adjacent bigrams", tags: ["text"]}
+def u:test_features() {
+  "Order matters for display, and the count is what the mean pool divides by.";
+  r = u:text_features("my mother listens", 512, 24);
+  u:assert_eq(r.n, 5, "three words plus two bigrams")?;
+  u:assert_text_eq(r.tokens, "my|mother|listens|my_mother|mother_listens", "words first, then bigrams")?;
+  u:assert_eq(reduce_add(r.mask), 5, "the mask marks exactly the real features")?;
+  u:assert_eq(reduce_mul(shape(r.ids)), 24, "padded to the fixed width")
+}
+
+@test {name: "an empty input produces no features and does not divide by zero", tags: ["text"]}
+def u:test_empty() {
+  "Chat input can be blank; the featurizer has to survive it.";
+  r = u:text_features("!!!", 512, 24);
+  u:assert_eq(r.n, 0, "no features")?;
+  u:assert_eq(reduce_add(r.mask), 0, "nothing masked in")
+}
+
+@test {name: "hashing is deterministic and bounded by the slot count", tags: ["text"]}
+def u:test_hash() {
+  "Slots are a fixed budget, so every feature must land inside it. Collisions are accepted and are part of the model's error budget.";
+  u:assert_eq(u:text_hash("mother"), u:text_hash("mother"), "same string, same hash")?;
+  r = u:text_features("my mother listens to me every single day", 64, 24);
+  u:assert_lt(r.ids, 64, "every slot id is inside the table")?;
+  u:assert_gt(u:text_hash("mother") - u:text_hash("father"), 0 - 2147483647, "different strings hash independently")
+}
+
+u:run_registered_tests()

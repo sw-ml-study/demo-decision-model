@@ -1,0 +1,69 @@
+# The pooled-embedding Choice model: featurization, the two forward passes and their parity, and per-label scoring.
+include "lib/choice_model.mlpl";
+
+cm_E = param[32, 4];
+cm_E = randn(3, [32, 4]) * 0.1;
+cm_W = param[4, 3];
+cm_W = randn(4, [4, 3]) * 0.1;
+cm_b = param[3];
+cm_b = fill([3], 0);
+
+@test {name: "featurizing a list gives aligned ids, pooling weights, and counts", tags: ["choice-model"]}
+def u:test_featurize() {
+  "The pooling weights are the mask divided by the row's feature count, computed once outside grad, so the pool is a mean and the tape sees no reshape.";
+  fz = u:cm_featurize(["my mother listens", "hello"], 32, 8);
+  u:assert_shape(fz.ids, [2, 8], "ids")?;
+  u:assert_shape(fz.wmask, [2, 8, 1], "pooling weights")?;
+  u:assert_eq(take(fz.counts, 0, 0), 5, "three words and two bigrams")?;
+  u:assert_eq(take(fz.counts, 0, 1), 1, "one word, no bigram")?;
+  u:assert_approx(reduce_add(fz.wmask), 2, 0.000000001, "each row's weights sum to one")
+}
+
+@test {name: "the training and inference forward passes agree exactly", tags: ["choice-model", "parity"]}
+def u:test_forward_parity() {
+  "Training runs over global params because params cannot be passed into grad; inference runs over a plain weights record so a trained model is just arrays. They must be the same arithmetic, or a saved model would not behave like the trained one.";
+  fz = u:cm_featurize(["my mother listens", "hello", "i feel sad"], 32, 8);
+  a = u:cm_logits(fz.ids, fz.wmask);
+  b = u:cm_infer({E: cm_E, W: cm_W, b: cm_b}, fz.ids, fz.wmask);
+  u:assert_shape(a, [3, 3], "one logit row per input")?;
+  u:assert_eq(reduce_add(abs(a - b)), 0, "exactly equal, not merely close")
+}
+
+@test {name: "training drives the loss down and the weights round-trip through a file", tags: ["choice-model", "io"]}
+def u:test_train_and_save() {
+  "A saved model has to reload bit for bit, or the chat demo would not be running the model that was measured.";
+  fz = u:cm_featurize(["my mother listens", "hello there", "i feel sad"], 32, 8);
+  y = [0, 1, 2];
+  before = cross_entropy(u:cm_logits(fz.ids, fz.wmask), y);
+  after = u:cm_train(fz.ids, fz.wmask, y, 40, 0.05);
+  u:assert_lt(after, before, "the loss fell")?;
+  w = {E: cm_E, W: cm_W, b: cm_b, labels: "A|B|C", slots: 32, width: 8};
+  u:assert_ok(u:cm_save("tests/fixtures/choice-roundtrip.tmp", w), "saved")?;
+  back = u:cm_load("tests/fixtures/choice-roundtrip.tmp")?;
+  u:assert_eq(reduce_add(abs(back.E - cm_E)), 0, "embedding round-trips exactly")?;
+  u:assert_eq(back.slots, 32, "metadata round-trips too")?;
+  u:assert_eq(u:cm_param_count(w), 32 * 4 + 4 * 3 + 3, "parameter count is the sum of the arrays")
+}
+
+@test {name: "a decision over a weights record is a well-formed Choice", tags: ["choice-model", "decision"]}
+def u:test_decide() {
+  "cm_decide is the bridge from text to the typed contract; whatever it returns must satisfy the same validator every other decision does.";
+  w = {E: cm_E, W: cm_W, b: cm_b, labels: "A|B|C", slots: 32, width: 8};
+  r = u:cm_decide(w, "my mother listens", "what should the reply be?");
+  u:assert_eq(u:decision_valid(r.decision), 1, "valid decision")?;
+  u:assert_eq(list_len(r.decision.labels), 3, "one label per class")?;
+  u:assert_text_eq(r.decision.kind, "choice", "a Choice")?;
+  u:assert_eq(r.n_features, 5, "and it reports what the model saw")
+}
+
+@test {name: "per-label accuracy separates classes an overall number would hide", tags: ["choice-model", "evaluate"]}
+def u:test_accuracy_by_label() {
+  "The repository does not accept an accuracy claim without its per-class breakdown, so the breakdown is a tested function rather than a script's arithmetic.";
+  r = u:cm_accuracy_by_label([0, 0, 1, 1], [0, 1, 1, 1], 2);
+  u:assert_eq(take(r.count, 0, 0), 1, "one example of class 0")?;
+  u:assert_eq(take(r.acc, 0, 0), 1, "and it was right")?;
+  u:assert_eq(take(r.count, 0, 1), 3, "three of class 1")?;
+  u:assert_approx(take(r.acc, 0, 1), 0.6666666666666666, 0.000001, "two of three right")
+}
+
+u:run_registered_tests()

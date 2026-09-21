@@ -1,0 +1,80 @@
+# Trains demo 01's Choice model and writes its weights. One Choice over nine response classes: no Noul, no Scale, no memory, no calibration -- the thin end-to-end slice, so that something runs before anything is deepened. Reports the learned model against the 1966 keyword matcher on the same splits, per class, and saves the weights for chat.mlpl to load.
+include "../../lib/choice_model.mlpl";
+include "eliza.mlpl";
+
+ez_slots = 1024;
+ez_width = 24;
+ez_dim = 32;
+ez_k = u:ez_label_count();
+ez_steps = 200;
+ez_lr = 0.05;
+
+cm_E = param[1024, 32];
+cm_E = randn(11, [1024, 32]) * 0.1;
+cm_W = param[32, 9];
+cm_W = randn(12, [32, 9]) * 0.1;
+cm_b = param[9];
+cm_b = fill([9], 0);
+
+def u:ez_matcher_preds(texts) {
+  "The keyword matcher's prediction for every sentence in a list.";
+  n = list_len(texts);
+  out = fill([0], 0);
+  i = 0;
+  while lt(i, n) {
+    out = concat(out, [u:ez_matcher(u:text_lg(texts, i))]);
+    i = i + 1
+  };
+  out
+}
+
+def u:ez_report(name, texts, y, weights) {
+  "Print one split: the model's accuracy, the matcher's accuracy on the same rows, and the margin between them.";
+  fz = u:cm_featurize(texts, ez_slots, ez_width);
+  pred = argmax(u:cm_infer(weights, fz.ids, fz.wmask), 1);
+  mpred = u:ez_matcher_preds(texts);
+  n = list_len(texts);
+  macc = reduce_add(eq(pred, y)) / n;
+  kacc = reduce_add(eq(mpred, y)) / n;
+  print(name, "n", n, "model", macc, "matcher", kacc, "margin", macc - kacc);
+  {pred: pred, mpred: mpred, model: macc, matcher: kacc}
+}
+
+def u:ez_per_label(pred, mpred, y) {
+  "Print per-class accuracy for the model and the matcher side by side, because an overall number hides which classes the keyword list simply never had words for.";
+  m = u:cm_accuracy_by_label(pred, y, ez_k);
+  k = u:cm_accuracy_by_label(mpred, y, ez_k);
+  c = 0;
+  while lt(c, ez_k) {
+    print("   ", u:ez_label(c), "n", take(m.count, 0, c), "model", take(m.acc, 0, c), "matcher", take(k.acc, 0, c));
+    c = c + 1
+  };
+  1
+}
+
+train_set = u:ez_corpus(0, 4);
+val_set = u:ez_corpus(4, 5);
+wild_set = u:ez_wild();
+train_f = u:cm_featurize(train_set.texts, ez_slots, ez_width);
+
+t0 = clock_ms();
+final_loss = u:cm_train(train_f.ids, train_f.wmask, train_set.y, ez_steps, ez_lr);
+train_ms = clock_ms() - t0;
+
+ez_weights = {E: cm_E, W: cm_W, b: cm_b, labels: u:ez_labels(), slots: ez_slots, width: ez_width};
+save_result = u:cm_save("fixtures/eliza/choice-v0.bin", ez_weights);
+
+print("parameters", u:cm_param_count(ez_weights), "steps", ez_steps, "train ms", train_ms, "final loss", final_loss);
+print("");
+tr = u:ez_report("train ", train_set.texts, train_set.y, ez_weights);
+va = u:ez_report("val   ", val_set.texts, val_set.y, ez_weights);
+wi = u:ez_report("wild  ", wild_set.texts, wild_set.y, ez_weights);
+print("");
+print("val per class:");
+dummy1 = u:ez_per_label(va.pred, va.mpred, val_set.y);
+print("");
+print("wild per class (20 sentences: read these as counts, not percentages):");
+dummy2 = u:ez_per_label(wi.pred, wi.mpred, wild_set.y);
+print("");
+print("weights written to fixtures/eliza/choice-v0.bin", save_result);
+print("")

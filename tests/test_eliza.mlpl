@@ -1,0 +1,61 @@
+# Demo 01: the keyword matcher yardstick, the generated corpus, the no-generation gate, and the behaviour of the committed trained weights.
+include "demos/eliza/eliza.mlpl";
+include "lib/choice_model.mlpl";
+
+@test {name: "every reply the demo can produce is a verbatim table entry", tags: ["eliza", "no-generation"]}
+def u:test_no_generation() {
+  "The repository's central claim, enforced rather than asserted: walk every class and every turn the response selector can reach, and require the text to be byte-identical to an entry of that class's table. Nothing is composed, so there is nothing to compose wrongly.";
+  k = u:ez_label_count();
+  c = 0;
+  checked = 0;
+  while lt(c, k) {
+    rs = str_split(u:ez_responses(c), "|");
+    n = list_len(rs);
+    turn = 0;
+    while lt(turn, 12) {
+      r = u:ez_response(c, turn);
+      here = u:text_lg(rs, r.index);
+      checked = checked + str_eq(r.text, here) * str_eq(r.table, u:ez_label(c)) * lt(r.index, n);
+      turn = turn + 1
+    };
+    c = c + 1
+  };
+  u:assert_eq(checked, k * 12, "every class at every turn quoted its own table")
+}
+
+@test {name: "the matcher is a 1966 keyword list, with the gaps that implies", tags: ["eliza", "matcher"]}
+def u:test_matcher() {
+  "The yardstick has to be the real thing, including its blind spots: it knows mother but not mom, and it ranks a dream above who appears in it.";
+  u:assert_eq(u:ez_matcher("my mother never listens"), u:ez_label_index("FAMILY"), "a listed keyword hits")?;
+  u:assert_eq(u:ez_matcher("my mom keeps calling me"), u:ez_label_index("FALLBACK"), "an unlisted synonym falls through")?;
+  u:assert_eq(u:ez_matcher("i dreamed about my mother"), u:ez_label_index("DREAM"), "priority order resolves a double hit")?;
+  u:assert_eq(u:ez_matcher("i bought a new car"), u:ez_label_index("FALLBACK"), "no keyword at all")?;
+  u:assert_eq(u:ez_matcher("motherhood"), u:ez_label_index("FALLBACK"), "whole words only, no substring matching")
+}
+
+@test {name: "the corpus splits by held-out sentence frame", tags: ["eliza", "corpus"]}
+def u:test_corpus() {
+  "Validation uses frames training never saw, with fillers it did, so it measures a new phrasing rather than a new vocabulary the hashed features could not represent anyway.";
+  tr = u:ez_corpus(0, 4);
+  va = u:ez_corpus(4, 5);
+  u:assert_eq(list_len(tr.texts), 232, "four frames per class")?;
+  u:assert_eq(list_len(va.texts), 58, "one held-out frame per class")?;
+  u:assert_eq(reduce_mul(shape(tr.y)), 232, "one label per sentence")?;
+  u:assert_eq(list_len(u:ez_wild().texts), 20, "the hand-written out-of-distribution set")
+}
+
+@test {name: "the committed weights load and decide the way they were measured", tags: ["eliza", "model"]}
+def u:test_trained_weights() {
+  "chat.mlpl must run the model the results row describes. These are the two headline cases: a synonym the keyword list never had, and an input unlike anything in training where the model is confidently wrong.";
+  w = u:cm_load("fixtures/eliza/choice-v0.bin")?;
+  u:assert_eq(u:cm_param_count(w), 33065, "33,065 parameters")?;
+  u:assert_text_eq(w.labels, u:ez_labels(), "the label set the weights were trained against")?;
+  mom = u:cm_decide(w, "my mom never listens to me", "what should the reply be?");
+  u:assert_text_eq(u:decision_label(mom.decision), "FAMILY", "the model learned mom from data")?;
+  u:assert_eq(u:ez_matcher("my mom never listens to me"), u:ez_label_index("FALLBACK"), "where the keyword list falls through")?;
+  car = u:cm_decide(w, "i bought a new car", "what should the reply be?");
+  u:assert_text_eq(u:decision_label(car.decision), "DESIRE", "and is confidently wrong off-distribution")?;
+  u:assert_gt(car.decision.confidence, 0.7, "at high confidence, which is why calibration is a later saga")
+}
+
+u:run_registered_tests()

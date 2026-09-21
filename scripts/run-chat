@@ -1,0 +1,15 @@
+#!/bin/sh
+# Talk to demo 01. Each argument is one turn; with no arguments, lines are read
+# from stdin. Loads the committed weights; it does not train.
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+mlpl=$("$repo_root/scripts/select-mlpl")
+
+if [ ! -f "$repo_root/fixtures/eliza/choice-v0.bin" ]; then
+    echo "no trained weights: run 'just eliza-train' first" >&2
+    exit 1
+fi
+
+cd "$repo_root"
+exec "$mlpl" --source-dir "$repo_root" -f "$repo_root/demos/eliza/chat.mlpl" -- "$@"

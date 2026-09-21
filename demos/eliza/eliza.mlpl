@@ -1,0 +1,161 @@
+# Demo 01's domain: the response classes, the canned replies, the 1966-style keyword matcher that is the yardstick, and the templates the training corpus is generated from. Everything ELIZA-specific in the repository lives here or beside it; lib/ never learns these words. Lists are |-joined strings because MLPL lists are immutable and have no append.
+include "../../lib/text.mlpl";
+
+def u:ez_labels() {
+  "The response classes, in label order. FALLBACK is a trained class with its own examples, not a leftover bucket.";
+  "GREET|FAMILY|FEELING|DESIRE|DREAM|COMPUTER|YES|NO|FALLBACK"
+}
+
+def u:ez_label_count() {
+  "How many response classes there are.";
+  list_len(str_split(u:ez_labels(), "|"))
+}
+
+def u:ez_label(i) {
+  "The i-th class name.";
+  u:text_lg(str_split(u:ez_labels(), "|"), i)
+}
+
+def u:ez_label_index(name) {
+  "Index of a class by name, or -1.";
+  ls = str_split(u:ez_labels(), "|");
+  n = list_len(ls);
+  found = 0 - 1;
+  i = 0;
+  while lt(i, n) {
+    found = if str_eq(u:text_lg(ls, i), name) {
+      i
+    } else {
+      found
+    };
+    i = i + 1
+  };
+  found
+}
+
+def u:ez_responses(i) {
+  "The canned replies for class i, |-joined. These are the only strings the demo can ever say.";
+  all = ["Hello. How are you feeling today?|Hi there. What would you like to talk about?|Good to see you. Where shall we begin?", "Tell me more about your family.|How do you get along with your family?|What was it like growing up with them?", "Why do you think you feel that way?|How long have you felt like this?|Does that feeling come and go?", "Why do you want that?|What would it mean to you if you got it?|Suppose you got it. What then?", "What does that dream suggest to you?|Do you dream often?|Who else appears in your dreams?", "Do computers worry you?|Why do you mention machines?|Do you think machines understand people?", "You seem quite certain.|I see. Please go on.|What makes you so sure?", "Why not?|Are you saying no just to be contrary?|What would change your mind?", "Please go on.|Tell me more about that.|I see. What else?"];
+  u:text_lg(all, i)
+}
+
+def u:ez_response(i, turn) {
+  "One reply for class i, chosen deterministically by turn number. Returns the table name, the index within it, and the text; nothing here composes a string.";
+  rs = str_split(u:ez_responses(i), "|");
+  at = mod(turn, list_len(rs));
+  {table: u:ez_label(i), index: at, text: u:text_lg(rs, at)}
+}
+
+def u:ez_keywords(i) {
+  "The keyword list for class i, exactly as a 1966 author would have hand-written it: space separated, no morphology, no synonyms it did not think of.";
+  all = ["hello hi", "mother father sister brother family wife husband children", "sad unhappy depressed feel feels", "want wish need", "dream dreams dreamt dreamed", "computer computers machine machines", "yes", "no"];
+  if lt(i, list_len(all)) {
+    u:text_lg(all, i)
+  } else {
+    ""
+  }
+}
+
+def u:ez_match_order() {
+  "Class indices in keyword-priority order, so a sentence hitting two lists resolves the way ELIZA's ranks did: a dream outranks who appears in it.";
+  [4, 1, 5, 2, 3, 7, 6, 0]
+}
+
+def u:ez_matcher(text) {
+  "The yardstick: first class in priority order with a whole-word keyword hit, else FALLBACK. This is what the learned model has to beat.";
+  words = str_split(u:text_words(text), " ");
+  nw = list_len(words);
+  order = u:ez_match_order();
+  found = u:ez_label_index("FALLBACK");
+  oi = 0;
+  while lt(oi, 8) * eq(found, u:ez_label_index("FALLBACK")) {
+    c = take(order, 0, oi);
+    keys = str_split(u:ez_keywords(c), " ");
+    nk = list_len(keys);
+    hit = 0;
+    wi = 0;
+    while lt(wi, nw) {
+      ki = 0;
+      while lt(ki, nk) {
+        hit = hit + str_eq(u:text_lg(words, wi), u:text_lg(keys, ki));
+        ki = ki + 1
+      };
+      wi = wi + 1
+    };
+    found = if gt(hit, 0) {
+      c
+    } else {
+      found
+    };
+    oi = oi + 1
+  };
+  found
+}
+
+def u:ez_templates(i) {
+  "Sentence frames for class i, |-joined, each with one {} slot. The last frame of every class is held out of training and used as the validation split, so validation measures a phrasing the model never saw.";
+  all = ["hello {}|hi {}|good morning {}|hey {}|good evening {}", "my {} never listens to me|i argued with my {} again|i miss my {}|my {} is always criticizing me|i cannot talk to my {}", "i feel {}|i have been so {} lately|lately everything makes me {}|i am {} all the time|why am i always so {}", "i want {}|i really wish i had {}|all i need is {}|i would love {}|i keep hoping for {}", "i had a dream about {}|last night i dreamt of {}|i keep having nightmares about {}|in my dream there was {}|i dreamed about {} again", "{} scare me|i do not trust {}|are you one of those {}|i think {} are taking over|i spend all day with {}", "{}|{} i think so|{} that is right|oh {}|{} definitely", "{}|{} not really|{} i do not think so|oh {}|{} never", "the weather was {} today|i watched a movie about {}|we talked about {} at lunch|the news was all about {}|i read an article about {}"];
+  u:text_lg(all, i)
+}
+
+def u:ez_fillers(i) {
+  "Slot fillers for class i, |-joined. Several are words the keyword list above does not contain (mom, dad, parents, anxious, robots, yeah, nope): that gap is the experiment.";
+  all = ["there|eliza|doctor|again|today|friend", "mother|father|mom|dad|sister|brother|parents|grandmother", "sad|anxious|lonely|depressed|miserable|empty|angry|exhausted", "a new job|more money|some peace and quiet|a vacation|someone to talk to|a fresh start", "falling|my old school|being chased|the ocean|a dark house|flying", "computers|machines|robots|programs|algorithms|phones", "yes|yeah|yep|sure|of course|absolutely", "no|nope|nah|not at all|no way|definitely not", "the economy|sports|cooking|gardening|traffic|history"];
+  u:text_lg(all, i)
+}
+
+def u:ez_render(template, filler) {
+  "Fill a frame's single {} slot.";
+  str_join(str_split(template, "{}"), filler)
+}
+
+def u:ez_corpus(first, last) {
+  "Every sentence generated from frames [first, last) of every class. Returns the sentences as a newline-joined string and their labels as an array, in the same order.";
+  k = u:ez_label_count();
+  lines = "";
+  y = fill([0], 0);
+  c = 0;
+  while lt(c, k) {
+    ts = str_split(u:ez_templates(c), "|");
+    fs = str_split(u:ez_fillers(c), "|");
+    nf = list_len(fs);
+    t = first;
+    while lt(t, last) {
+      fi = 0;
+      while lt(fi, nf) {
+        s = u:ez_render(u:text_lg(ts, t), u:text_lg(fs, fi));
+        lines = if gt(str_len(lines), 0) {
+          str_concat(str_concat(lines, "\n"), s)
+        } else {
+          s
+        };
+        y = concat(y, [c]);
+        fi = fi + 1
+      };
+      t = t + 1
+    };
+    c = c + 1
+  };
+  {texts: str_split(lines, "\n"), y: y}
+}
+
+def u:ez_wild() {
+  "Hand-written sentences that came from no frame at all, with their intended class. Small and noisy on purpose: it is the only honest out-of-distribution read in this slice, so it is reported as counts, never as a headline percentage.";
+  pairs = "my mom keeps calling me::FAMILY\ndad forgot my birthday again::FAMILY\nmy parents are getting divorced::FAMILY\ni cannot stop crying::FEELING\neverything seems pointless::FEELING\ni feel like nobody understands me::FEELING\ni wish i could just quit::DESIRE\ni need a break from all of this::DESIRE\ni dreamt i was drowning::DREAM\nnightmares every single night::DREAM\ndo you think robots have feelings::COMPUTER\nmy computer crashed again::COMPUTER\nyeah::YES\nsure thing::YES\nnope::NO\nnot at all::NO\nhello::GREET\nhey eliza::GREET\ni bought a new car::FALLBACK\nit rained all weekend::FALLBACK";
+  rows = str_split(pairs, "\n");
+  n = list_len(rows);
+  lines = "";
+  y = fill([0], 0);
+  i = 0;
+  while lt(i, n) {
+    parts = str_split(u:text_lg(rows, i), "::");
+    lines = if gt(str_len(lines), 0) {
+      str_concat(str_concat(lines, "\n"), u:text_lg(parts, 0))
+    } else {
+      u:text_lg(parts, 0)
+    };
+    y = concat(y, [u:ez_label_index(u:text_lg(parts, 1))]);
+    i = i + 1
+  };
+  {texts: str_split(lines, "\n"), y: y}
+}

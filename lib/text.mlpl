@@ -1,0 +1,113 @@
+# Text to model input: ASCII normalization, words, and hashed word-plus-bigram feature slots. Domain-neutral; the technique is ported from moe-microscope's docent. A hashed slot knows nothing about meaning, so a word never seen in training contributes nothing but its context -- that limit is deliberate and visible.
+
+def u:text_lg(l, i) {
+  "Element i of a string list.";
+  unwrap(list_get(l, i))
+}
+
+def u:text_clean(s) {
+  "Lowercase ASCII letters, keep letters, digits, and spaces, delete apostrophes (so don't becomes dont), and turn every other character into a space.";
+  upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  lower = "abcdefghijklmnopqrstuvwxyz";
+  keep = "abcdefghijklmnopqrstuvwxyz0123456789 ";
+  n = str_len(s);
+  out = "";
+  i = 0;
+  while lt(i, n) {
+    ch = str_slice(s, i, 1);
+    up = str_find(upper, ch);
+    piece = if gt(up, 0 - 1) {
+      str_slice(lower, up, 1)
+    } else {
+      if gt(str_find(keep, ch), 0 - 1) {
+        ch
+      } else {
+        if str_eq(ch, "'") {
+          ""
+        } else {
+          " "
+        }
+      }
+    };
+    out = str_concat(out, piece);
+    i = i + 1
+  };
+  out
+}
+
+def u:text_words(s) {
+  "The non-empty words of a cleaned string, joined by single spaces (an empty string when there are none).";
+  parts = str_split(u:text_clean(s), " ");
+  n = list_len(parts);
+  out = "";
+  i = 0;
+  while lt(i, n) {
+    w = u:text_lg(parts, i);
+    out = if gt(str_len(w), 0) {
+      if gt(str_len(out), 0) {
+        str_concat(str_concat(out, " "), w)
+      } else {
+        w
+      }
+    } else {
+      out
+    };
+    i = i + 1
+  };
+  out
+}
+
+def u:text_hash(s) {
+  "Base-31 rolling checksum of a string's bytes modulo 2147483647.";
+  bytes = tokenize_bytes(s);
+  n = reduce_mul(shape(bytes));
+  h = 7;
+  i = 0;
+  while lt(i, n) {
+    h = mod(h * 31 + take(bytes, 0, i), 2147483647);
+    i = i + 1
+  };
+  h
+}
+
+def u:text_features(s, slots, f) {
+  "Feature record for one input: padded slot ids [f], a mask [f], the feature count, and the feature tokens as a |-joined string for display. Words come first, then adjacent bigrams joined by an underscore; features beyond f are dropped.";
+  joined = u:text_words(s);
+  words = if gt(str_len(joined), 0) {
+    str_split(joined, " ")
+  } else {
+    str_split("", " ")
+  };
+  nw = if gt(str_len(joined), 0) {
+    list_len(words)
+  } else {
+    0
+  };
+  ids = fill([f], 0);
+  mask = fill([f], 0);
+  tokens = "";
+  n = 0;
+  i = 0;
+  while lt(i, nw) * lt(n, f) {
+    w = u:text_lg(words, i);
+    ids = scatter(ids, n, mod(u:text_hash(w), slots));
+    mask = scatter(mask, n, 1);
+    tokens = if gt(n, 0) {
+      str_concat(str_concat(tokens, "|"), w)
+    } else {
+      w
+    };
+    n = n + 1;
+    i = i + 1
+  };
+  i = 0;
+  while lt(i, nw - 1) * lt(n, f) {
+    bg = str_concat(str_concat(u:text_lg(words, i), "_"), u:text_lg(words, i + 1));
+    ids = scatter(ids, n, mod(u:text_hash(bg), slots));
+    mask = scatter(mask, n, 1);
+    tokens = str_concat(str_concat(tokens, "|"), bg);
+    n = n + 1;
+    i = i + 1
+  };
+  {ids: ids, mask: mask, n: n, tokens: tokens}
+}

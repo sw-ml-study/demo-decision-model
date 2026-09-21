@@ -1,0 +1,26 @@
+# Q4 reproducer, found while training demo 01: Adam's per-parameter moment state persists across separate training runs in one process, so a sweep that trains several configurations in a single program is contaminated -- the second configuration starts with the first one's momentum. Two identical runs, same reinitialized weights and the same identical starting loss, reach different losses. The workaround every sweep must use is one configuration per process. Checked by scripts/run-probes and asserted in tests/test_capability_probes.mlpl.
+q4_W = param[2, 2];
+q4_x = reshape([1.0, 2.0], [1, 2]);
+
+def u:q4_loss() {
+  "Toy squared loss over the probe weight.";
+  reduce_add(matmul(q4_x, q4_W) * matmul(q4_x, q4_W))
+}
+
+def u:q4_run() {
+  "Reinitialize to the same weights and take the same five Adam steps; return the starting and ending loss.";
+  q4_W = randn(5, [2, 2]);
+  before = u:q4_loss();
+  train 5 {
+    adam(u:q4_loss(), q4_W, 0.1, 0.9, 0.999, 0.00000001)
+  };
+  {start: before, end: u:q4_loss()}
+}
+
+q4_a = u:q4_run();
+q4_b = u:q4_run();
+print("Q4 run A start", q4_a.start, "end", q4_a.end);
+print("Q4 run B start", q4_b.start, "end", q4_b.end);
+print("Q4 identical starts", eq(q4_a.start, q4_b.start), "but different ends", gt(abs(q4_a.end - q4_b.end), 0));
+print("Q4 answer: optimizer state is process-global; sweep one configuration per process");
+print("")

@@ -4,6 +4,18 @@ set shell := ["sh", "-cu"]
 default:
     @just --list
 
+# Talk to demo 01: `just chat "my mom never listens to me"`. Loads the committed weights.
+chat text:
+    @./scripts/run-chat "{{text}}"
+
+# Run the committed demo transcript through demo 01, one turn per line.
+transcript:
+    @./scripts/run-chat < demos/eliza/transcript.txt
+
+# Train demo 01's Choice model and rewrite its weights (about 25 seconds).
+eliza-train:
+    ./scripts/run-eliza-train
+
 # The full pre-commit gate: structure, boundaries, links, catalog, style, tests, probes.
 check:
     ./scripts/check
