@@ -1,0 +1,8 @@
+number = 8
+slug = "escape-hatch-model"
+status = "pending"
+description = "Fix the model's confidently-wrong reporting found by 007-dialog-probe, in thi..."
+role = "production"
+context_files = []
+created_at = "2026-09-20T19:53:16"
+commits = []

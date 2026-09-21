@@ -1,0 +1,1 @@
+User found the live demo unconvincing ('I don't know' -> COMPUTER 0.86). Probe realistic and wild dialogs through the shipped model, grade the replies, diagnose the causes with measurements, prototype policy fixes, and recommend an order of work. Record findings in docs/experiments.
