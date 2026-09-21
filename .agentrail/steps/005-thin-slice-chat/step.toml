@@ -1,0 +1,9 @@
+number = 5
+slug = "thin-slice-chat"
+status = "completed"
+description = "User-chosen thin end-to-end slice to get something demonstrable: minimal ELIZ..."
+role = "production"
+context_files = []
+created_at = "2026-09-20T16:48:14"
+completed_at = "2026-09-20T18:56:56"
+commits = ["d6b48a14c8de9a6abcd5c28dbd68bcaf7b6dcae5"]
