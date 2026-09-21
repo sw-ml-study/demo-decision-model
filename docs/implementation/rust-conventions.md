@@ -17,6 +17,14 @@ written down here rather than silently ignored.
   script (`scripts/check-abstraction`) enforces that no demo vocabulary appears
   under `crates/`.
 
+## Status by crate
+
+| Crate | `sw-checklist` |
+|---|---|
+| `tdm-model` | passes |
+| `tdm-web` | passes, including the web checks (favicon, `index.html`, footer); components split to stay under 50 lines |
+| `tdm-trace` | fails module function count only; see below |
+
 ## Accepted deviation: module function count
 
 `sw-checklist` fails a module with more than 7 functions, and warns a crate with

@@ -12,6 +12,22 @@ chat text:
 transcript:
     @./scripts/run-chat < demos/eliza/transcript.txt
 
+# Serve the browser demo locally with live rebuild at http://127.0.0.1:8080/.
+web:
+    cd crates/tdm-web && trunk serve --open
+
+# Build the live demo into pages/ (committed; the Pages workflow publishes it as is).
+site:
+    ./scripts/build-site
+
+# Serve the built pages/ directory at http://127.0.0.1:8765/ exactly as Pages will.
+serve-site:
+    cd pages && python3 -m http.server 8765 --bind 127.0.0.1
+
+# Re-export demo 01's trained model as the JSON bundle the browser embeds.
+eliza-export:
+    ../sw-mlpl/target/release/mlpl-repl --source-dir . -f demos/eliza/export.mlpl
+
 # Train demo 01's Choice model and rewrite its weights (about 25 seconds).
 eliza-train:
     ./scripts/run-eliza-train

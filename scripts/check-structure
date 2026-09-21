@@ -31,7 +31,14 @@ for path in \
     demos/eliza/train.mlpl \
     demos/eliza/chat.mlpl \
     demos/eliza/transcript.txt \
-    fixtures/eliza/choice-v0.bin
+    fixtures/eliza/choice-v0.bin \
+    demos/eliza/export.mlpl \
+    fixtures/bundles/demo01.json \
+    crates/tdm-model/src/lib.rs \
+    crates/tdm-web/src/main.rs \
+    crates/tdm-web/index.html \
+    pages/index.html \
+    .github/workflows/pages.yml
 do
     [ -f "$repo_root/$path" ] || { echo "missing required file: $path" >&2; exit 1; }
 done

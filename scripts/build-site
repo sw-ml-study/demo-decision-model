@@ -1,0 +1,43 @@
+#!/bin/sh
+# Compose the live demo site: the Rust/Yew/WASM page with the trained model
+# embedded, stamped with build facts (host, short SHA, UTC timestamp) that the
+# footer shows, plus the literate document when it has been exported.
+# usage: scripts/build-site [OUT_DIR]   (default: pages/, which is committed and
+# is exactly what the Pages workflow publishes -- CI builds nothing)
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+out=${1:-$repo_root/pages}
+
+case "$out" in
+    /*) ;;
+    *) out="$(pwd)/$out" ;;
+esac
+
+TDM_BUILD_SHA=$(git -C "$repo_root" rev-parse --short HEAD 2>/dev/null || echo unknown)
+# pages/ is committed, so it is always built from the commit before it. Mark a
+# build whose source (anything outside pages/) had uncommitted changes, so the
+# footer never claims a SHA the running code does not match.
+if ! git -C "$repo_root" diff --quiet HEAD -- . ':!pages' 2>/dev/null \
+    || [ -n "$(git -C "$repo_root" ls-files --others --exclude-standard -- . ':!pages' 2>/dev/null)" ]; then
+    TDM_BUILD_SHA="$TDM_BUILD_SHA-dirty"
+fi
+TDM_BUILD_HOST=$(hostname 2>/dev/null || echo unknown)
+TDM_BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+export TDM_BUILD_SHA TDM_BUILD_HOST TDM_BUILD_TIME
+
+rm -rf "$out"
+cd "$repo_root/crates/tdm-web"
+# Relative asset URLs, so the same directory works under any path: locally,
+# and at /demo-decision-model/ on GitHub Pages.
+trunk build --release --public-url ./ --dist "$out"
+
+if [ -f "$repo_root/docs/literate/literate.html" ]; then
+    cp "$repo_root/docs/literate/literate.html" "$out/literate.html"
+fi
+printf '{"host":"%s","sha":"%s","timestamp":"%s"}\n' \
+    "$TDM_BUILD_HOST" "$TDM_BUILD_SHA" "$TDM_BUILD_TIME" > "$out/build-info.json"
+
+wasm=$(find "$out" -name '*.wasm' | head -1)
+echo "site composed in $out ($TDM_BUILD_SHA, $TDM_BUILD_TIME)"
+echo "  wasm $(wc -c < "$wasm" | tr -d ' ') bytes, $(gzip -9 -c "$wasm" | wc -c | tr -d ' ') gzipped"

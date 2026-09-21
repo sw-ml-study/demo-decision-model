@@ -410,7 +410,7 @@ fn a_composed_output_must_be_the_candidate_that_actually_won() {
 
     // A plausible sentence that was never offered at all.
     let mut v = composed_candidates();
-    v["turns"][0]["output"]["text"] = json!("Earlier you said your mother worries. Go on.");
+    v["turns"][0]["output"]["text"] = json!("Earlier you said the train was late. Go on.");
     expect_err(&v, &ValidationError::TextNotOffered(0));
 
     // A decision index this turn does not have.

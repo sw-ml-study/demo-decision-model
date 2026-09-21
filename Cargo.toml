@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/tdm-trace"]
+members = ["crates/tdm-trace", "crates/tdm-model", "crates/tdm-web"]
 resolver = "2"
 
 [workspace.package]
@@ -13,3 +13,10 @@ unsafe_code = "deny"
 [workspace.lints.clippy]
 all = "deny"
 pedantic = "deny"
+
+# The browser demo ships as WASM; size matters more than build time.
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"

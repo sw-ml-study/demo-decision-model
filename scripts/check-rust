@@ -18,5 +18,11 @@ fi
 cd "$repo_root"
 cargo fmt --check
 cargo clippy --all-targets --quiet
+# The browser crate's real code only compiles for wasm32; lint it there too.
+if rustup target list --installed 2>/dev/null | grep -q '^wasm32-unknown-unknown$'; then
+    cargo clippy -p tdm-web --target wasm32-unknown-unknown --quiet
+else
+    echo "rust: wasm32-unknown-unknown not installed; skipping the browser crate's wasm lint" >&2
+fi
 cargo test --quiet
 echo "PASS rust crates (fmt, clippy, tests)"

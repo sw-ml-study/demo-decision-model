@@ -2,6 +2,12 @@
 
 Tiny models that decide, not talk.
 
+**Live demo: <https://sw-ml-study.github.io/demo-decision-model/>** — nothing to
+clone or install. The trained model runs entirely in your browser (WASM, about
+250 KB gzipped including the weights), and a trace view shows every decision
+behind every reply. A link can carry the conversation, e.g.
+[`?say=my+mom+never+listens+to+me`](https://sw-ml-study.github.io/demo-decision-model/?say=my+mom+never+listens+to+me).
+
 A **Typed Decision Model** (TDM) takes unstructured state in and returns typed
 probabilistic decisions out. It has three primitives — **Choice**, **Noul**, and
 **Scale** — plus **Memory** that lives outside it, and it deliberately has no
@@ -143,6 +149,23 @@ prepared it.
 **This is a thin slice, marked `provisional`.** One Choice, no Noul, no Scale, no
 memory, no calibration, no browser UI. It exists so there is something real to
 judge before anything is deepened. Numbers: [`SL01`](docs/reference/results.md).
+
+### In the browser
+
+`crates/tdm-model` ports the featurizer and forward pass to Rust; MLPL remains
+the only trainer. `demos/eliza/export.mlpl` writes the trained model as a JSON
+bundle that carries 319 parity inputs with MLPL's own probabilities and matcher
+picks, and the Rust tests require all of them to match: largest disagreement
+under `1e-9`, the matcher identical on every input. Rounding the weights to
+`1e-6` for transport changed no decision.
+
+`crates/tdm-web` is the Yew page. It embeds the bundle, so the site is one
+static download: 634 KB of WASM, 254 KB gzipped, of which the model is about
+150 KB. In memory the model is 33,065 f64 values, 264 KB. It is built locally
+into `pages/` with `just site`, committed, and published unchanged by a GitHub
+Actions workflow; CI builds nothing. The footer names the source commit it was
+built from, the host, and the time, and marks a build from uncommitted source
+as `-dirty`.
 
 ### Foundations under it
 

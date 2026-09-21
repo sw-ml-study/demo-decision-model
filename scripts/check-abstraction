@@ -5,13 +5,13 @@ set -eu
 
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 
-# Demo-01 vocabulary. Add a demo's words here when the demo is added.
-pattern='[Ee][Ll][Ii][Zz][Aa]|[Jj]eviza|MOTHER|FATHER|psychotherap|[Rr]ogerian'
+# Demo-01 vocabulary, matched case-insensitively. Add a demo's words here when the demo is added.
+pattern='eliza|jeviza|mother|father|psychotherap|rogerian'
 
 status=0
 for dir in lib crates schemas; do
     [ -d "$repo_root/$dir" ] || continue
-    hits=$(grep -rnE "$pattern" "$repo_root/$dir" 2>/dev/null || true)
+    hits=$(grep -rniE "$pattern" "$repo_root/$dir" 2>/dev/null || true)
     if [ -n "$hits" ]; then
         echo "demo vocabulary leaked into $dir/ (see 'The architecture rule' in docs/plan.md):" >&2
         echo "$hits" >&2

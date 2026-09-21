@@ -1,0 +1,88 @@
+# Exports demo 01 as a self-describing JSON bundle for the browser: the trained weights, the featurizer settings, the label set, the canned replies, the matcher's keyword lists, the policy threshold, and a parity set -- inputs with the probabilities and matcher picks MLPL computes for them -- so the Rust port can prove it runs the same model. MLPL stays the only trainer; the browser only infers.
+include "../../lib/choice_model.mlpl";
+include "eliza.mlpl";
+
+def u:ex_round(a) {
+  "Round to six decimal places so the bundle stays small. The parity set is computed from the rounded weights, and the effect of rounding on every parity probability is measured and printed.";
+  floor(a * 1000000 + 0.5) / 1000000
+}
+
+def u:text_words_lines(text) {
+  "The non-empty lines of a text, newline-joined, so a trailing newline does not become an empty example.";
+  lines = str_split(text, "\n");
+  n = list_len(lines);
+  out = "";
+  i = 0;
+  while lt(i, n) {
+    line = u:text_lg(lines, i);
+    out = if gt(str_len(u:text_words(line)), 0) {
+      if gt(str_len(out), 0) {
+        str_concat(str_concat(out, "\n"), line)
+      } else {
+        line
+      }
+    } else {
+      out
+    };
+    i = i + 1
+  };
+  out
+}
+
+def u:ex_join_lines(texts) {
+  "A string list as one newline-joined string.";
+  str_join(texts, "\n")
+}
+
+def u:ex_per_label(fn_name) {
+  "The per-class response or keyword strings as a string list, in label order.";
+  k = u:ez_label_count();
+  out = "";
+  c = 0;
+  while lt(c, k) {
+    item = if str_eq(fn_name, "responses") {
+      u:ez_responses(c)
+    } else {
+      u:ez_keywords(c)
+    };
+    out = if gt(c, 0) {
+      str_concat(str_concat(out, "\n"), item)
+    } else {
+      item
+    };
+    c = c + 1
+  };
+  str_split(out, "\n")
+}
+
+ex_w = unwrap(u:cm_load("fixtures/eliza/choice-v0.bin"));
+ex_rounded = {E: u:ex_round(ex_w.E), W: u:ex_round(ex_w.W), b: u:ex_round(ex_w.b), labels: ex_w.labels, slots: ex_w.slots, width: ex_w.width};
+
+ex_tr = u:ez_corpus(0, 4);
+ex_va = u:ez_corpus(4, 5);
+ex_wi = u:ez_wild();
+ex_transcript = str_split(u:text_words_lines(unwrap(read_text("demos/eliza/transcript.txt"))), "\n");
+ex_all = str_split(str_join([u:ex_join_lines(ex_tr.texts), u:ex_join_lines(ex_va.texts), u:ex_join_lines(ex_wi.texts), str_join(ex_transcript, "\n")], "\n"), "\n");
+ex_n = list_len(ex_all);
+
+ex_fz = u:cm_featurize(ex_all, ex_w.slots, ex_w.width);
+ex_probs_rounded = softmax(u:cm_infer(ex_rounded, ex_fz.ids, ex_fz.wmask), 1);
+ex_probs_original = softmax(u:cm_infer(ex_w, ex_fz.ids, ex_fz.wmask), 1);
+ex_rounding_effect = reduce(:max, abs(ex_probs_rounded - ex_probs_original));
+ex_argmax_changed = reduce_add(1 - eq(argmax(ex_probs_rounded, 1), argmax(ex_probs_original, 1)));
+
+ex_match = fill([0], 0);
+ex_i = 0;
+while lt(ex_i, ex_n) {
+  ex_match = concat(ex_match, [u:ez_matcher(u:text_lg(ex_all, ex_i))]);
+  ex_i = ex_i + 1
+};
+
+ex_bundle = {schema: "sw-ml-study.decision-bundle", version: 1, provenance: {producer: "demos/eliza/export.mlpl", producer_revision: "choice-v0", generated_at: "2026-09-20", source_description: "demo 01 thin-slice Choice model (SL01), 200 full-batch Adam steps from seeded random init over 232 generated sentences; weights rounded to 1e-6 for transport"}, demo: "demo 01", title: "ELIZA", question: "what should the reply be?", labels: str_split(ex_w.labels, "|"), fallback: "FALLBACK", threshold: 0.4, slots: ex_w.slots, width: ex_w.width, dim: 32, embedding: reshape(ex_rounded.E, [reduce_mul(shape(ex_rounded.E))]), head: reshape(ex_rounded.W, [reduce_mul(shape(ex_rounded.W))]), bias: ex_rounded.b, responses: u:ex_per_label("responses"), keywords: u:ex_per_label("keywords"), match_order: u:ez_match_order(), examples: ex_transcript, parity: {inputs: ex_all, probs: reshape(ex_probs_rounded, [ex_n * u:ez_label_count()]), matcher: ex_match}};
+
+ex_json = unwrap(to_json(ex_bundle));
+ex_saved = write_atomic("fixtures/bundles/demo01.json", ex_json);
+print("bundle written", ex_saved, "bytes", str_len(ex_json));
+print("parity inputs", ex_n);
+print("rounding to 1e-6 moved any parity probability by at most", ex_rounding_effect, "and changed", ex_argmax_changed, "decisions");
+print("")
