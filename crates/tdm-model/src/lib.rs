@@ -15,8 +15,8 @@ mod matcher;
 mod model;
 mod responder;
 
-pub use bundle::{Bundle, BundleError};
+pub use bundle::{Bundle, BundleError, Snapshots, Weights};
 pub use features::{Features, featurize, hash, words};
 pub use matcher::KeywordMatcher;
 pub use model::{Decision, Model};
-pub use responder::{Reply, Turn, respond};
+pub use responder::{Reply, Turn, respond, respond_at};

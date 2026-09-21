@@ -1,10 +1,20 @@
-# Exports demo 01 as a self-describing JSON bundle for the browser: the trained weights, the featurizer settings, the label set, the canned replies, the matcher's keyword lists, the policy threshold, and a parity set -- inputs with the probabilities and matcher picks MLPL computes for them -- so the Rust port can prove it runs the same model. MLPL stays the only trainer; the browser only infers.
+# Exports demo 01 as a self-describing JSON bundle for the browser: a training timeline (one run from seeded random initialization, snapshotted at fixed step counts, each snapshot evaluated identically), the featurizer settings, the label set, the canned replies, the matcher's keyword lists, the policy threshold, and a parity set -- inputs with the probabilities and matcher picks MLPL computes for them -- so the Rust port can prove it runs the same model. MLPL stays the only trainer; the browser only infers.
 include "../../lib/choice_model.mlpl";
 include "eliza.mlpl";
 
 def u:ex_round(a) {
-  "Round to six decimal places so the bundle stays small. The parity set is computed from the rounded weights, and the effect of rounding on every parity probability is measured and printed.";
-  floor(a * 1000000 + 0.5) / 1000000
+  "Round to four decimal places so five snapshots fit in one page. Parity is computed from the rounded weights, and the effect of rounding on every parity probability is measured and printed.";
+  floor(a * 10000 + 0.5) / 10000
+}
+
+def u:ex_acc(w, fz, y) {
+  "Accuracy of a weights record on a featurized, labelled split.";
+  reduce_add(eq(argmax(u:cm_infer(w, fz.ids, fz.wmask), 1), y)) / reduce_mul(shape(y))
+}
+
+def u:ex_conf(w, fz) {
+  "Mean top probability over a featurized set: how sure the model is, whether or not it is right.";
+  mean(reduce(:max, softmax(u:cm_infer(w, fz.ids, fz.wmask), 1), 1))
 }
 
 def u:text_words_lines(text) {
@@ -55,21 +65,68 @@ def u:ex_per_label(fn_name) {
   str_split(out, "\n")
 }
 
-ex_w = unwrap(u:cm_load("fixtures/eliza/choice-v0.bin"));
-ex_rounded = {E: u:ex_round(ex_w.E), W: u:ex_round(ex_w.W), b: u:ex_round(ex_w.b), labels: ex_w.labels, slots: ex_w.slots, width: ex_w.width};
+
+ex_slots = 1024;
+ex_width = 24;
+ex_steps = [0, 11, 22, 55, 110];
+ex_nominal = [0, 1, 2, 5, 10];
+ex_k = u:ez_label_count();
 
 ex_tr = u:ez_corpus(0, 4);
 ex_va = u:ez_corpus(4, 5);
 ex_wi = u:ez_wild();
 ex_transcript = str_split(u:text_words_lines(unwrap(read_text("demos/eliza/transcript.txt"))), "\n");
+ex_probe = str_split(str_join([u:text_words_lines(unwrap(read_text("demos/eliza/dialogs.txt"))), u:text_words_lines(unwrap(read_text("demos/eliza/dialogs-wild.txt")))], "\n"), "\n");
 ex_all = str_split(str_join([u:ex_join_lines(ex_tr.texts), u:ex_join_lines(ex_va.texts), u:ex_join_lines(ex_wi.texts), str_join(ex_transcript, "\n")], "\n"), "\n");
 ex_n = list_len(ex_all);
 
-ex_fz = u:cm_featurize(ex_all, ex_w.slots, ex_w.width);
-ex_probs_rounded = softmax(u:cm_infer(ex_rounded, ex_fz.ids, ex_fz.wmask), 1);
-ex_probs_original = softmax(u:cm_infer(ex_w, ex_fz.ids, ex_fz.wmask), 1);
-ex_rounding_effect = reduce(:max, abs(ex_probs_rounded - ex_probs_original));
-ex_argmax_changed = reduce_add(1 - eq(argmax(ex_probs_rounded, 1), argmax(ex_probs_original, 1)));
+ex_trf = u:cm_featurize(ex_tr.texts, ex_slots, ex_width);
+ex_vaf = u:cm_featurize(ex_va.texts, ex_slots, ex_width);
+ex_wif = u:cm_featurize(ex_wi.texts, ex_slots, ex_width);
+ex_prf = u:cm_featurize(ex_probe, ex_slots, ex_width);
+ex_alf = u:cm_featurize(ex_all, ex_slots, ex_width);
+
+cm_E = param[1024, 32];
+cm_E = randn(11, [1024, 32]) * 0.1;
+cm_W = param[32, 9];
+cm_W = randn(12, [32, 9]) * 0.1;
+cm_b = param[9];
+cm_b = fill([9], 0);
+
+ex_E = fill([0], 0);
+ex_Wh = fill([0], 0);
+ex_B = fill([0], 0);
+ex_P = fill([0], 0);
+ex_metrics = fill([0], 0);
+ex_worst_rounding = 0;
+ex_changed = 0;
+ex_done = 0;
+ex_ms = "";
+ex_c = 0;
+while lt(ex_c, 5) {
+  ex_target = take(ex_steps, 0, ex_c);
+  ex_t0 = clock_ms();
+  ex_loss_now = if gt(ex_target, ex_done) {
+    u:cm_train(ex_trf.ids, ex_trf.wmask, ex_tr.y, ex_target - ex_done, 0.05)
+  } else {
+    0
+  };
+  ex_ms = str_concat(str_concat(ex_ms, " "), to_string(floor(clock_ms() - ex_t0)));
+  ex_done = ex_target;
+  ex_raw = {E: cm_E, W: cm_W, b: cm_b};
+  ex_rw = {E: u:ex_round(cm_E), W: u:ex_round(cm_W), b: u:ex_round(cm_b)};
+  ex_p_r = softmax(u:cm_infer(ex_rw, ex_alf.ids, ex_alf.wmask), 1);
+  ex_p_o = softmax(u:cm_infer(ex_raw, ex_alf.ids, ex_alf.wmask), 1);
+  ex_worst_rounding = reduce(:max, [ex_worst_rounding, reduce(:max, abs(ex_p_r - ex_p_o))]);
+  ex_changed = ex_changed + reduce_add(1 - eq(argmax(ex_p_r, 1), argmax(ex_p_o, 1)));
+  ex_E = concat(ex_E, reshape(ex_rw.E, [32768]));
+  ex_Wh = concat(ex_Wh, reshape(ex_rw.W, [288]));
+  ex_B = concat(ex_B, ex_rw.b);
+  ex_P = concat(ex_P, reshape(ex_p_r, [ex_n * ex_k]));
+  ex_metrics = concat(ex_metrics, [cross_entropy(u:cm_infer(ex_rw, ex_trf.ids, ex_trf.wmask), ex_tr.y), u:ex_acc(ex_rw, ex_trf, ex_tr.y), u:ex_acc(ex_rw, ex_vaf, ex_va.y), u:ex_acc(ex_rw, ex_wif, ex_wi.y), u:ex_conf(ex_rw, ex_vaf), u:ex_conf(ex_rw, ex_prf)]);
+  print("snapshot", take(ex_nominal, 0, ex_c), "s  steps", ex_target, " loss", take(ex_metrics, 0, ex_c * 6), " val", take(ex_metrics, 0, ex_c * 6 + 2), " wild", take(ex_metrics, 0, ex_c * 6 + 3), " val conf", take(ex_metrics, 0, ex_c * 6 + 4), " probe conf", take(ex_metrics, 0, ex_c * 6 + 5));
+  ex_c = ex_c + 1
+};
 
 ex_match = fill([0], 0);
 ex_i = 0;
@@ -78,11 +135,12 @@ while lt(ex_i, ex_n) {
   ex_i = ex_i + 1
 };
 
-ex_bundle = {schema: "sw-ml-study.decision-bundle", version: 1, provenance: {producer: "demos/eliza/export.mlpl", producer_revision: "choice-v0", generated_at: "2026-09-20", source_description: "demo 01 thin-slice Choice model (SL01), 200 full-batch Adam steps from seeded random init over 232 generated sentences; weights rounded to 1e-6 for transport"}, demo: "demo 01", title: "ELIZA", question: "what should the reply be?", labels: str_split(ex_w.labels, "|"), fallback: "FALLBACK", threshold: 0.4, slots: ex_w.slots, width: ex_w.width, dim: 32, embedding: reshape(ex_rounded.E, [reduce_mul(shape(ex_rounded.E))]), head: reshape(ex_rounded.W, [reduce_mul(shape(ex_rounded.W))]), bias: ex_rounded.b, responses: u:ex_per_label("responses"), keywords: u:ex_per_label("keywords"), match_order: u:ez_match_order(), examples: ex_transcript, parity: {inputs: ex_all, probs: reshape(ex_probs_rounded, [ex_n * u:ez_label_count()]), matcher: ex_match}};
+ex_bundle = {schema: "sw-ml-study.decision-bundle", version: 2, provenance: {producer: "demos/eliza/export.mlpl", producer_revision: "timeline-v1", generated_at: "2026-09-20", source_description: "demo 01 Choice model: one full-batch Adam run from seeded random initialization over 232 generated sentences, snapshotted after 0, 11, 22, 55 and 110 steps -- what 0, 1, 2, 5 and 10 seconds of training bought on an M1 Max with mlpl-repl 0.22.0. Weights rounded to 1e-4 for transport."}, demo: "demo 01", title: "ELIZA", question: "what should the reply be?", opening: "The doctor is in. What seems to be your problem?", labels: str_split(u:ez_labels(), "|"), fallback: "FALLBACK", threshold: 0.4, slots: ex_slots, width: ex_width, dim: 32, snapshots: {steps: ex_steps, seconds: ex_nominal, metric_names: ["train loss", "train accuracy", "val accuracy", "wild accuracy", "val confidence", "probe confidence"], metrics: reshape(ex_metrics, [5, 6]), embedding: reshape(ex_E, [5, 32768]), head: reshape(ex_Wh, [5, 288]), bias: reshape(ex_B, [5, 9])}, default_snapshot: 4, responses: u:ex_per_label("responses"), keywords: u:ex_per_label("keywords"), match_order: u:ez_match_order(), examples: ex_transcript, parity: {inputs: ex_all, probs: reshape(ex_P, [5, ex_n * ex_k]), matcher: ex_match}};
 
 ex_json = unwrap(to_json(ex_bundle));
 ex_saved = write_atomic("fixtures/bundles/demo01.json", ex_json);
 print("bundle written", ex_saved, "bytes", str_len(ex_json));
-print("parity inputs", ex_n);
-print("rounding to 1e-6 moved any parity probability by at most", ex_rounding_effect, "and changed", ex_argmax_changed, "decisions");
+print("parity inputs", ex_n, "per snapshot; probe inputs", list_len(ex_probe));
+print("training ms per segment:", ex_ms);
+print("rounding to 1e-4 moved any parity probability by at most", ex_worst_rounding, "and changed", ex_changed, "decisions across all snapshots");
 print("")

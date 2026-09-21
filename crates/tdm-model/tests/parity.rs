@@ -12,21 +12,76 @@ fn bundle() -> Bundle {
 }
 
 #[test]
-fn every_parity_probability_matches_mlpl() {
+fn every_parity_probability_matches_mlpl_at_every_snapshot() {
     let b = bundle();
-    let model = Model::new(&b);
     let k = b.labels.len();
-    let mut worst: f64 = 0.0;
-    for (i, input) in b.parity.inputs.iter().enumerate() {
-        let d = model.decide(input);
-        for c in 0..k {
-            worst = worst.max((d.probs[c] - b.parity.probs[i * k + c]).abs());
+    for snap in 0..b.snapshot_count() {
+        let model = Model::at(&b, snap);
+        let mut worst: f64 = 0.0;
+        for (i, input) in b.parity.inputs.iter().enumerate() {
+            let d = model.decide(input);
+            for c in 0..k {
+                worst = worst.max((d.probs[c] - b.parity.probs[snap][i * k + c]).abs());
+            }
         }
+        assert!(
+            worst < 1e-9,
+            "snapshot {snap}: largest disagreement with MLPL over {} inputs was {worst}",
+            b.parity.inputs.len()
+        );
     }
+}
+
+#[test]
+#[expect(
+    clippy::cast_precision_loss,
+    reason = "label and input counts are tiny"
+)]
+fn the_first_snapshot_is_untrained_and_the_last_is_not() {
+    // "Random weights, random results": at step 0 every decision is close to a
+    // uniform guess over the nine labels. By the last snapshot it is not.
+    let b = bundle();
+    assert_eq!(b.snapshots.steps[0], 0);
+    let untrained = Model::at(&b, 0);
+    let trained = Model::at(&b, b.snapshot_count() - 1);
+    let uniform = 1.0 / b.labels.len() as f64;
+    for input in &b.parity.inputs {
+        assert!(
+            untrained.decide(input).confidence < 3.0 * uniform,
+            "step 0 was already sure about {input:?}"
+        );
+    }
+    let mean = |m: &Model| {
+        b.parity
+            .inputs
+            .iter()
+            .map(|i| m.decide(i).confidence)
+            .sum::<f64>()
+            / b.parity.inputs.len() as f64
+    };
+    assert!(mean(&trained) > 0.8 && mean(&untrained) < 0.2);
+}
+
+#[test]
+fn the_timeline_reports_what_training_did_and_did_not_buy() {
+    // The measured story, pinned so a re-export cannot quietly change it:
+    // accuracy jumps in the first second and then stops moving, while
+    // confidence on the unlabelled probe inputs keeps climbing.
+    let b = bundle();
+    let val = |s| b.metric(s, "val accuracy").expect("val accuracy");
+    let probe = |s| b.metric(s, "probe confidence").expect("probe confidence");
+    let last = b.snapshot_count() - 1;
     assert!(
-        worst < 1e-9,
-        "largest disagreement with MLPL over {} inputs was {worst}",
-        b.parity.inputs.len()
+        val(0) < 0.15 && val(1) > 0.8,
+        "the first second is where the learning happens"
+    );
+    assert!(
+        (val(last) - val(2)).abs() < 1e-9,
+        "after that, validation accuracy does not move"
+    );
+    assert!(
+        probe(last) > probe(1) + 0.2,
+        "but confidence on inputs it knows nothing about keeps rising"
     );
 }
 
@@ -61,6 +116,7 @@ fn the_bundle_is_the_measured_model() {
     let b = bundle();
     assert_eq!(b.param_count(), 33_065);
     assert_eq!(b.labels.len(), 9);
+    assert_eq!(b.snapshots.steps, [0, 11, 22, 55, 110]);
     assert!(b.parity.inputs.len() >= 310);
     // Every reply is one of the offered candidates; the port adds none.
     for label in 0..b.labels.len() {

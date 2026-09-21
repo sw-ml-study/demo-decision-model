@@ -23,8 +23,13 @@ impl PartialEq for Timed {
 fn log(props: &ChatProps) -> Html {
     html! {
         <div class="log">
+            if let Some(opening) = &props.bundle.opening {
+                <div class="exchange opening">
+                    <p class="them"><span>{ &props.bundle.title }</span>{ opening }</p>
+                </div>
+            }
             if props.turns.is_empty() {
-                <p class="hint">{ "Say something, or try one of the examples below." }</p>
+                <p class="hint">{ "Answer, or try one of the examples below." }</p>
             }
             { for props.turns.iter().enumerate().map(|(i, t)| {
                 let pick = props.on_select.clone();

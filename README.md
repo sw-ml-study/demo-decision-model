@@ -150,6 +150,28 @@ prepared it.
 memory, no calibration, no browser UI. It exists so there is something real to
 judge before anything is deepened. Numbers: [`SL01`](docs/reference/results.md).
 
+### Training, visible
+
+The page shows training, not only inference. One MLPL run from random weights
+is snapshotted after 0, 1, 2, 5 and 10 seconds of training; pick a snapshot and
+the whole conversation is re-decided by the model as it was then
+([`TL01`](catalog/lessons.toml)):
+
+| Snapshot | Val accuracy | Wild accuracy | Confidence on probe inputs |
+|---|---|---|---|
+| 0 s, random | 0.069 | 0.10 | 0.115 |
+| 1 s | 0.845 | **0.80** | 0.514 |
+| 2 s | **0.879** | 0.75 | 0.740 |
+| 5 s | 0.879 | 0.75 | 0.808 |
+| 10 s | 0.879 | 0.75 | 0.811 |
+
+At 0 s every class scores about 0.11 and the policy abstains on everything. The
+learning happens in the first second. After two seconds accuracy stops moving
+and the only thing training still buys is confidence, including on the 95
+probe inputs the model was never trained on. For a model whose job is to report
+how sure it is, that is the problem this repository exists to fix. A link can
+open on a snapshot: [`?snap=0`](https://sw-ml-study.github.io/demo-decision-model/?snap=0&say=i+feel+sad).
+
 ### In the browser
 
 `crates/tdm-model` ports the featurizer and forward pass to Rust; MLPL remains

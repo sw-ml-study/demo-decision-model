@@ -26,3 +26,17 @@ memory = "33,065 parameters (embedding 1,024x32 = 32,768; head 32x9 = 288; bias 
 speed = "200 full-batch Adam steps over 232 examples in 23.5 s (mlpl-repl 0.22.0, M1 Max, about 88 ms per step); inference 0.5 to 2.1 ms per decision, 9-turn transcript end to end in 0.11 s including process start"
 quality = "one Choice over 9 classes. train 1.000, val 0.879, wild 0.750; keyword matcher on the same rows 0.526 / 0.397 / 0.400; margin +0.474 / +0.483 / +0.350. Val per class: all 1.000 except COMPUTER 0.000 and NO 0.833. CALIBRATION NOT MEASURED -- the model is visibly overconfident (1.000 on most inputs, 0.786 while wrong on 'i bought a new car'); that is CB01's subject."
 status = "provisional"
+
+[[lesson]]
+id = "TL01"
+slug = "training-timeline"
+title = "Accuracy is learned in two seconds; after that, training only buys confidence"
+source = "demos/eliza/export.mlpl"
+library = ["lib/choice_model.mlpl", "demos/eliza/eliza.mlpl"]
+test = ["crates/tdm-model/tests/parity.rs"]
+fixture = "fixtures/bundles/demo01.json"
+implementation = "from-scratch"
+memory = "five snapshots of the 33,065-parameter Choice model, rounded to 1e-4: bundle 1,571,861 bytes (520 KB gzipped); page WASM 1.83 MB (629 KB gzipped)"
+speed = "one full-batch Adam run, snapshots after 0, 11, 22, 55 and 110 steps = 0, 1, 2, 5 and 10 s on an M1 Max (segments measured 1.04, 1.02, 3.05, 5.10 s); browser inference about 5 us per decision"
+quality = "val accuracy 0.069 / 0.845 / 0.879 / 0.879 / 0.879; wild 0.10 / 0.80 / 0.75 / 0.75 / 0.75; mean confidence on 95 unlabelled probe inputs 0.115 / 0.514 / 0.740 / 0.808 / 0.811. Snapshot 0 is a uniform guess (0.11 per class). Accuracy settles at 2 s; confidence on inputs never trained on keeps rising to 10 s. The 1 s snapshot is the best behaved on the hand-written set. Rounding changed no decision (max 5.4e-5)."
+status = "accepted"

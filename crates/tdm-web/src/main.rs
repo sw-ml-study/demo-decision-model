@@ -17,6 +17,8 @@ mod footer;
 )]
 mod query;
 #[cfg(target_arch = "wasm32")]
+mod timeline;
+#[cfg(target_arch = "wasm32")]
 mod trace;
 
 #[cfg(target_arch = "wasm32")]

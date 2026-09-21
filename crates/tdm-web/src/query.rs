@@ -40,9 +40,29 @@ pub fn says(search: &str) -> Vec<String> {
         .collect()
 }
 
+/// The training snapshot a `snap=N` parameter asks for, if it names one that
+/// exists; otherwise `None` and the page uses the bundle's default.
+#[must_use]
+pub fn snapshot(search: &str, count: usize) -> Option<usize> {
+    search
+        .trim_start_matches('?')
+        .split('&')
+        .filter_map(|pair| pair.strip_prefix("snap="))
+        .find_map(|v| v.parse::<usize>().ok())
+        .filter(|&s| s < count)
+}
+
 #[cfg(test)]
 mod tests {
-    use super::says;
+    use super::{says, snapshot};
+
+    #[test]
+    fn a_snap_parameter_selects_an_existing_snapshot_only() {
+        assert_eq!(snapshot("?say=hi&snap=1", 5), Some(1));
+        assert_eq!(snapshot("?snap=9", 5), None);
+        assert_eq!(snapshot("?snap=x", 5), None);
+        assert_eq!(snapshot("", 5), None);
+    }
 
     #[test]
     fn each_say_parameter_is_one_turn_in_order() {

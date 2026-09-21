@@ -11,6 +11,7 @@ use crate::app::{Shared, Timed};
 pub struct TraceProps {
     pub bundle: Shared,
     pub shown: Option<Timed>,
+    pub snapshot: usize,
 }
 
 fn bars(bundle: &Bundle, t: &Timed) -> Html {
@@ -73,6 +74,9 @@ pub fn trace(props: &TraceProps) -> Html {
             <p class="meta">{ format!("choice: {} — {} offered", b.question, b.labels.len()) }</p>
 
             <h2>{ "Decision out" }</h2>
+            <p class="meta">{ format!("model as of {} of training ({} steps)",
+                if b.snapshots.steps[props.snapshot] == 0 { "0 s".to_owned() } else { format!("{} s", b.snapshots.seconds[props.snapshot]) },
+                b.snapshots.steps[props.snapshot]) }</p>
             { bars(b, t) }
             <p class="mono">{ format!("confidence {:.3}   margin {:.3}   decided in {:.1} µs (mean of 100 runs)", d.confidence, d.margin, t.micros) }</p>
 

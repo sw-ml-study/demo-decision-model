@@ -1,12 +1,13 @@
 //! The forward pass: mean of the addressed embedding rows, one linear head,
 //! softmax. The same arithmetic as `u:cm_infer` in `lib/choice_model.mlpl`.
 
-use crate::bundle::Bundle;
+use crate::bundle::{Bundle, Weights};
 use crate::features::{Features, featurize};
 
-/// A trained model, ready to decide.
+/// One snapshot of a trained model, ready to decide.
 pub struct Model<'a> {
     bundle: &'a Bundle,
+    weights: Weights<'a>,
 }
 
 /// One Choice decision, with what the model saw.
@@ -20,22 +21,32 @@ pub struct Decision {
 }
 
 impl<'a> Model<'a> {
+    /// The model as it was at one snapshot of the training timeline.
     #[must_use]
-    pub const fn new(bundle: &'a Bundle) -> Self {
-        Self { bundle }
+    pub fn at(bundle: &'a Bundle, snapshot: usize) -> Self {
+        Self {
+            bundle,
+            weights: bundle.weights(snapshot),
+        }
+    }
+
+    /// The model at the bundle's default snapshot.
+    #[must_use]
+    pub fn new(bundle: &'a Bundle) -> Self {
+        Self::at(bundle, bundle.default_snapshot)
     }
 
     /// Logits for one input. An input with no features pools to zero, so its
     /// logits are the bias alone, exactly as in MLPL.
     #[must_use]
     pub fn logits(&self, features: &Features) -> Vec<f64> {
-        let b = self.bundle;
-        let (d, k) = (b.dim, b.labels.len());
+        let weights = self.weights;
+        let (d, k) = (self.bundle.dim, self.bundle.labels.len());
         let mut pooled = vec![0.0; d];
         if !features.slots.is_empty() {
             for &slot in &features.slots {
                 for (j, p) in pooled.iter_mut().enumerate() {
-                    *p += b.embedding[slot * d + j];
+                    *p += weights.embedding[slot * d + j];
                 }
             }
             #[expect(
@@ -48,7 +59,12 @@ impl<'a> Model<'a> {
             }
         }
         (0..k)
-            .map(|c| b.bias[c] + (0..d).map(|j| pooled[j] * b.head[j * k + c]).sum::<f64>())
+            .map(|c| {
+                weights.bias[c]
+                    + (0..d)
+                        .map(|j| pooled[j] * weights.head[j * k + c])
+                        .sum::<f64>()
+            })
             .collect()
     }
 

@@ -28,11 +28,18 @@ pub struct Turn {
     pub matcher: usize,
 }
 
-/// Run one turn. The threshold belongs to the bundle's policy, not the model:
-/// the model reports belief and this function decides whether belief is enough.
+/// Run one turn at the bundle's default snapshot.
 #[must_use]
 pub fn respond(bundle: &Bundle, text: &str, turn: usize) -> Turn {
-    let decision = Model::new(bundle).decide(text);
+    respond_at(bundle, bundle.default_snapshot, text, turn)
+}
+
+/// Run one turn with the model as it was at one snapshot of training. The
+/// threshold belongs to the bundle's policy, not the model: the model reports
+/// belief and this function decides whether belief is enough.
+#[must_use]
+pub fn respond_at(bundle: &Bundle, snapshot: usize, text: &str, turn: usize) -> Turn {
+    let decision = Model::at(bundle, snapshot).decide(text);
     let acted = decision.confidence >= bundle.threshold;
     let label = if acted {
         decision.selected

@@ -3,11 +3,12 @@
 
 use std::rc::Rc;
 
-use tdm_model::{Bundle, Turn, respond};
+use tdm_model::{Bundle, Turn, respond_at};
 use yew::prelude::*;
 
 use crate::chat::Chat;
 use crate::footer::Footer;
+use crate::timeline::Timeline;
 use crate::trace::Trace;
 
 /// The trained model and its demo data, embedded at build time so the page is
@@ -40,24 +41,42 @@ pub struct Timed {
     pub micros: f64,
 }
 
-/// Turns requested by `?say=` parameters, run once at load.
-fn initial_turns(bundle: &Bundle) -> Vec<Timed> {
-    let search = web_sys::window()
+fn search() -> String {
+    web_sys::window()
         .and_then(|w| w.location().search().ok())
-        .unwrap_or_default();
-    crate::query::says(&search)
+        .unwrap_or_default()
+}
+
+/// Inputs requested by `?say=` parameters, replayed at load.
+fn initial_inputs() -> Vec<String> {
+    crate::query::says(&search())
+}
+
+/// Every turn of the conversation, decided by the model at one snapshot. The
+/// conversation is stored as inputs, so choosing another point on the training
+/// timeline re-decides all of it and the difference is visible turn by turn.
+fn decide_all(bundle: &Bundle, snapshot: usize, inputs: &[String]) -> Vec<Timed> {
+    inputs
         .iter()
         .enumerate()
-        .map(|(i, text)| timed(bundle, text, i))
+        .map(|(i, text)| timed(bundle, snapshot, text, i))
         .collect()
 }
 
-fn timed(bundle: &Bundle, text: &str, index: usize) -> Timed {
+/// Browsers coarsen `performance.now()` (to 100 us without cross-origin
+/// isolation), which is slower than one decision. So each decision is timed over
+/// this many repetitions and the mean is reported.
+const TIMING_RUNS: u32 = 100;
+
+fn timed(bundle: &Bundle, snapshot: usize, text: &str, index: usize) -> Timed {
     let start = now_ms();
-    let turn = respond(bundle, text, index);
+    for _ in 1..TIMING_RUNS {
+        let _ = respond_at(bundle, snapshot, text, index);
+    }
+    let turn = respond_at(bundle, snapshot, text, index);
     Timed {
         turn,
-        micros: (now_ms() - start) * 1000.0,
+        micros: (now_ms() - start) * 1000.0 / f64::from(TIMING_RUNS),
     }
 }
 
@@ -69,7 +88,7 @@ fn now_ms() -> f64 {
 
 #[derive(Properties, PartialEq)]
 struct HeaderProps {
-    title: String,
+    demo: String,
     tracing: bool,
     on_toggle: Callback<MouseEvent>,
 }
@@ -79,8 +98,8 @@ fn header(props: &HeaderProps) -> Html {
     html! {
         <header>
             <div>
-                <h1>{ &props.title }</h1>
-                <p class="sub">{ "a typed decision model chooses every reply; it never writes one" }</p>
+                <h1>{ "Typed Decision Model" }</h1>
+                <p class="sub">{ format!("{} · the model chooses every reply from a bounded set; it never writes one", props.demo) }</p>
             </div>
             <button class={classes!("toggle", props.tracing.then_some("on"))} onclick={props.on_toggle.clone()}>
                 { if props.tracing { "trace: on" } else { "trace: off" } }
@@ -94,24 +113,35 @@ pub fn app() -> Html {
     let bundle: Rc<Bundle> = use_memo((), |()| {
         Bundle::parse(BUNDLE).expect("the embedded bundle is validated by the crate tests")
     });
-    let turns = {
-        let bundle = bundle.clone();
-        use_state(move || initial_turns(&bundle))
+    let inputs = use_state(initial_inputs);
+    let snapshot = {
+        let (count, default) = (bundle.snapshot_count(), bundle.default_snapshot);
+        use_state(move || crate::query::snapshot(&search(), count).unwrap_or(default))
     };
     let selected = {
-        let n = turns.len();
+        let n = inputs.len();
         use_state(move || n.checked_sub(1))
     };
     let tracing = use_state(|| true);
+    let turns = {
+        let bundle = bundle.clone();
+        use_memo(((*inputs).clone(), *snapshot), move |(inputs, snap)| {
+            decide_all(&bundle, *snap, inputs)
+        })
+    };
 
     let on_say = {
-        let (bundle, turns, selected) = (bundle.clone(), turns.clone(), selected.clone());
+        let (inputs, selected) = (inputs.clone(), selected.clone());
         Callback::from(move |text: String| {
-            let mut next = (*turns).clone();
-            next.push(timed(&bundle, &text, turns.len()));
+            let mut next = (*inputs).clone();
+            next.push(text);
             selected.set(Some(next.len() - 1));
-            turns.set(next);
+            inputs.set(next);
         })
+    };
+    let on_pick = {
+        let snapshot = snapshot.clone();
+        Callback::from(move |s: usize| snapshot.set(s))
     };
     let on_select = {
         let selected = selected.clone();
@@ -125,12 +155,13 @@ pub fn app() -> Html {
 
     html! {
         <div class="page">
-            <Header title={bundle.title.clone()} tracing={*tracing} on_toggle={on_toggle} />
+            <Header demo={format!("{}: {}", bundle.demo, bundle.title)} tracing={*tracing} on_toggle={on_toggle} />
+            <Timeline bundle={Shared(bundle.clone())} snapshot={*snapshot} on_pick={on_pick} />
             <main class={classes!(tracing.then_some("split"))}>
                 <Chat bundle={Shared(bundle.clone())} turns={(*turns).clone()} selected={*selected}
                       on_say={on_say} on_select={on_select} />
                 if *tracing {
-                    <Trace bundle={Shared(bundle.clone())} shown={shown} />
+                    <Trace bundle={Shared(bundle.clone())} shown={shown} snapshot={*snapshot} />
                 }
             </main>
             <Footer bundle={Shared(bundle.clone())} />
