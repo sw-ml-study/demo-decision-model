@@ -1,0 +1,1533 @@
+#+title: The typed decision model, read as a literate program
+#+subtitle: a runnable primer and a tangling reading of the sw-MLPL sources
+#+author: Michael A Wright
+#+startup: showall
+#+property: header-args:mlpl :results output :exports code :eval no-export
+#+property: header-args:emacs-lisp :eval no-export
+#+options: toc:2 num:t timestamp:nil ^:{}
+
+* How to read and run this document
+
+The source of this page is [[https://github.com/sw-ml-study/demo-decision-model/blob/main/docs/literate/demo-decision-model.org][docs/literate/demo-decision-model.org]] in the repository; GitHub renders it too, and Emacs can run it.
+
+This is the repository's model, in the order a reader should meet it: first a
+primer of small, self-contained MLPL blocks you can run, each beside the number
+the corresponding result measured; then the sources themselves, split at
+function boundaries, with each function's own docstring as the prose before it.
+
+The source blocks carry a ~:tangle~ target. Tangling this file regenerates the
+committed library and demo files byte for byte, and ~just check~ runs
+~scripts/check-tangle~ to prove it, so the prose can never describe code that no
+longer exists. The same check runs every primer block and requires its printed
+output to match the result recorded here. The committed ~.mlpl~ files remain the
+source of truth; when they change, this document is edited to match.
+
+The subject is a typed decision model: a model that takes unstructured text in
+and returns a probability over a fixed, bounded set of options -- a Choice, a
+Noul, or a Scale -- and never writes a sentence. Demo 01 is ELIZA, used as a
+test bench: the model decides which canned reply applies, and ordinary code
+quotes it. The live demo runs the model trained here, in the browser:
+[[https://sw-ml-study.github.io/demo-decision-model/][sw-ml-study.github.io/demo-decision-model]].
+Measured numbers quoted below are rows of the
+[[file:../reference/results.md][results table]] and entries of the
+[[file:../../catalog/lessons.toml][lesson catalog]]; the dialog probe that found
+the model's failures is [[file:../experiments/SL01-dialog-probe.md][SL01-dialog-probe]].
+
+** Evaluating blocks
+
+Nothing is evaluated on export (~:eval no-export~ in the header), so =C-c C-e h o=
+produces HTML with no prompts. To make =C-c C-c= work interactively, evaluate
+this setup block once per Emacs session. It loads sw-MLPL's org-babel backend
+~ob-mlpl~ from the adjacent checkout and points it at whichever interpreter
+exists:
+
+#+begin_src emacs-lisp :tangle no
+(let* ((here (file-name-directory (buffer-file-name)))
+       (repo (or (locate-dominating-file here "AGENTS.md") (expand-file-name "../.." here)))
+       (sw-mlpl (expand-file-name "../sw-mlpl" repo))
+       (candidates (list (getenv "MLPL")
+                         (expand-file-name "target/release/mlpl-repl" sw-mlpl)
+                         (expand-file-name "target/debug/mlpl-repl" sw-mlpl)
+                         (executable-find "mlpl-repl"))))
+  (add-to-list 'load-path (expand-file-name "elisp" sw-mlpl))
+  (require 'ob-mlpl)
+  (make-directory (expand-file-name "tmp" repo) t)
+  (setq temporary-file-directory (expand-file-name "tmp/" repo))
+  (setq org-babel-mlpl-command
+        (or (seq-find (lambda (p) (and p (file-executable-p p))) candidates)
+            (user-error "no mlpl-repl found; build ../sw-mlpl or set org-babel-mlpl-command")))
+  (setq org-confirm-babel-evaluate nil)
+  (message "ob-mlpl ready: %s" org-babel-mlpl-command))
+#+end_src
+
+A block runs in a fresh interpreter on a temporary file, so the runnable primer
+blocks use builtins only; the source blocks in the reading are for reading and
+tangling. The interpreter echoes the value of a script's last expression after
+its printed lines, so the last line of every result is the number to look at.
+
+* A primer in six blocks
+
+** A decision is a distribution
+
+A Choice turns a row of scores into a probability per offered option, then reads three numbers off it: which option won, how sure the model is of it (confidence), and by how much it beat the runner-up (margin). This is ~u:choice~ from the decision contract, written out with builtins.
+
+#+begin_src mlpl :tangle no :exports both
+labels = ["REFLECT", "RECALL", "FALLBACK"];
+logits = [0.0, 2.0, 1.0];
+probs = softmax(logits, 0);
+order = grade_down(probs);
+selected = take(order, 0, 0);
+confidence = take(probs, 0, selected);
+margin = confidence - take(probs, 0, take(order, 0, 1));
+print("probs      ", probs);
+print("selected   ", unwrap(list_get(labels, selected)));
+print("confidence ", confidence);
+print("margin     ", margin);
+margin
+#+end_src
+
+#+RESULTS:
+: probs       0.09003057317038046 0.6652409557748218 0.24472847105479764
+: selected    RECALL
+: confidence  0.6652409557748218
+: margin      0.4205124847200241
+: 0.4205124847200241
+
+Nothing here produces text. The program receives a distribution over options it wrote itself, and the worst the model can do is put the mass in the wrong place.
+
+** Confidence and margin are different doubts
+
+Both numbers are reported everywhere because they fail differently. Two distributions can share a confidence and mean different things: one is an uncertain decision with a clear leader, the other a coin flip between two candidates. The thresholds are the program's, not the model's.
+
+#+begin_src mlpl :tangle no :exports both
+uncertain = [0.48, 0.27, 0.25];
+coin_flip = [0.48, 0.47, 0.05];
+def u:margin(p) {
+  "Gap between the two most probable labels.";
+  o = grade_down(p);
+  take(p, 0, take(o, 0, 0)) - take(p, 0, take(o, 0, 1))
+}
+print("uncertain  confidence", reduce(:max, uncertain), " margin", u:margin(uncertain));
+print("coin flip  confidence", reduce(:max, coin_flip), " margin", u:margin(coin_flip));
+min_confidence = 0.4;
+min_margin = 0.1;
+print("act on uncertain?", ge(reduce(:max, uncertain), min_confidence) * ge(u:margin(uncertain), min_margin));
+print("act on coin flip?", ge(reduce(:max, coin_flip), min_confidence) * ge(u:margin(coin_flip), min_margin));
+u:margin(coin_flip)
+#+end_src
+
+#+RESULTS:
+: uncertain  confidence 0.48  margin 0.20999999999999996
+: coin flip  confidence 0.48  margin 0.010000000000000009
+: act on uncertain? 1
+: act on coin flip? 0
+: 0.010000000000000009
+
+The contract's test suite pins exactly this pair of cases, so the distinction cannot quietly be dropped.
+
+** A Scale is a Choice whose labels are ordered
+
+Ordering is what makes an expectation meaningful. Two distributions can pick the same level with the same confidence and still read the state differently; the expectation is what separates them.
+
+#+begin_src mlpl :tangle no :exports both
+levels = ["LOW", "MEDIUM", "HIGH"];
+leaning_low = [0.4, 0.5, 0.1];
+leaning_high = [0.1, 0.5, 0.4];
+def u:expect(p) {
+  "Expected level index: the sum of i times p_i.";
+  reduce_add(p * range(3))
+}
+print("both select", unwrap(list_get(levels, argmax(leaning_low))), "and", unwrap(list_get(levels, argmax(leaning_high))), "at", reduce(:max, leaning_low));
+print("expectation leaning low ", u:expect(leaning_low));
+print("expectation leaning high", u:expect(leaning_high));
+u:expect(leaning_high) - u:expect(leaning_low)
+#+end_src
+
+#+RESULTS:
+: both select MEDIUM and MEDIUM at 0.5
+: expectation leaning low  0.7
+: expectation leaning high 1.3
+: 0.6000000000000001
+
+That difference is the only reason Scale is its own primitive rather than a three-way Choice.
+
+** Why the model misread "I don't know"
+
+The model does not see words; it sees slots. Each word and adjacent word pair is hashed into one of 1,024 slots, and each slot has one learned vector. Two different features that land in the same slot are, to the model, the same feature.
+
+#+begin_src mlpl :tangle no :exports both
+def u:hash(s) {
+  "Base-31 rolling checksum of a string's bytes modulo 2147483647.";
+  bytes = tokenize_bytes(s);
+  n = reduce_mul(shape(bytes));
+  h = 7;
+  i = 0;
+  while lt(i, n) {
+    h = mod(h * 31 + take(bytes, 0, i), 2147483647);
+    i = i + 1
+  };
+  h
+}
+slots = 1024;
+print("dont_know  -> slot", mod(u:hash("dont_know"), slots));
+print("robots_are -> slot", mod(u:hash("robots_are"), slots));
+print("goodbye    -> slot", mod(u:hash("goodbye"), slots));
+print("mom_never  -> slot", mod(u:hash("mom_never"), slots));
+eq(mod(u:hash("dont_know"), slots), mod(u:hash("robots_are"), slots))
+#+end_src
+
+#+RESULTS:
+: dont_know  -> slot 986
+: robots_are -> slot 986
+: goodbye    -> slot 943
+: mom_never  -> slot 943
+: 1
+
+=dont_know= and =robots_are= share slot 986, so "I don't know" reached the trained model reading partly as "robots are" and came back COMPUTER at 0.86. =goodbye= shares slot 943 with =mom_never=, and came back FAMILY at 1.00. The model was not confused; it was reading different words from the ones typed. The dialog probe measured this across 96 inputs: only 43% of realistic-probe features were ever seen in training, and 19% borrowed a training feature's meaning by collision.
+
+** One forward pass, by hand
+
+The whole model is three arrays. Look up the embedding row of each feature, average them (the pooling), multiply by the head, add the bias, and apply softmax. This block does it with a four-row table, two features, and three classes.
+
+#+begin_src mlpl :tangle no :exports both
+E = reshape([1.0, 0.0, 0.0, 1.0, 1.0, 1.0, -1.0, 0.0], [4, 2]);
+W = reshape([2.0, -1.0, 0.0, -1.0, 2.0, 0.0], [2, 3]);
+b = [0.0, 0.0, 0.5];
+ids = [0, 2];
+pooled = reduce_add(gather_rows(E, ids), 0) / 2;
+logits = matmul(reshape(pooled, [1, 2]), W) + b;
+probs = softmax(reshape(logits, [3]), 0);
+print("rows read ", ids);
+print("pooled    ", pooled);
+print("logits    ", logits);
+print("probs     ", probs);
+argmax(probs)
+#+end_src
+
+#+RESULTS:
+: rows read  0 2
+: pooled     1 0.5
+: logits     1.5 0 0.5
+: probs      0.6285317192117624 0.14024438316608848 0.23122389762214907
+: 0
+
+The trained model is the same arithmetic at 1,024 x 32 plus a 32 x 9 head and nine biases: 32,768 + 288 + 9 = 33,065 parameters.
+
+** What training buys, and when it stops buying accuracy
+
+Three examples, three classes, random starting weights, and Adam. Report accuracy and mean confidence as training goes on.
+
+#+begin_src mlpl :tangle no :exports both
+E = param[6, 4];
+E = randn(1, [6, 4]) * 0.1;
+W = param[4, 3];
+W = randn(2, [4, 3]) * 0.1;
+ids = reshape([0, 1, 2, 3, 4, 5], [3, 2]);
+pool = reshape(fill([6], 0.5), [3, 2, 1]);
+y = [0, 1, 2];
+def u:logits() {
+  "Mean-pool the two embedding rows each example addresses, then apply the head.";
+  matmul(reduce_add(gather_rows(E, ids) * pool, 1), W)
+}
+def u:report(step) {
+  "Accuracy and mean confidence of the current weights.";
+  p = softmax(u:logits(), 1);
+  print("step", step, " accuracy", reduce_add(eq(argmax(p, 1), y)) / 3, " mean confidence", mean(reduce(:max, p, 1)));
+  1
+}
+r0 = u:report(0);
+train 5 {
+  adam(cross_entropy(u:logits(), y), [E, W], 0.05, 0.9, 0.999, 0.00000001)
+};
+r1 = u:report(5);
+train 15 {
+  adam(cross_entropy(u:logits(), y), [E, W], 0.05, 0.9, 0.999, 0.00000001)
+};
+r2 = u:report(20);
+train 60 {
+  adam(cross_entropy(u:logits(), y), [E, W], 0.05, 0.9, 0.999, 0.00000001)
+};
+r3 = u:report(80);
+mean(reduce(:max, softmax(u:logits(), 1), 1))
+#+end_src
+
+#+RESULTS:
+: step 0  accuracy 0.6666666666666666  mean confidence 0.3467642350080147
+: step 5  accuracy 1  mean confidence 0.43762785802984117
+: step 20  accuracy 1  mean confidence 0.9826837771209657
+: step 80  accuracy 1  mean confidence 0.9998822381064619
+: 0.9998822381064619
+
+Accuracy is perfect by step 5; after that, training only makes the model more sure, climbing from 0.44 to 0.98 to 0.9999 with nothing left to learn. The live demo's training timeline shows the same shape at full size (TL01): validation accuracy settles at 0.879 after two seconds of training, while confidence on 95 inputs the model never trained on keeps rising from 0.51 to 0.81. For a model whose job is to report how sure it is, that is the problem to solve.
+
+* The sources, read in order
+
+The library knows about decisions and nothing about ELIZA; everything demo 01
+says or knows lives under =demos/eliza/=. A repository script checks that
+boundary, because demo 02 has to run with =lib/= unchanged.
+
+** The decision contract: =lib/decision.mlpl=
+
+Fixed once and pinned by tests, because a lesson that has already been measured must not have the shape shift underneath it. There is one constructor for the Decision record, three primitives built on it, and a validator. There is no generation primitive, and a test asserts it.
+
+The module comment says what the file is for.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+# The typed decision contract: the Decision record and the three primitives a decision model may expose (Choice, Noul, Scale). Fixed once and pinned by tests/test_decision.mlpl, because a lesson that has already been measured must not have the shape shift underneath it. There is no generation primitive in this file and there never will be: a decision model reports belief, and ordinary program code owns every threshold, every side effect, and every string a user sees.
+#+end_src
+
+*** ~u:decision_kinds()~
+
+The three legal decision kinds, in the order the documentation introduces them.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:decision_kinds() {
+  "The three legal decision kinds, in the order the documentation introduces them.";
+  ["choice", "noul", "scale"]
+}
+#+end_src
+
+*** ~u:decision_size(v)~
+
+Element count of a rank-1 array.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:decision_size(v) {
+  "Element count of a rank-1 array.";
+  reduce_mul(shape(v))
+}
+#+end_src
+
+*** ~u:decision_probs(logits)~
+
+Probabilities from a rank-1 logit vector.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:decision_probs(logits) {
+  "Probabilities from a rank-1 logit vector.";
+  softmax(logits, 0)
+}
+#+end_src
+
+*** ~u:decision_temper(logits, t)~
+
+Temperature-scaled logits: t above 1 softens the distribution, t below 1 sharpens it, t of 1 is the identity. The cheapest calibration map there is, and the baseline every other one must beat.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:decision_temper(logits, t) {
+  "Temperature-scaled logits: t above 1 softens the distribution, t below 1 sharpens it, t of 1 is the identity. The cheapest calibration map there is, and the baseline every other one must beat.";
+  logits / t
+}
+#+end_src
+
+*** ~u:decision_selected(probs)~
+
+Index of the most probable label; ties go to the first.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:decision_selected(probs) {
+  "Index of the most probable label; ties go to the first.";
+  argmax(probs)
+}
+#+end_src
+
+*** ~u:decision_confidence(probs)~
+
+Probability of the selected label.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:decision_confidence(probs) {
+  "Probability of the selected label.";
+  take(probs, 0, argmax(probs))
+}
+#+end_src
+
+*** ~u:decision_margin(probs)~
+
+Gap between the two most probable labels, or 1 for a single-label set. Reported beside confidence everywhere because the two fail differently: .48 confidence with .21 margin is an uncertain decision, while .48 with .01 is a coin flip between two candidates, and a policy may reasonably treat those differently.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:decision_margin(probs) {
+  "Gap between the two most probable labels, or 1 for a single-label set. Reported beside confidence everywhere because the two fail differently: .48 confidence with .21 margin is an uncertain decision, while .48 with .01 is a coin flip between two candidates, and a policy may reasonably treat those differently.";
+  n = u:decision_size(probs);
+  if lt(n, 2) {
+    1
+  } else {
+    ord = grade_down(probs);
+    take(probs, 0, take(ord, 0, 0)) - take(probs, 0, take(ord, 0, 1))
+  }
+}
+#+end_src
+
+*** ~u:decision_expectation(probs)~
+
+Expected level index of a distribution over ordered levels: the sum of i times p_i. Meaningful only when the labels are ordered, which is why only a Scale carries it.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:decision_expectation(probs) {
+  "Expected level index of a distribution over ordered levels: the sum of i times p_i. Meaningful only when the labels are ordered, which is why only a Scale carries it.";
+  reduce_add(probs * range(u:decision_size(probs)))
+}
+#+end_src
+
+*** ~u:decision_uncalibrated()~
+
+The calibration record of a raw model output: no map has been applied.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:decision_uncalibrated() {
+  "The calibration record of a raw model output: no map has been applied.";
+  {method: "none", t: 1}
+}
+#+end_src
+
+*** ~u:decision_temperature_map(t)~
+
+The calibration record of a temperature-scaled output, naming the fitted scalar so a trace can be read back.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:decision_temperature_map(t) {
+  "The calibration record of a temperature-scaled output, naming the fitted scalar so a trace can be read back.";
+  {method: "temperature", t: t}
+}
+#+end_src
+
+*** ~u:decision_build(kind, question, labels, probs, calibration)~
+
+The one Decision constructor. Every field every consumer may rely on is set here, so no lesson invents its own shape: kind, question, labels, probs, selected, confidence, margin, and the calibration provenance.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:decision_build(kind, question, labels, probs, calibration) {
+  "The one Decision constructor. Every field every consumer may rely on is set here, so no lesson invents its own shape: kind, question, labels, probs, selected, confidence, margin, and the calibration provenance.";
+  {kind: kind, question: question, labels: labels, probs: probs, selected: u:decision_selected(probs), confidence: u:decision_confidence(probs), margin: u:decision_margin(probs), calibration: calibration}
+}
+#+end_src
+
+*** ~u:choice_from_probs(question, labels, probs, calibration)~
+
+A Choice decision from a distribution that is already normalized, for replaying a recorded trace.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:choice_from_probs(question, labels, probs, calibration) {
+  "A Choice decision from a distribution that is already normalized, for replaying a recorded trace.";
+  u:decision_build("choice", question, labels, probs, calibration)
+}
+#+end_src
+
+*** ~u:choice(question, labels, logits)~
+
+A Choice decision over a labelled set: which one, with what probability. The choices are an input rather than a fixed output layer, so a caller may offer a set that did not exist during training.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:choice(question, labels, logits) {
+  "A Choice decision over a labelled set: which one, with what probability. The choices are an input rather than a fixed output layer, so a caller may offer a set that did not exist during training.";
+  u:choice_from_probs(question, labels, u:decision_probs(logits), u:decision_uncalibrated())
+}
+#+end_src
+
+*** ~u:choice_tempered(question, labels, logits, t)~
+
+A Choice decision with temperature scaling applied, recording the scalar it used.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:choice_tempered(question, labels, logits, t) {
+  "A Choice decision with temperature scaling applied, recording the scalar it used.";
+  u:choice_from_probs(question, labels, u:decision_probs(u:decision_temper(logits, t)), u:decision_temperature_map(t))
+}
+#+end_src
+
+*** ~u:noul_from_p(proposition, p, calibration)~
+
+A Noul decision from a probability that is already calibrated or replayed. Carried as a two-label distribution so that one validator, one trace schema, and one renderer serve all three kinds; p remains readable as its own field.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:noul_from_p(proposition, p, calibration) {
+  "A Noul decision from a probability that is already calibrated or replayed. Carried as a two-label distribution so that one validator, one trace schema, and one renderer serve all three kinds; p remains readable as its own field.";
+  d = u:decision_build("noul", proposition, ["false", "true"], [1 - p, p], calibration);
+  {kind: d.kind, question: d.question, labels: d.labels, probs: d.probs, selected: d.selected, confidence: d.confidence, margin: d.margin, calibration: d.calibration, p: p}
+}
+#+end_src
+
+*** ~u:noul(proposition, logit)~
+
+A Noul decision: one probability that a proposition holds of the state.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:noul(proposition, logit) {
+  "A Noul decision: one probability that a proposition holds of the state.";
+  u:noul_from_p(proposition, sigmoid(logit), u:decision_uncalibrated())
+}
+#+end_src
+
+*** ~u:noul_tempered(proposition, logit, t)~
+
+A Noul decision with temperature scaling applied, recording the scalar it used.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:noul_tempered(proposition, logit, t) {
+  "A Noul decision with temperature scaling applied, recording the scalar it used.";
+  u:noul_from_p(proposition, sigmoid(logit / t), u:decision_temperature_map(t))
+}
+#+end_src
+
+*** ~u:scale_from_probs(question, levels, probs, calibration)~
+
+A Scale decision from a distribution that is already normalized, for replaying a recorded trace.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:scale_from_probs(question, levels, probs, calibration) {
+  "A Scale decision from a distribution that is already normalized, for replaying a recorded trace.";
+  d = u:decision_build("scale", question, levels, probs, calibration);
+  {kind: d.kind, question: d.question, labels: d.labels, probs: d.probs, selected: d.selected, confidence: d.confidence, margin: d.margin, calibration: d.calibration, expectation: u:decision_expectation(probs)}
+}
+#+end_src
+
+*** ~u:scale(question, levels, logits)~
+
+A Scale decision over ordered levels: the distribution and its expectation. A Scale differs from a Choice only in that its labels are ordered, which is what makes the expectation meaningful and makes an adjacent error cheaper than a distant one.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:scale(question, levels, logits) {
+  "A Scale decision over ordered levels: the distribution and its expectation. A Scale differs from a Choice only in that its labels are ordered, which is what makes the expectation meaningful and makes an adjacent error cheaper than a distant one.";
+  u:scale_from_probs(question, levels, u:decision_probs(logits), u:decision_uncalibrated())
+}
+#+end_src
+
+*** ~u:scale_tempered(question, levels, logits, t)~
+
+A Scale decision with temperature scaling applied, recording the scalar it used.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:scale_tempered(question, levels, logits, t) {
+  "A Scale decision with temperature scaling applied, recording the scalar it used.";
+  u:scale_from_probs(question, levels, u:decision_probs(u:decision_temper(logits, t)), u:decision_temperature_map(t))
+}
+#+end_src
+
+*** ~u:decision_label(d)~
+
+The selected label as text.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:decision_label(d) {
+  "The selected label as text.";
+  unwrap(list_get(d.labels, d.selected))
+}
+#+end_src
+
+*** ~u:decision_prob(d, i)~
+
+Probability of the label at index i.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:decision_prob(d, i) {
+  "Probability of the label at index i.";
+  take(d.probs, 0, i)
+}
+#+end_src
+
+*** ~u:decision_index_of(d, name)~
+
+Index of a named label, or -1 when the decision does not offer it.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:decision_index_of(d, name) {
+  "Index of a named label, or -1 when the decision does not offer it.";
+  n = list_len(d.labels);
+  found = 0 - 1;
+  i = 0;
+  while lt(i, n) {
+    found = if str_eq(unwrap(list_get(d.labels, i)), name) {
+      i
+    } else {
+      found
+    };
+    i = i + 1
+  };
+  found
+}
+#+end_src
+
+*** ~u:decision_prob_of(d, name)~
+
+Probability of a named label, or 0 when the decision does not offer it. This is how policy reads a distribution: by name, never by a position a later saga might renumber.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:decision_prob_of(d, name) {
+  "Probability of a named label, or 0 when the decision does not offer it. This is how policy reads a distribution: by name, never by a position a later saga might renumber.";
+  i = u:decision_index_of(d, name);
+  if lt(i, 0) {
+    0
+  } else {
+    take(d.probs, 0, i)
+  }
+}
+#+end_src
+
+*** ~u:decision_acts(d, min_confidence, min_margin)~
+
+Whether application policy may act on this decision. Both thresholds belong to the caller: the model reports belief, and the program decides what belief is enough. Abstention is the complement.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:decision_acts(d, min_confidence, min_margin) {
+  "Whether application policy may act on this decision. Both thresholds belong to the caller: the model reports belief, and the program decides what belief is enough. Abstention is the complement.";
+  ge(d.confidence, min_confidence) * ge(d.margin, min_margin)
+}
+#+end_src
+
+*** ~u:decision_abstains(d, min_confidence, min_margin)~
+
+Whether application policy must fall back rather than act.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:decision_abstains(d, min_confidence, min_margin) {
+  "Whether application policy must fall back rather than act.";
+  1 - u:decision_acts(d, min_confidence, min_margin)
+}
+#+end_src
+
+*** ~u:decision_kind_known(kind)~
+
+Whether a kind string is one of the three legal kinds.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:decision_kind_known(kind) {
+  "Whether a kind string is one of the three legal kinds.";
+  ks = u:decision_kinds();
+  n = list_len(ks);
+  ok = 0;
+  i = 0;
+  while lt(i, n) {
+    ok = ok + str_eq(unwrap(list_get(ks, i)), kind);
+    i = i + 1
+  };
+  gt(ok, 0)
+}
+#+end_src
+
+*** ~u:decision_valid(d)~
+
+Whether a Decision is well formed: a known kind, one probability per label, at least one label, no negative probability, a distribution summing to one within 1e-9, a selected index in range, and the expectation present exactly when the kind is scale. Cheap enough to assert on every decision a lesson records.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:decision_valid(d) {
+  "Whether a Decision is well formed: a known kind, one probability per label, at least one label, no negative probability, a distribution summing to one within 1e-9, a selected index in range, and the expectation present exactly when the kind is scale. Cheap enough to assert on every decision a lesson records.";
+  n = u:decision_size(d.probs);
+  u:decision_kind_known(d.kind) * eq(list_len(d.labels), n) * gt(n, 0) * ge(reduce(:min, d.probs), 0) * lt(abs(reduce_add(d.probs) - 1), 0.000000001) * ge(d.selected, 0) * lt(d.selected, n) * eq(has_field(d, "expectation"), str_eq(d.kind, "scale"))
+}
+#+end_src
+
+** Text to model input: =lib/text.mlpl=
+
+Normalization, words, and hashed word-and-bigram slots. The hash is where primer block 4's collisions come from.
+
+The module comment says what the file is for.
+
+#+begin_src mlpl :tangle ../../lib/text.mlpl
+# Text to model input: ASCII normalization, words, and hashed word-plus-bigram feature slots. Domain-neutral; the technique is ported from moe-microscope's docent. A hashed slot knows nothing about meaning, so a word never seen in training contributes nothing but its context -- that limit is deliberate and visible.
+#+end_src
+
+*** ~u:text_lg(l, i)~
+
+Element i of a string list.
+
+#+begin_src mlpl :tangle ../../lib/text.mlpl
+def u:text_lg(l, i) {
+  "Element i of a string list.";
+  unwrap(list_get(l, i))
+}
+#+end_src
+
+*** ~u:text_clean(s)~
+
+Lowercase ASCII letters, keep letters, digits, and spaces, delete apostrophes (so don't becomes dont), and turn every other character into a space.
+
+#+begin_src mlpl :tangle ../../lib/text.mlpl
+def u:text_clean(s) {
+  "Lowercase ASCII letters, keep letters, digits, and spaces, delete apostrophes (so don't becomes dont), and turn every other character into a space.";
+  upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  lower = "abcdefghijklmnopqrstuvwxyz";
+  keep = "abcdefghijklmnopqrstuvwxyz0123456789 ";
+  n = str_len(s);
+  out = "";
+  i = 0;
+  while lt(i, n) {
+    ch = str_slice(s, i, 1);
+    up = str_find(upper, ch);
+    piece = if gt(up, 0 - 1) {
+      str_slice(lower, up, 1)
+    } else {
+      if gt(str_find(keep, ch), 0 - 1) {
+        ch
+      } else {
+        if str_eq(ch, "'") {
+          ""
+        } else {
+          " "
+        }
+      }
+    };
+    out = str_concat(out, piece);
+    i = i + 1
+  };
+  out
+}
+#+end_src
+
+*** ~u:text_words(s)~
+
+The non-empty words of a cleaned string, joined by single spaces (an empty string when there are none).
+
+#+begin_src mlpl :tangle ../../lib/text.mlpl
+def u:text_words(s) {
+  "The non-empty words of a cleaned string, joined by single spaces (an empty string when there are none).";
+  parts = str_split(u:text_clean(s), " ");
+  n = list_len(parts);
+  out = "";
+  i = 0;
+  while lt(i, n) {
+    w = u:text_lg(parts, i);
+    out = if gt(str_len(w), 0) {
+      if gt(str_len(out), 0) {
+        str_concat(str_concat(out, " "), w)
+      } else {
+        w
+      }
+    } else {
+      out
+    };
+    i = i + 1
+  };
+  out
+}
+#+end_src
+
+*** ~u:text_hash(s)~
+
+Base-31 rolling checksum of a string's bytes modulo 2147483647.
+
+#+begin_src mlpl :tangle ../../lib/text.mlpl
+def u:text_hash(s) {
+  "Base-31 rolling checksum of a string's bytes modulo 2147483647.";
+  bytes = tokenize_bytes(s);
+  n = reduce_mul(shape(bytes));
+  h = 7;
+  i = 0;
+  while lt(i, n) {
+    h = mod(h * 31 + take(bytes, 0, i), 2147483647);
+    i = i + 1
+  };
+  h
+}
+#+end_src
+
+*** ~u:text_features(s, slots, f)~
+
+Feature record for one input: padded slot ids [f], a mask [f], the feature count, and the feature tokens as a |-joined string for display. Words come first, then adjacent bigrams joined by an underscore; features beyond f are dropped.
+
+#+begin_src mlpl :tangle ../../lib/text.mlpl
+def u:text_features(s, slots, f) {
+  "Feature record for one input: padded slot ids [f], a mask [f], the feature count, and the feature tokens as a |-joined string for display. Words come first, then adjacent bigrams joined by an underscore; features beyond f are dropped.";
+  joined = u:text_words(s);
+  words = if gt(str_len(joined), 0) {
+    str_split(joined, " ")
+  } else {
+    str_split("", " ")
+  };
+  nw = if gt(str_len(joined), 0) {
+    list_len(words)
+  } else {
+    0
+  };
+  ids = fill([f], 0);
+  mask = fill([f], 0);
+  tokens = "";
+  n = 0;
+  i = 0;
+  while lt(i, nw) * lt(n, f) {
+    w = u:text_lg(words, i);
+    ids = scatter(ids, n, mod(u:text_hash(w), slots));
+    mask = scatter(mask, n, 1);
+    tokens = if gt(n, 0) {
+      str_concat(str_concat(tokens, "|"), w)
+    } else {
+      w
+    };
+    n = n + 1;
+    i = i + 1
+  };
+  i = 0;
+  while lt(i, nw - 1) * lt(n, f) {
+    bg = str_concat(str_concat(u:text_lg(words, i), "_"), u:text_lg(words, i + 1));
+    ids = scatter(ids, n, mod(u:text_hash(bg), slots));
+    mask = scatter(mask, n, 1);
+    tokens = str_concat(str_concat(tokens, "|"), bg);
+    n = n + 1;
+    i = i + 1
+  };
+  {ids: ids, mask: mask, n: n, tokens: tokens}
+}
+#+end_src
+
+** The Choice model: =lib/choice_model.mlpl=
+
+A learned vector per slot, a masked mean pool, one linear head. Training runs over global params because params cannot be passed into ~grad~ as arguments; inference runs over a plain weights record, so a trained model is just arrays. A test asserts that the two forward passes agree exactly.
+
+The module comment says what the file is for.
+
+#+begin_src mlpl :tangle ../../lib/choice_model.mlpl
+# The smallest Choice model: hashed word-and-bigram slots, a learned embedding per slot, a masked mean pool, and one linear head over a fixed label set. Domain-neutral. Training runs over the caller's global params cm_E [slots, d], cm_W [d, k], and cm_b [k] (models and params cannot be passed into grad as arguments); inference runs over a plain weights record, so a trained model is just arrays that to_native can save and parse_native can load. Parity between the two forward passes is asserted in tests/test_choice_model.mlpl.
+include "text.mlpl";
+include "decision.mlpl";
+#+end_src
+
+*** ~u:cm_featurize(texts, slots, f)~
+
+Feature matrices for a string list: slot ids [N, f], the pooling weights [N, f, 1] (mask divided by the row's feature count, so the pool is a mean), and the counts [N]. Computed once, outside grad.
+
+#+begin_src mlpl :tangle ../../lib/choice_model.mlpl
+def u:cm_featurize(texts, slots, f) {
+  "Feature matrices for a string list: slot ids [N, f], the pooling weights [N, f, 1] (mask divided by the row's feature count, so the pool is a mean), and the counts [N]. Computed once, outside grad.";
+  n = list_len(texts);
+  ids = fill([0], 0);
+  w = fill([0], 0);
+  counts = fill([0], 0);
+  i = 0;
+  while lt(i, n) {
+    r = u:text_features(u:text_lg(texts, i), slots, f);
+    denom = if gt(r.n, 0) {
+      r.n
+    } else {
+      1
+    };
+    ids = concat(ids, r.ids);
+    w = concat(w, r.mask / denom);
+    counts = concat(counts, [r.n]);
+    i = i + 1
+  };
+  {ids: reshape(ids, [n, f]), wmask: reshape(w, [n, f, 1]), counts: counts}
+}
+#+end_src
+
+*** ~u:cm_logits(ids, wmask)~
+
+Training forward pass over the caller's global params: gather each slot's embedding, mean-pool with the precomputed weights, apply the head. Returns [N, k].
+
+#+begin_src mlpl :tangle ../../lib/choice_model.mlpl
+def u:cm_logits(ids, wmask) {
+  "Training forward pass over the caller's global params: gather each slot's embedding, mean-pool with the precomputed weights, apply the head. Returns [N, k].";
+  matmul(reduce_add(gather_rows(cm_E, ids) * wmask, 1), cm_W) + cm_b
+}
+#+end_src
+
+*** ~u:cm_train(ids, wmask, y, steps, lr)~
+
+Full-batch Adam over the caller's global params for a fixed number of steps; returns the final training loss. The block holds only the adam call because adam returns the loss it stepped from, so the forward pass runs once per step rather than twice.
+
+#+begin_src mlpl :tangle ../../lib/choice_model.mlpl
+def u:cm_train(ids, wmask, y, steps, lr) {
+  "Full-batch Adam over the caller's global params for a fixed number of steps; returns the final training loss. The block holds only the adam call because adam returns the loss it stepped from, so the forward pass runs once per step rather than twice.";
+  train steps {
+    adam(cross_entropy(u:cm_logits(ids, wmask), y), [cm_E, cm_W, cm_b], lr, 0.9, 0.999, 0.00000001)
+  };
+  cross_entropy(u:cm_logits(ids, wmask), y)
+}
+#+end_src
+
+*** ~u:cm_infer(weights, ids, wmask)~
+
+Inference forward pass over a plain weights record {E, W, b}. Same arithmetic as cm_logits, no tape, no globals.
+
+#+begin_src mlpl :tangle ../../lib/choice_model.mlpl
+def u:cm_infer(weights, ids, wmask) {
+  "Inference forward pass over a plain weights record {E, W, b}. Same arithmetic as cm_logits, no tape, no globals.";
+  matmul(reduce_add(gather_rows(weights.E, ids) * wmask, 1), weights.W) + weights.b
+}
+#+end_src
+
+*** ~u:cm_param_count(weights)~
+
+Trainable parameters in a weights record.
+
+#+begin_src mlpl :tangle ../../lib/choice_model.mlpl
+def u:cm_param_count(weights) {
+  "Trainable parameters in a weights record.";
+  reduce_mul(shape(weights.E)) + reduce_mul(shape(weights.W)) + reduce_mul(shape(weights.b))
+}
+#+end_src
+
+*** ~u:cm_save(path, weights)~
+
+Write a weights record (plus whatever metadata fields it carries) to a native binary file.
+
+#+begin_src mlpl :tangle ../../lib/choice_model.mlpl
+def u:cm_save(path, weights) {
+  "Write a weights record (plus whatever metadata fields it carries) to a native binary file.";
+  write_bytes(path, unwrap(to_native(weights)))
+}
+#+end_src
+
+*** ~u:cm_load(path)~
+
+Read a weights record written by cm_save.
+
+#+begin_src mlpl :tangle ../../lib/choice_model.mlpl
+def u:cm_load(path) {
+  "Read a weights record written by cm_save.";
+  parse_native(read_bytes(path)?)
+}
+#+end_src
+
+*** ~u:cm_decide(weights, text, question)~
+
+One Choice decision over one input, using the label set, slot count, and feature width stored with the weights. Returns the Decision plus the features the model actually saw, so a caller can show them.
+
+#+begin_src mlpl :tangle ../../lib/choice_model.mlpl
+def u:cm_decide(weights, text, question) {
+  "One Choice decision over one input, using the label set, slot count, and feature width stored with the weights. Returns the Decision plus the features the model actually saw, so a caller can show them.";
+  labels = str_split(weights.labels, "|");
+  r = u:text_features(text, weights.slots, weights.width);
+  denom = if gt(r.n, 0) {
+    r.n
+  } else {
+    1
+  };
+  wmask = reshape(r.mask / denom, [1, weights.width, 1]);
+  logits = reshape(u:cm_infer(weights, reshape(r.ids, [1, weights.width]), wmask), [list_len(labels)]);
+  {decision: u:choice(question, labels, logits), tokens: r.tokens, n_features: r.n}
+}
+#+end_src
+
+*** ~u:cm_accuracy_by_label(pred, y, k)~
+
+Per-label accuracy [k] and per-label counts [k] over parallel prediction and truth vectors; a label with no examples scores 0.
+
+#+begin_src mlpl :tangle ../../lib/choice_model.mlpl
+def u:cm_accuracy_by_label(pred, y, k) {
+  "Per-label accuracy [k] and per-label counts [k] over parallel prediction and truth vectors; a label with no examples scores 0.";
+  hits = eq(pred, y);
+  acc = fill([k], 0);
+  cnt = fill([k], 0);
+  c = 0;
+  while lt(c, k) {
+    sel = eq(y, c);
+    m = reduce_add(sel);
+    cnt = scatter(cnt, c, m);
+    acc = scatter(acc, c, if gt(m, 0) {
+        reduce_add(hits * sel) / m
+      } else {
+        0
+      });
+    c = c + 1
+  };
+  {acc: acc, count: cnt}
+}
+#+end_src
+
+** Demo 01's domain: =demos/eliza/eliza.mlpl=
+
+The nine response classes, their canned replies, the keyword matcher that serves as the yardstick, and the sentence frames the training corpus is generated from. One person wrote both the frames and the keyword list, which flatters the model's margin over the matcher; the planned ELIZA-oracle corpus is how that gets tested honestly.
+
+The module comment says what the file is for.
+
+#+begin_src mlpl :tangle ../../demos/eliza/eliza.mlpl
+# Demo 01's domain: the response classes, the canned replies, the 1966-style keyword matcher that is the yardstick, and the templates the training corpus is generated from. Everything ELIZA-specific in the repository lives here or beside it; lib/ never learns these words. Lists are |-joined strings because MLPL lists are immutable and have no append.
+include "../../lib/text.mlpl";
+#+end_src
+
+*** ~u:ez_labels()~
+
+The response classes, in label order. FALLBACK is a trained class with its own examples, not a leftover bucket.
+
+#+begin_src mlpl :tangle ../../demos/eliza/eliza.mlpl
+def u:ez_labels() {
+  "The response classes, in label order. FALLBACK is a trained class with its own examples, not a leftover bucket.";
+  "GREET|FAMILY|FEELING|DESIRE|DREAM|COMPUTER|YES|NO|FALLBACK"
+}
+#+end_src
+
+*** ~u:ez_label_count()~
+
+How many response classes there are.
+
+#+begin_src mlpl :tangle ../../demos/eliza/eliza.mlpl
+def u:ez_label_count() {
+  "How many response classes there are.";
+  list_len(str_split(u:ez_labels(), "|"))
+}
+#+end_src
+
+*** ~u:ez_label(i)~
+
+The i-th class name.
+
+#+begin_src mlpl :tangle ../../demos/eliza/eliza.mlpl
+def u:ez_label(i) {
+  "The i-th class name.";
+  u:text_lg(str_split(u:ez_labels(), "|"), i)
+}
+#+end_src
+
+*** ~u:ez_label_index(name)~
+
+Index of a class by name, or -1.
+
+#+begin_src mlpl :tangle ../../demos/eliza/eliza.mlpl
+def u:ez_label_index(name) {
+  "Index of a class by name, or -1.";
+  ls = str_split(u:ez_labels(), "|");
+  n = list_len(ls);
+  found = 0 - 1;
+  i = 0;
+  while lt(i, n) {
+    found = if str_eq(u:text_lg(ls, i), name) {
+      i
+    } else {
+      found
+    };
+    i = i + 1
+  };
+  found
+}
+#+end_src
+
+*** ~u:ez_responses(i)~
+
+The canned replies for class i, |-joined. These are the only strings the demo can ever say.
+
+#+begin_src mlpl :tangle ../../demos/eliza/eliza.mlpl
+def u:ez_responses(i) {
+  "The canned replies for class i, |-joined. These are the only strings the demo can ever say.";
+  all = ["Hello. How are you feeling today?|Hi there. What would you like to talk about?|Good to see you. Where shall we begin?", "Tell me more about your family.|How do you get along with your family?|What was it like growing up with them?", "Why do you think you feel that way?|How long have you felt like this?|Does that feeling come and go?", "Why do you want that?|What would it mean to you if you got it?|Suppose you got it. What then?", "What does that dream suggest to you?|Do you dream often?|Who else appears in your dreams?", "Do computers worry you?|Why do you mention machines?|Do you think machines understand people?", "You seem quite certain.|I see. Please go on.|What makes you so sure?", "Why not?|Are you saying no just to be contrary?|What would change your mind?", "Please go on.|Tell me more about that.|I see. What else?"];
+  u:text_lg(all, i)
+}
+#+end_src
+
+*** ~u:ez_response(i, turn)~
+
+One reply for class i, chosen deterministically by turn number. Returns the table name, the index within it, and the text; nothing here composes a string.
+
+#+begin_src mlpl :tangle ../../demos/eliza/eliza.mlpl
+def u:ez_response(i, turn) {
+  "One reply for class i, chosen deterministically by turn number. Returns the table name, the index within it, and the text; nothing here composes a string.";
+  rs = str_split(u:ez_responses(i), "|");
+  at = mod(turn, list_len(rs));
+  {table: u:ez_label(i), index: at, text: u:text_lg(rs, at)}
+}
+#+end_src
+
+*** ~u:ez_keywords(i)~
+
+The keyword list for class i, exactly as a 1966 author would have hand-written it: space separated, no morphology, no synonyms it did not think of.
+
+#+begin_src mlpl :tangle ../../demos/eliza/eliza.mlpl
+def u:ez_keywords(i) {
+  "The keyword list for class i, exactly as a 1966 author would have hand-written it: space separated, no morphology, no synonyms it did not think of.";
+  all = ["hello hi", "mother father sister brother family wife husband children", "sad unhappy depressed feel feels", "want wish need", "dream dreams dreamt dreamed", "computer computers machine machines", "yes", "no"];
+  if lt(i, list_len(all)) {
+    u:text_lg(all, i)
+  } else {
+    ""
+  }
+}
+#+end_src
+
+*** ~u:ez_match_order()~
+
+Class indices in keyword-priority order, so a sentence hitting two lists resolves the way ELIZA's ranks did: a dream outranks who appears in it.
+
+#+begin_src mlpl :tangle ../../demos/eliza/eliza.mlpl
+def u:ez_match_order() {
+  "Class indices in keyword-priority order, so a sentence hitting two lists resolves the way ELIZA's ranks did: a dream outranks who appears in it.";
+  [4, 1, 5, 2, 3, 7, 6, 0]
+}
+#+end_src
+
+*** ~u:ez_matcher(text)~
+
+The yardstick: first class in priority order with a whole-word keyword hit, else FALLBACK. This is what the learned model has to beat.
+
+#+begin_src mlpl :tangle ../../demos/eliza/eliza.mlpl
+def u:ez_matcher(text) {
+  "The yardstick: first class in priority order with a whole-word keyword hit, else FALLBACK. This is what the learned model has to beat.";
+  words = str_split(u:text_words(text), " ");
+  nw = list_len(words);
+  order = u:ez_match_order();
+  found = u:ez_label_index("FALLBACK");
+  oi = 0;
+  while lt(oi, 8) * eq(found, u:ez_label_index("FALLBACK")) {
+    c = take(order, 0, oi);
+    keys = str_split(u:ez_keywords(c), " ");
+    nk = list_len(keys);
+    hit = 0;
+    wi = 0;
+    while lt(wi, nw) {
+      ki = 0;
+      while lt(ki, nk) {
+        hit = hit + str_eq(u:text_lg(words, wi), u:text_lg(keys, ki));
+        ki = ki + 1
+      };
+      wi = wi + 1
+    };
+    found = if gt(hit, 0) {
+      c
+    } else {
+      found
+    };
+    oi = oi + 1
+  };
+  found
+}
+#+end_src
+
+*** ~u:ez_templates(i)~
+
+Sentence frames for class i, |-joined, each with one {} slot. The last frame of every class is held out of training and used as the validation split, so validation measures a phrasing the model never saw.
+
+#+begin_src mlpl :tangle ../../demos/eliza/eliza.mlpl
+def u:ez_templates(i) {
+  "Sentence frames for class i, |-joined, each with one {} slot. The last frame of every class is held out of training and used as the validation split, so validation measures a phrasing the model never saw.";
+  all = ["hello {}|hi {}|good morning {}|hey {}|good evening {}", "my {} never listens to me|i argued with my {} again|i miss my {}|my {} is always criticizing me|i cannot talk to my {}", "i feel {}|i have been so {} lately|lately everything makes me {}|i am {} all the time|why am i always so {}", "i want {}|i really wish i had {}|all i need is {}|i would love {}|i keep hoping for {}", "i had a dream about {}|last night i dreamt of {}|i keep having nightmares about {}|in my dream there was {}|i dreamed about {} again", "{} scare me|i do not trust {}|are you one of those {}|i think {} are taking over|i spend all day with {}", "{}|{} i think so|{} that is right|oh {}|{} definitely", "{}|{} not really|{} i do not think so|oh {}|{} never", "the weather was {} today|i watched a movie about {}|we talked about {} at lunch|the news was all about {}|i read an article about {}"];
+  u:text_lg(all, i)
+}
+#+end_src
+
+*** ~u:ez_fillers(i)~
+
+Slot fillers for class i, |-joined. Several are words the keyword list above does not contain (mom, dad, parents, anxious, robots, yeah, nope): that gap is the experiment.
+
+#+begin_src mlpl :tangle ../../demos/eliza/eliza.mlpl
+def u:ez_fillers(i) {
+  "Slot fillers for class i, |-joined. Several are words the keyword list above does not contain (mom, dad, parents, anxious, robots, yeah, nope): that gap is the experiment.";
+  all = ["there|eliza|doctor|again|today|friend", "mother|father|mom|dad|sister|brother|parents|grandmother", "sad|anxious|lonely|depressed|miserable|empty|angry|exhausted", "a new job|more money|some peace and quiet|a vacation|someone to talk to|a fresh start", "falling|my old school|being chased|the ocean|a dark house|flying", "computers|machines|robots|programs|algorithms|phones", "yes|yeah|yep|sure|of course|absolutely", "no|nope|nah|not at all|no way|definitely not", "the economy|sports|cooking|gardening|traffic|history"];
+  u:text_lg(all, i)
+}
+#+end_src
+
+*** ~u:ez_render(template, filler)~
+
+Fill a frame's single {} slot.
+
+#+begin_src mlpl :tangle ../../demos/eliza/eliza.mlpl
+def u:ez_render(template, filler) {
+  "Fill a frame's single {} slot.";
+  str_join(str_split(template, "{}"), filler)
+}
+#+end_src
+
+*** ~u:ez_corpus(first, last)~
+
+Every sentence generated from frames [first, last) of every class. Returns the sentences as a newline-joined string and their labels as an array, in the same order.
+
+#+begin_src mlpl :tangle ../../demos/eliza/eliza.mlpl
+def u:ez_corpus(first, last) {
+  "Every sentence generated from frames [first, last) of every class. Returns the sentences as a newline-joined string and their labels as an array, in the same order.";
+  k = u:ez_label_count();
+  lines = "";
+  y = fill([0], 0);
+  c = 0;
+  while lt(c, k) {
+    ts = str_split(u:ez_templates(c), "|");
+    fs = str_split(u:ez_fillers(c), "|");
+    nf = list_len(fs);
+    t = first;
+    while lt(t, last) {
+      fi = 0;
+      while lt(fi, nf) {
+        s = u:ez_render(u:text_lg(ts, t), u:text_lg(fs, fi));
+        lines = if gt(str_len(lines), 0) {
+          str_concat(str_concat(lines, "\n"), s)
+        } else {
+          s
+        };
+        y = concat(y, [c]);
+        fi = fi + 1
+      };
+      t = t + 1
+    };
+    c = c + 1
+  };
+  {texts: str_split(lines, "\n"), y: y}
+}
+#+end_src
+
+*** ~u:ez_wild()~
+
+Hand-written sentences that came from no frame at all, with their intended class. Small and noisy on purpose: it is the only honest out-of-distribution read in this slice, so it is reported as counts, never as a headline percentage.
+
+#+begin_src mlpl :tangle ../../demos/eliza/eliza.mlpl
+def u:ez_wild() {
+  "Hand-written sentences that came from no frame at all, with their intended class. Small and noisy on purpose: it is the only honest out-of-distribution read in this slice, so it is reported as counts, never as a headline percentage.";
+  pairs = "my mom keeps calling me::FAMILY\ndad forgot my birthday again::FAMILY\nmy parents are getting divorced::FAMILY\ni cannot stop crying::FEELING\neverything seems pointless::FEELING\ni feel like nobody understands me::FEELING\ni wish i could just quit::DESIRE\ni need a break from all of this::DESIRE\ni dreamt i was drowning::DREAM\nnightmares every single night::DREAM\ndo you think robots have feelings::COMPUTER\nmy computer crashed again::COMPUTER\nyeah::YES\nsure thing::YES\nnope::NO\nnot at all::NO\nhello::GREET\nhey eliza::GREET\ni bought a new car::FALLBACK\nit rained all weekend::FALLBACK";
+  rows = str_split(pairs, "\n");
+  n = list_len(rows);
+  lines = "";
+  y = fill([0], 0);
+  i = 0;
+  while lt(i, n) {
+    parts = str_split(u:text_lg(rows, i), "::");
+    lines = if gt(str_len(lines), 0) {
+      str_concat(str_concat(lines, "\n"), u:text_lg(parts, 0))
+    } else {
+      u:text_lg(parts, 0)
+    };
+    y = concat(y, [u:ez_label_index(u:text_lg(parts, 1))]);
+    i = i + 1
+  };
+  {texts: str_split(lines, "\n"), y: y}
+}
+#+end_src
+
+** Training demo 01: =demos/eliza/train.mlpl=
+
+Two hundred full-batch Adam steps from seeded random initialization over the 232 generated sentences, reported against the keyword matcher on the same splits, per class. This is the model behind the command-line chat and the SL01 results row.
+
+The module comment says what the file is for.
+
+#+begin_src mlpl :tangle ../../demos/eliza/train.mlpl
+# Trains demo 01's Choice model and writes its weights. One Choice over nine response classes: no Noul, no Scale, no memory, no calibration -- the thin end-to-end slice, so that something runs before anything is deepened. Reports the learned model against the 1966 keyword matcher on the same splits, per class, and saves the weights for chat.mlpl to load.
+include "../../lib/choice_model.mlpl";
+include "eliza.mlpl";
+#+end_src
+
+Top-level statements: the script itself.
+
+#+begin_src mlpl :tangle ../../demos/eliza/train.mlpl
+ez_slots = 1024;
+ez_width = 24;
+ez_dim = 32;
+ez_k = u:ez_label_count();
+ez_steps = 200;
+ez_lr = 0.05;
+#+end_src
+
+Top-level statements: the script itself.
+
+#+begin_src mlpl :tangle ../../demos/eliza/train.mlpl
+cm_E = param[1024, 32];
+cm_E = randn(11, [1024, 32]) * 0.1;
+cm_W = param[32, 9];
+cm_W = randn(12, [32, 9]) * 0.1;
+cm_b = param[9];
+cm_b = fill([9], 0);
+#+end_src
+
+*** ~u:ez_matcher_preds(texts)~
+
+The keyword matcher's prediction for every sentence in a list.
+
+#+begin_src mlpl :tangle ../../demos/eliza/train.mlpl
+def u:ez_matcher_preds(texts) {
+  "The keyword matcher's prediction for every sentence in a list.";
+  n = list_len(texts);
+  out = fill([0], 0);
+  i = 0;
+  while lt(i, n) {
+    out = concat(out, [u:ez_matcher(u:text_lg(texts, i))]);
+    i = i + 1
+  };
+  out
+}
+#+end_src
+
+*** ~u:ez_report(name, texts, y, weights)~
+
+Print one split: the model's accuracy, the matcher's accuracy on the same rows, and the margin between them.
+
+#+begin_src mlpl :tangle ../../demos/eliza/train.mlpl
+def u:ez_report(name, texts, y, weights) {
+  "Print one split: the model's accuracy, the matcher's accuracy on the same rows, and the margin between them.";
+  fz = u:cm_featurize(texts, ez_slots, ez_width);
+  pred = argmax(u:cm_infer(weights, fz.ids, fz.wmask), 1);
+  mpred = u:ez_matcher_preds(texts);
+  n = list_len(texts);
+  macc = reduce_add(eq(pred, y)) / n;
+  kacc = reduce_add(eq(mpred, y)) / n;
+  print(name, "n", n, "model", macc, "matcher", kacc, "margin", macc - kacc);
+  {pred: pred, mpred: mpred, model: macc, matcher: kacc}
+}
+#+end_src
+
+*** ~u:ez_per_label(pred, mpred, y)~
+
+Print per-class accuracy for the model and the matcher side by side, because an overall number hides which classes the keyword list simply never had words for.
+
+#+begin_src mlpl :tangle ../../demos/eliza/train.mlpl
+def u:ez_per_label(pred, mpred, y) {
+  "Print per-class accuracy for the model and the matcher side by side, because an overall number hides which classes the keyword list simply never had words for.";
+  m = u:cm_accuracy_by_label(pred, y, ez_k);
+  k = u:cm_accuracy_by_label(mpred, y, ez_k);
+  c = 0;
+  while lt(c, ez_k) {
+    print("   ", u:ez_label(c), "n", take(m.count, 0, c), "model", take(m.acc, 0, c), "matcher", take(k.acc, 0, c));
+    c = c + 1
+  };
+  1
+}
+#+end_src
+
+Top-level statements: the script itself.
+
+#+begin_src mlpl :tangle ../../demos/eliza/train.mlpl
+train_set = u:ez_corpus(0, 4);
+val_set = u:ez_corpus(4, 5);
+wild_set = u:ez_wild();
+train_f = u:cm_featurize(train_set.texts, ez_slots, ez_width);
+#+end_src
+
+Top-level statements: the script itself.
+
+#+begin_src mlpl :tangle ../../demos/eliza/train.mlpl
+t0 = clock_ms();
+final_loss = u:cm_train(train_f.ids, train_f.wmask, train_set.y, ez_steps, ez_lr);
+train_ms = clock_ms() - t0;
+#+end_src
+
+Top-level statements: the script itself.
+
+#+begin_src mlpl :tangle ../../demos/eliza/train.mlpl
+ez_weights = {E: cm_E, W: cm_W, b: cm_b, labels: u:ez_labels(), slots: ez_slots, width: ez_width};
+save_result = u:cm_save("fixtures/eliza/choice-v0.bin", ez_weights);
+#+end_src
+
+Top-level statements: the script itself.
+
+#+begin_src mlpl :tangle ../../demos/eliza/train.mlpl
+print("parameters", u:cm_param_count(ez_weights), "steps", ez_steps, "train ms", train_ms, "final loss", final_loss);
+print("");
+tr = u:ez_report("train ", train_set.texts, train_set.y, ez_weights);
+va = u:ez_report("val   ", val_set.texts, val_set.y, ez_weights);
+wi = u:ez_report("wild  ", wild_set.texts, wild_set.y, ez_weights);
+print("");
+print("val per class:");
+dummy1 = u:ez_per_label(va.pred, va.mpred, val_set.y);
+print("");
+print("wild per class (20 sentences: read these as counts, not percentages):");
+dummy2 = u:ez_per_label(wi.pred, wi.mpred, wild_set.y);
+print("");
+print("weights written to fixtures/eliza/choice-v0.bin", save_result);
+print("")
+#+end_src
+
+** Exporting for the browser: =demos/eliza/export.mlpl=
+
+One training run, snapshotted after 0, 11, 22, 55 and 110 steps -- what 0, 1, 2, 5 and 10 seconds of training bought -- each snapshot evaluated identically and written, with a parity set, into the bundle the live page embeds. The Rust port proves itself against that parity set.
+
+The module comment says what the file is for.
+
+#+begin_src mlpl :tangle ../../demos/eliza/export.mlpl
+# Exports demo 01 as a self-describing JSON bundle for the browser: a training timeline (one run from seeded random initialization, snapshotted at fixed step counts, each snapshot evaluated identically), the featurizer settings, the label set, the canned replies, the matcher's keyword lists, the policy threshold, and a parity set -- inputs with the probabilities and matcher picks MLPL computes for them -- so the Rust port can prove it runs the same model. MLPL stays the only trainer; the browser only infers.
+include "../../lib/choice_model.mlpl";
+include "eliza.mlpl";
+#+end_src
+
+*** ~u:ex_round(a)~
+
+Round to four decimal places so five snapshots fit in one page. Parity is computed from the rounded weights, and the effect of rounding on every parity probability is measured and printed.
+
+#+begin_src mlpl :tangle ../../demos/eliza/export.mlpl
+def u:ex_round(a) {
+  "Round to four decimal places so five snapshots fit in one page. Parity is computed from the rounded weights, and the effect of rounding on every parity probability is measured and printed.";
+  floor(a * 10000 + 0.5) / 10000
+}
+#+end_src
+
+*** ~u:ex_acc(w, fz, y)~
+
+Accuracy of a weights record on a featurized, labelled split.
+
+#+begin_src mlpl :tangle ../../demos/eliza/export.mlpl
+def u:ex_acc(w, fz, y) {
+  "Accuracy of a weights record on a featurized, labelled split.";
+  reduce_add(eq(argmax(u:cm_infer(w, fz.ids, fz.wmask), 1), y)) / reduce_mul(shape(y))
+}
+#+end_src
+
+*** ~u:ex_conf(w, fz)~
+
+Mean top probability over a featurized set: how sure the model is, whether or not it is right.
+
+#+begin_src mlpl :tangle ../../demos/eliza/export.mlpl
+def u:ex_conf(w, fz) {
+  "Mean top probability over a featurized set: how sure the model is, whether or not it is right.";
+  mean(reduce(:max, softmax(u:cm_infer(w, fz.ids, fz.wmask), 1), 1))
+}
+#+end_src
+
+*** ~u:text_words_lines(text)~
+
+The non-empty lines of a text, newline-joined, so a trailing newline does not become an empty example.
+
+#+begin_src mlpl :tangle ../../demos/eliza/export.mlpl
+def u:text_words_lines(text) {
+  "The non-empty lines of a text, newline-joined, so a trailing newline does not become an empty example.";
+  lines = str_split(text, "\n");
+  n = list_len(lines);
+  out = "";
+  i = 0;
+  while lt(i, n) {
+    line = u:text_lg(lines, i);
+    out = if gt(str_len(u:text_words(line)), 0) {
+      if gt(str_len(out), 0) {
+        str_concat(str_concat(out, "\n"), line)
+      } else {
+        line
+      }
+    } else {
+      out
+    };
+    i = i + 1
+  };
+  out
+}
+#+end_src
+
+*** ~u:ex_join_lines(texts)~
+
+A string list as one newline-joined string.
+
+#+begin_src mlpl :tangle ../../demos/eliza/export.mlpl
+def u:ex_join_lines(texts) {
+  "A string list as one newline-joined string.";
+  str_join(texts, "\n")
+}
+#+end_src
+
+*** ~u:ex_per_label(fn_name)~
+
+The per-class response or keyword strings as a string list, in label order.
+
+#+begin_src mlpl :tangle ../../demos/eliza/export.mlpl
+def u:ex_per_label(fn_name) {
+  "The per-class response or keyword strings as a string list, in label order.";
+  k = u:ez_label_count();
+  out = "";
+  c = 0;
+  while lt(c, k) {
+    item = if str_eq(fn_name, "responses") {
+      u:ez_responses(c)
+    } else {
+      u:ez_keywords(c)
+    };
+    out = if gt(c, 0) {
+      str_concat(str_concat(out, "\n"), item)
+    } else {
+      item
+    };
+    c = c + 1
+  };
+  str_split(out, "\n")
+}
+#+end_src
+
+Top-level statements: the script itself.
+
+#+begin_src mlpl :tangle ../../demos/eliza/export.mlpl
+ex_slots = 1024;
+ex_width = 24;
+ex_steps = [0, 11, 22, 55, 110];
+ex_nominal = [0, 1, 2, 5, 10];
+ex_k = u:ez_label_count();
+#+end_src
+
+Top-level statements: the script itself.
+
+#+begin_src mlpl :tangle ../../demos/eliza/export.mlpl
+ex_tr = u:ez_corpus(0, 4);
+ex_va = u:ez_corpus(4, 5);
+ex_wi = u:ez_wild();
+ex_transcript = str_split(u:text_words_lines(unwrap(read_text("demos/eliza/transcript.txt"))), "\n");
+ex_probe = str_split(str_join([u:text_words_lines(unwrap(read_text("demos/eliza/dialogs.txt"))), u:text_words_lines(unwrap(read_text("demos/eliza/dialogs-wild.txt")))], "\n"), "\n");
+ex_all = str_split(str_join([u:ex_join_lines(ex_tr.texts), u:ex_join_lines(ex_va.texts), u:ex_join_lines(ex_wi.texts), str_join(ex_transcript, "\n")], "\n"), "\n");
+ex_n = list_len(ex_all);
+#+end_src
+
+Top-level statements: the script itself.
+
+#+begin_src mlpl :tangle ../../demos/eliza/export.mlpl
+ex_trf = u:cm_featurize(ex_tr.texts, ex_slots, ex_width);
+ex_vaf = u:cm_featurize(ex_va.texts, ex_slots, ex_width);
+ex_wif = u:cm_featurize(ex_wi.texts, ex_slots, ex_width);
+ex_prf = u:cm_featurize(ex_probe, ex_slots, ex_width);
+ex_alf = u:cm_featurize(ex_all, ex_slots, ex_width);
+#+end_src
+
+Top-level statements: the script itself.
+
+#+begin_src mlpl :tangle ../../demos/eliza/export.mlpl
+cm_E = param[1024, 32];
+cm_E = randn(11, [1024, 32]) * 0.1;
+cm_W = param[32, 9];
+cm_W = randn(12, [32, 9]) * 0.1;
+cm_b = param[9];
+cm_b = fill([9], 0);
+#+end_src
+
+Top-level statements: the script itself.
+
+#+begin_src mlpl :tangle ../../demos/eliza/export.mlpl
+ex_E = fill([0], 0);
+ex_Wh = fill([0], 0);
+ex_B = fill([0], 0);
+ex_P = fill([0], 0);
+ex_metrics = fill([0], 0);
+ex_worst_rounding = 0;
+ex_changed = 0;
+ex_done = 0;
+ex_ms = "";
+ex_c = 0;
+while lt(ex_c, 5) {
+  ex_target = take(ex_steps, 0, ex_c);
+  ex_t0 = clock_ms();
+  ex_loss_now = if gt(ex_target, ex_done) {
+    u:cm_train(ex_trf.ids, ex_trf.wmask, ex_tr.y, ex_target - ex_done, 0.05)
+  } else {
+    0
+  };
+  ex_ms = str_concat(str_concat(ex_ms, " "), to_string(floor(clock_ms() - ex_t0)));
+  ex_done = ex_target;
+  ex_raw = {E: cm_E, W: cm_W, b: cm_b};
+  ex_rw = {E: u:ex_round(cm_E), W: u:ex_round(cm_W), b: u:ex_round(cm_b)};
+  ex_p_r = softmax(u:cm_infer(ex_rw, ex_alf.ids, ex_alf.wmask), 1);
+  ex_p_o = softmax(u:cm_infer(ex_raw, ex_alf.ids, ex_alf.wmask), 1);
+  ex_worst_rounding = reduce(:max, [ex_worst_rounding, reduce(:max, abs(ex_p_r - ex_p_o))]);
+  ex_changed = ex_changed + reduce_add(1 - eq(argmax(ex_p_r, 1), argmax(ex_p_o, 1)));
+  ex_E = concat(ex_E, reshape(ex_rw.E, [32768]));
+  ex_Wh = concat(ex_Wh, reshape(ex_rw.W, [288]));
+  ex_B = concat(ex_B, ex_rw.b);
+  ex_P = concat(ex_P, reshape(ex_p_r, [ex_n * ex_k]));
+  ex_metrics = concat(ex_metrics, [cross_entropy(u:cm_infer(ex_rw, ex_trf.ids, ex_trf.wmask), ex_tr.y), u:ex_acc(ex_rw, ex_trf, ex_tr.y), u:ex_acc(ex_rw, ex_vaf, ex_va.y), u:ex_acc(ex_rw, ex_wif, ex_wi.y), u:ex_conf(ex_rw, ex_vaf), u:ex_conf(ex_rw, ex_prf)]);
+  print("snapshot", take(ex_nominal, 0, ex_c), "s  steps", ex_target, " loss", take(ex_metrics, 0, ex_c * 6), " val", take(ex_metrics, 0, ex_c * 6 + 2), " wild", take(ex_metrics, 0, ex_c * 6 + 3), " val conf", take(ex_metrics, 0, ex_c * 6 + 4), " probe conf", take(ex_metrics, 0, ex_c * 6 + 5));
+  ex_c = ex_c + 1
+};
+#+end_src
+
+Top-level statements: the script itself.
+
+#+begin_src mlpl :tangle ../../demos/eliza/export.mlpl
+ex_match = fill([0], 0);
+ex_i = 0;
+while lt(ex_i, ex_n) {
+  ex_match = concat(ex_match, [u:ez_matcher(u:text_lg(ex_all, ex_i))]);
+  ex_i = ex_i + 1
+};
+#+end_src
+
+Top-level statements: the script itself.
+
+#+begin_src mlpl :tangle ../../demos/eliza/export.mlpl
+ex_bundle = {schema: "sw-ml-study.decision-bundle", version: 2, provenance: {producer: "demos/eliza/export.mlpl", producer_revision: "timeline-v1", generated_at: "2026-09-20", source_description: "demo 01 Choice model: one full-batch Adam run from seeded random initialization over 232 generated sentences, snapshotted after 0, 11, 22, 55 and 110 steps -- what 0, 1, 2, 5 and 10 seconds of training bought on an M1 Max with mlpl-repl 0.22.0. Weights rounded to 1e-4 for transport."}, demo: "demo 01", title: "ELIZA", question: "what should the reply be?", opening: "The doctor is in. What seems to be your problem?", labels: str_split(u:ez_labels(), "|"), fallback: "FALLBACK", threshold: 0.4, slots: ex_slots, width: ex_width, dim: 32, snapshots: {steps: ex_steps, seconds: ex_nominal, metric_names: ["train loss", "train accuracy", "val accuracy", "wild accuracy", "val confidence", "probe confidence"], metrics: reshape(ex_metrics, [5, 6]), embedding: reshape(ex_E, [5, 32768]), head: reshape(ex_Wh, [5, 288]), bias: reshape(ex_B, [5, 9])}, default_snapshot: 4, responses: u:ex_per_label("responses"), keywords: u:ex_per_label("keywords"), match_order: u:ez_match_order(), examples: ex_transcript, parity: {inputs: ex_all, probs: reshape(ex_P, [5, ex_n * ex_k]), matcher: ex_match}};
+#+end_src
+
+Top-level statements: the script itself.
+
+#+begin_src mlpl :tangle ../../demos/eliza/export.mlpl
+ex_json = unwrap(to_json(ex_bundle));
+ex_saved = write_atomic("fixtures/bundles/demo01.json", ex_json);
+print("bundle written", ex_saved, "bytes", str_len(ex_json));
+print("parity inputs", ex_n, "per snapshot; probe inputs", list_len(ex_probe));
+print("training ms per segment:", ex_ms);
+print("rounding to 1e-4 moved any parity probability by at most", ex_worst_rounding, "and changed", ex_changed, "decisions across all snapshots");
+print("")
+#+end_src
+

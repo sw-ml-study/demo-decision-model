@@ -13,6 +13,14 @@ function with a free deterministic oracle, not the point.
 - [`research.txt`](research.txt) — the source design discussion the plan was
   distilled from.
 
+## Literate reading
+
+- [`literate/demo-decision-model.org`](literate/demo-decision-model.org) — the
+  model read as a literate program: a six-block runnable primer, then every
+  library and demo source split at function boundaries. It tangles back to the
+  committed files byte for byte, and `just check` proves it. Published beside
+  the live demo as `literate.html`.
+
 ## Reference
 
 - [`reference/results.md`](reference/results.md) — one row per lesson run. Every

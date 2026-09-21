@@ -16,6 +16,14 @@ transcript:
 web:
     cd crates/tdm-web && trunk serve --open
 
+# Re-export the literate document to docs/literate/literate.html (Emacs, batch, nothing evaluated).
+literate:
+    ./scripts/publish-literate
+
+# Check the literate document: tangle parity, primer results, and a fresh export.
+tangle:
+    ./scripts/check-tangle
+
 # Build the live demo into pages/ (committed; the Pages workflow publishes it as is).
 site:
     ./scripts/build-site

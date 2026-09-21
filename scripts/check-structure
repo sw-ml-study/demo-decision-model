@@ -38,7 +38,9 @@ for path in \
     crates/tdm-web/src/main.rs \
     crates/tdm-web/index.html \
     pages/index.html \
-    .github/workflows/pages.yml
+    .github/workflows/pages.yml \
+    docs/literate/demo-decision-model.org \
+    docs/literate/literate.html
 do
     [ -f "$repo_root/$path" ] || { echo "missing required file: $path" >&2; exit 1; }
 done

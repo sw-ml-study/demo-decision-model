@@ -1,6 +1,6 @@
-number = 12
+number = 9
 slug = "literate-document"
-status = "pending"
+status = "in-progress"
 description = "User request: an Emacs org-mode literate, reproducible-research document for ..."
 role = "production"
 context_files = []

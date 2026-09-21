@@ -1,6 +1,6 @@
-number = 9
+number = 10
 slug = "publish-interim-results"
-status = "pending"
+status = "in-progress"
 description = "User direction: publish interim results soon. A short, honest write-up of wha..."
 role = "production"
 context_files = []

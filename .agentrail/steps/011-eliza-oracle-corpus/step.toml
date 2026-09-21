@@ -1,4 +1,4 @@
-number = 10
+number = 11
 slug = "eliza-oracle-corpus"
 status = "pending"
 description = "User plan: train a better model from a real ELIZA oracle rather than from fra..."
