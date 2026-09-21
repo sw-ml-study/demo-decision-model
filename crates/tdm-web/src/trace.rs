@@ -2,7 +2,7 @@
 //! offered, the distribution that came out, the policy that consumed it, and
 //! the table entry that resulted.
 
-use tdm_model::Bundle;
+use tdm_model::{Bundle, Outcome};
 use yew::prelude::*;
 
 use crate::app::{Shared, Timed};
@@ -37,18 +37,67 @@ fn bars(bundle: &Bundle, t: &Timed) -> Html {
 
 fn policy(bundle: &Bundle, t: &Timed) -> Html {
     let (d, r) = (&t.turn.decision, &t.turn.reply);
-    let text = if r.acted {
-        format!(
-            "confidence {:.3} ≥ {:.2}  →  act on {}",
+    let chosen = &bundle.labels[d.selected];
+    let text = match (r.outcome, bundle.escalation) {
+        (Outcome::Act, Some(e)) => format!(
+            "confidence {:.3} ≥ {:.2}, margin {:.3} ≥ {:.2}, {} known features  →  act on {chosen}",
+            d.confidence,
+            e.min_confidence,
+            d.margin,
+            e.min_margin,
+            d.features.slots.len()
+        ),
+        (Outcome::Act, None) => format!(
+            "confidence {:.3} ≥ {:.2}  →  act on {chosen}",
+            d.confidence, bundle.threshold
+        ),
+        (Outcome::NoneApplies, _) => format!(
+            "the model chose {chosen}: none of the offered replies fits  →  reply from {chosen}"
+        ),
+        (Outcome::Escalate, Some(e)) => format!(
+            "not enough to act on (needs confidence ≥ {:.2}, margin ≥ {:.2}, {} known feature{})  →  ESCALATE: a larger decider would choose among the same {} options; none runs in the browser, so reply from {}",
+            e.min_confidence,
+            e.min_margin,
+            e.min_known,
+            if e.min_known == 1 { "" } else { "s" },
+            bundle.labels.len(),
+            bundle.labels[r.label]
+        ),
+        (Outcome::Escalate, None) => format!(
+            "confidence {:.3} < {:.2}  →  abstain, fall back to {}",
             d.confidence, bundle.threshold, bundle.labels[r.label]
+        ),
+    };
+    html! { <p class={classes!("mono", (r.outcome == Outcome::Escalate).then_some("escalate"))}>{ text }</p> }
+}
+
+fn features(b: &Bundle, t: &Timed) -> Html {
+    let f = &t.turn.decision.features;
+    let known = f.known.iter().filter(|k| **k).count();
+    let meta = if b.vocab.is_some() {
+        format!(
+            "{known} of {} features are in the model's vocabulary; unknown ones contribute nothing",
+            f.tokens.len()
         )
     } else {
         format!(
-            "confidence {:.3} < {:.2}  →  abstain, fall back to {}",
-            d.confidence, bundle.threshold, bundle.labels[r.label]
+            "{} features of {}, hashed into {} slots",
+            f.slots.len(),
+            b.width,
+            b.slots.unwrap_or(0)
         )
     };
-    html! { <p class="mono">{ text }</p> }
+    html! {
+        <>
+            <p class="meta">{ meta }</p>
+            <div class="chips">
+                { for f.tokens.iter().zip(&f.known).map(|(tok, k)| html! {
+                    <span class={classes!("chip", (!*k).then_some("unknown"))}
+                          title={if *k { "known: read by the model" } else { "not in the vocabulary: contributes nothing" }}>{ tok }</span>
+                }) }
+            </div>
+        </>
+    }
 }
 
 #[function_component(Trace)]
@@ -63,19 +112,14 @@ pub fn trace(props: &TraceProps) -> Html {
         <section class="trace">
             <h2>{ "State in" }</h2>
             <p class="quote">{ &t.turn.input }</p>
-            <p class="meta">{ format!("{} features of {}, hashed into {} slots", d.features.slots.len(), b.width, b.slots) }</p>
-            <div class="chips">
-                { for d.features.tokens.iter().zip(&d.features.slots).map(|(tok, slot)| html! {
-                    <span class="chip" title={format!("slot {slot}")}>{ tok }</span>
-                }) }
-            </div>
+            { features(b, t) }
 
             <h2>{ "Choices in" }</h2>
             <p class="meta">{ format!("choice: {} — {} offered", b.question, b.labels.len()) }</p>
 
             <h2>{ "Decision out" }</h2>
             <p class="meta">{ format!("model as of {} of training ({} steps)",
-                if b.snapshots.steps[props.snapshot] == 0 { "0 s".to_owned() } else { format!("{} s", b.snapshots.seconds[props.snapshot]) },
+                b.snapshot_label(props.snapshot),
                 b.snapshots.steps[props.snapshot]) }</p>
             { bars(b, t) }
             <p class="mono">{ format!("confidence {:.3}   margin {:.3}   decided in {:.1} µs (mean of 100 runs)", d.confidence, d.margin, t.micros) }</p>

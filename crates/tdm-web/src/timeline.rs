@@ -9,6 +9,9 @@ use crate::app::Shared;
 
 const ACC: &str = "val accuracy";
 const PROBE: &str = "probe confidence";
+const TEST: &str = "probe accuracy";
+const WRONG: &str = "probe confidence when wrong";
+const RIGHT: &str = "probe confidence when right";
 const W: f64 = 360.0;
 const H: f64 = 110.0;
 const PAD: f64 = 14.0;
@@ -21,12 +24,7 @@ pub struct TimelineProps {
 }
 
 fn label(b: &Bundle, i: usize) -> String {
-    let s = b.snapshots.seconds[i];
-    if b.snapshots.steps[i] == 0 {
-        "0 s · random".to_owned()
-    } else {
-        format!("{s} s")
-    }
+    b.snapshot_label(i)
 }
 
 #[expect(
@@ -55,17 +53,32 @@ fn line(b: &Bundle, metric: &str) -> String {
         .join(" ")
 }
 
+/// The series to draw: validation accuracy, then test accuracy when the bundle
+/// measured it, then a confidence series -- on wrong answers if measured.
+fn series(b: &Bundle) -> Vec<(&'static str, &'static str, &'static str)> {
+    let has = |m: &str| b.snapshots.metric_names.iter().any(|n| n == m);
+    let mut out = vec![(ACC, "acc", "validation accuracy")];
+    if has(TEST) {
+        out.push((TEST, "test", "accuracy on the 96 hand-labelled probes"));
+    }
+    if has(WRONG) {
+        out.push((WRONG, "conf", "confidence when wrong"));
+    } else {
+        out.push((PROBE, "conf", "confidence on probe inputs"));
+    }
+    out
+}
+
 fn chart(b: &Bundle, snapshot: usize) -> Html {
     let n = b.snapshot_count();
     let sx = format!("{:.1}", x(snapshot, n));
     html! {
         <svg class="chart" viewBox={format!("0 0 {W} {H}")} role="img"
-             aria-label="validation accuracy and probe confidence across the training snapshots">
+             aria-label="accuracy and confidence across the training snapshots">
             <line class="axis" x1={PAD.to_string()} y1={y(0.0).to_string()} x2={(W - PAD).to_string()} y2={y(0.0).to_string()} />
             <line class="axis faint" x1={PAD.to_string()} y1={y(1.0).to_string()} x2={(W - PAD).to_string()} y2={y(1.0).to_string()} />
             <line class="cursor" x1={sx.clone()} y1={y(1.0).to_string()} x2={sx} y2={y(0.0).to_string()} />
-            <polyline class="acc" points={line(b, ACC)} />
-            <polyline class="conf" points={line(b, PROBE)} />
+            { for series(b).into_iter().map(|(m, class, _)| html! { <polyline class={class} points={line(b, m)} /> }) }
         </svg>
     }
 }
@@ -74,10 +87,20 @@ fn chart(b: &Bundle, snapshot: usize) -> Html {
 /// accuracy stopped changing, and what confidence did after that.
 fn reading(b: &Bundle) -> String {
     let n = b.snapshot_count();
-    let acc = |i| b.metric(i, ACC).unwrap_or(0.0);
-    let conf = |i| b.metric(i, PROBE).unwrap_or(0.0);
+    let get = |i, m| b.metric(i, m).unwrap_or(0.0);
+    if b.metric(0, TEST).is_some() {
+        let d = b.default_snapshot;
+        return format!(
+            "The page uses the {} snapshot, chosen by accuracy on held-out frames ({:.2}), never by the probes. On the 96 hand-labelled probes it is right {:.0}% of the time, and it knows when it is not: {:.2} confident when wrong against {:.2} when right, which is what the escalation threshold relies on.",
+            label(b, d),
+            get(d, ACC),
+            100.0 * get(d, TEST),
+            get(d, WRONG),
+            get(d, RIGHT)
+        );
+    }
     let settled = (1..n)
-        .find(|&i| (i..n).all(|j| (acc(j) - acc(i)).abs() < 1e-9))
+        .find(|&i| (i..n).all(|j| (get(j, ACC) - get(i, ACC)).abs() < 1e-9))
         .unwrap_or(n - 1);
     if settled + 1 >= n {
         return format!(
@@ -88,10 +111,10 @@ fn reading(b: &Bundle) -> String {
     format!(
         "Validation accuracy stops changing at {} ({:.2}). From there to {}, it stays put while confidence on the probe inputs — which the model was never trained on — rises from {:.2} to {:.2}.",
         label(b, settled),
-        acc(settled),
+        get(settled, ACC),
         label(b, n - 1),
-        conf(settled),
-        conf(n - 1)
+        get(settled, PROBE),
+        get(n - 1, PROBE)
     )
 }
 
@@ -100,8 +123,16 @@ pub fn timeline(props: &TimelineProps) -> Html {
     let b = &props.bundle;
     let s = props.snapshot;
     let num = |name: &str| {
-        b.metric(s, name)
-            .map_or_else(|| "—".to_owned(), |v| format!("{v:.3}"))
+        b.metric(s, name).map_or_else(
+            || "—".to_owned(),
+            |v| {
+                if v.fract() == 0.0 && v.abs() >= 1.0 {
+                    format!("{v:.0}")
+                } else {
+                    format!("{v:.3}")
+                }
+            },
+        )
     };
     html! {
         <section class="timeline">
@@ -124,15 +155,16 @@ pub fn timeline(props: &TimelineProps) -> Html {
                 </div>
                 <div class="tl-chart">
                     { chart(b, s) }
-                    <p class="legend"><span class="k acc"></span>{ "validation accuracy" }
-                        <span class="k conf"></span>{ "confidence on probe inputs" }</p>
+                    <p class="legend">
+                        { for series(b).into_iter().map(|(_, class, name)| html! {
+                            <span class="item"><span class={classes!("k", class)}></span>{ name }</span>
+                        }) }
+                    </p>
                 </div>
                 <div class="tl-nums mono">
-                    <p>{ format!("val accuracy   {}", num("val accuracy")) }</p>
-                    <p>{ format!("wild accuracy  {}", num("wild accuracy")) }</p>
-                    <p>{ format!("val confidence {}", num("val confidence")) }</p>
-                    <p>{ format!("probe conf.    {}", num("probe confidence")) }</p>
-                    <p>{ format!("train loss     {}", num("train loss")) }</p>
+                    { for b.snapshots.metric_names.iter().map(|m| html! {
+                        <p>{ format!("{m:<28} {}", num(m)) }</p>
+                    }) }
                 </div>
             </div>
             <p class="reading">{ reading(b) }</p>

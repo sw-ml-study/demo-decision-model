@@ -128,3 +128,37 @@ budget that reaches the quality bar.
 
 These probe sets become the regression benchmark for each step: the sensible
 rate and, more importantly, the confidence the model reports when it is wrong.
+
+## Follow-up: model 2 (`EH01`)
+
+The first three recommended fixes, built and measured against the same probes,
+with their labels frozen and committed (`2de9945`) before any new training frame
+was written:
+
+- **Collisions:** hashing replaced by an exact 1,173-feature vocabulary; an
+  unknown word now contributes nothing, and the page shows it struck through.
+- **"None of these":** a trained NONE class with its own examples, word dropout
+  to teach that thin evidence is not certainty, label smoothing, and an explicit
+  escalation outcome when confidence, margin, or known evidence is too low.
+- **Coverage:** seventeen classes, adding DONT_KNOW, QUESTION, ALWAYS, HOSTILE,
+  SORRY, CLOSING, WORK and LOSS; frames rewritten so words like *you* and
+  *friend* appear across many classes and cannot stand in for one.
+
+| What a visitor sees (96 probes) | v1 model | model 2 |
+|---|---|---|
+| reply class correct | 40% | **69%** |
+| right when not escalating | 38% | **78%** |
+| wrong "machines" replies | 12 | **1** |
+| wrong greetings | 7 | **0** |
+| escalated | 9% | 33% |
+
+On the 78 probes never seen verbatim in training: 62% vs 38%, and confidence
+when wrong 0.36 against 0.72. The model now knows when it does not know, which
+is what the escalation rule relies on: of 32 escalations, the model's own choice
+would have been wrong in 28.
+
+Not fixed: a third of inputs escalate, and in the browser an escalation replies
+from the NONE table ("Please go on."), which is safe but flat. Next: reflection
+and recall for escalations, a local escalation path to a larger decider over the
+same options, and the ELIZA-oracle corpus so the frames, labels and yardstick
+stop being one person's.

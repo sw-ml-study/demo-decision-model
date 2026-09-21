@@ -88,3 +88,11 @@ footer code { font-family: var(--mono); }
 .reading { margin: 10px 0 0; font-size: 14px; }
 .exchange.opening { cursor: default; }
 .exchange.opening:hover { border-color: transparent; }
+.chip.unknown { opacity: .45; text-decoration: line-through; }
+.mono.escalate { color: var(--bad); }
+.chart .test { stroke: var(--good); }
+.legend .k.test { border-color: var(--good); }
+.tl-nums p { font-size: 12px; }
+.legend { flex-direction: column; align-items: flex-start; gap: 2px; }
+.legend .item { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.legend .item .k { margin-left: 0; }

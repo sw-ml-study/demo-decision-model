@@ -1,9 +1,13 @@
 //! The exported bundle: weights, featurizer settings, and demo data.
 
+use std::collections::HashMap;
+
 use serde::Deserialize;
 
 const SCHEMA: &str = "sw-ml-study.decision-bundle";
-const VERSION: u32 = 2;
+/// Versions this crate reads: 2 hashes features into slots, 3 uses an exact
+/// vocabulary and adds the escalation policy.
+const VERSIONS: [u32; 2] = [2, 3];
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Provenance {
@@ -30,7 +34,21 @@ pub struct Bundle {
     pub labels: Vec<String>,
     pub fallback: String,
     pub threshold: f64,
-    pub slots: usize,
+    /// Version 2: features are hashed into this many slots.
+    #[serde(default)]
+    pub slots: Option<usize>,
+    /// Version 3: the exact training vocabulary. Token `i` owns embedding row
+    /// `i + 1`; row 0 is never read, because an unknown token contributes
+    /// nothing rather than borrowing a trained token's meaning.
+    #[serde(default)]
+    pub vocab: Option<Vec<String>>,
+    #[serde(skip)]
+    pub(crate) vocab_index: HashMap<String, usize>,
+    /// When the policy acts, declares none of the offered options apply, or
+    /// escalates to a larger decider. Absent in version 2, whose policy is the
+    /// single `threshold`.
+    #[serde(default)]
+    pub escalation: Option<Escalation>,
     pub width: usize,
     pub dim: usize,
     /// The training timeline: one run, snapshotted at fixed step counts.
@@ -49,6 +67,15 @@ pub struct Bundle {
     pub parity: Parity,
 }
 
+/// The thresholds under which the program will not act on the model's choice.
+#[derive(Clone, Copy, Debug, Deserialize)]
+pub struct Escalation {
+    pub min_confidence: f64,
+    pub min_margin: f64,
+    /// Fewer known features than this is not enough evidence to act on.
+    pub min_known: usize,
+}
+
 /// One training run, snapshotted. Row `i` of every array is snapshot `i`.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Snapshots {
@@ -56,6 +83,9 @@ pub struct Snapshots {
     pub steps: Vec<usize>,
     /// The training time each snapshot stands for, on the machine that trained it.
     pub seconds: Vec<f64>,
+    /// Human labels for the training budgets, when the bundle names them.
+    #[serde(default)]
+    pub budgets: Option<Vec<String>>,
     /// Names of the columns of `metrics`, in order.
     pub metric_names: Vec<String>,
     /// Per snapshot, the numbers MLPL measured for it.
@@ -98,15 +128,22 @@ impl Bundle {
     ///
     /// Returns the first inconsistency found.
     pub fn parse(source: &str) -> Result<Self, BundleError> {
-        let b: Self =
+        let mut b: Self =
             serde_json::from_str(source).map_err(|e| BundleError::Malformed(e.to_string()))?;
         if b.schema != SCHEMA {
             return Err(BundleError::UnsupportedSchema);
         }
-        if b.version != VERSION {
+        if !VERSIONS.contains(&b.version) {
             return Err(BundleError::UnsupportedVersion(b.version));
         }
         b.check_shapes()?;
+        b.vocab_index = b
+            .vocab
+            .iter()
+            .flatten()
+            .enumerate()
+            .map(|(i, t)| (t.clone(), i + 1))
+            .collect();
         Ok(b)
     }
 
@@ -136,17 +173,18 @@ impl Bundle {
     fn check_snapshots(&self, k: usize) -> Result<(), BundleError> {
         let s = &self.snapshots;
         let c = s.steps.len();
-        let rows = [
+        let counts = [
             s.seconds.len(),
             s.metrics.len(),
             s.embedding.len(),
             s.head.len(),
             s.bias.len(),
         ];
-        if c == 0 || rows.iter().any(|&r| r != c) || self.default_snapshot >= c {
+        if c == 0 || counts.iter().any(|&r| r != c) || self.default_snapshot >= c {
             return Err(BundleError::Shape("snapshot count"));
         }
-        let shapes_ok = s.embedding.iter().all(|e| e.len() == self.slots * self.dim)
+        let rows = self.embedding_rows();
+        let shapes_ok = s.embedding.iter().all(|e| e.len() == rows * self.dim)
             && s.head.iter().all(|h| h.len() == self.dim * k)
             && s.bias.iter().all(|b| b.len() == k)
             && s.metrics.iter().all(|m| m.len() == s.metric_names.len());
@@ -154,6 +192,35 @@ impl Bundle {
             return Err(BundleError::Shape("snapshot weights"));
         }
         Ok(())
+    }
+
+    /// Rows in the embedding table: hash slots, or the vocabulary plus the
+    /// unused unknown row.
+    #[must_use]
+    pub fn embedding_rows(&self) -> usize {
+        self.vocab
+            .as_ref()
+            .map_or(self.slots.unwrap_or(0), |v| v.len() + 1)
+    }
+
+    /// The embedding row of a known token, or `None` if the vocabulary does not
+    /// contain it. Always `None` for a hashed bundle.
+    #[must_use]
+    pub fn vocab_row(&self, token: &str) -> Option<usize> {
+        self.vocab_index.get(token).copied()
+    }
+
+    /// The display label of a snapshot: its named budget, else its seconds.
+    #[must_use]
+    pub fn snapshot_label(&self, i: usize) -> String {
+        if let Some(b) = self.snapshots.budgets.as_ref().and_then(|b| b.get(i)) {
+            return b.clone();
+        }
+        if self.snapshots.steps[i] == 0 {
+            "0 s".to_owned()
+        } else {
+            format!("{} s", self.snapshots.seconds[i])
+        }
     }
 
     /// How many snapshots the timeline has.

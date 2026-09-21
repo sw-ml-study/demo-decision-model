@@ -2,7 +2,7 @@
 //! softmax. The same arithmetic as `u:cm_infer` in `lib/choice_model.mlpl`.
 
 use crate::bundle::{Bundle, Weights};
-use crate::features::{Features, featurize};
+use crate::features::{Features, featurize, featurize_vocab};
 
 /// One snapshot of a trained model, ready to decide.
 pub struct Model<'a> {
@@ -71,7 +71,12 @@ impl<'a> Model<'a> {
     /// Featurize, run the forward pass, and read off the decision.
     #[must_use]
     pub fn decide(&self, text: &str) -> Decision {
-        let features = featurize(text, self.bundle.slots, self.bundle.width);
+        let b = self.bundle;
+        let features = if b.vocab.is_some() {
+            featurize_vocab(text, b.width, |t| b.vocab_row(t))
+        } else {
+            featurize(text, b.slots.unwrap_or(1), b.width)
+        };
         let probs = softmax(&self.logits(&features));
         let mut order: Vec<usize> = (0..probs.len()).collect();
         order.sort_by(|&a, &b| probs[b].total_cmp(&probs[a]).then(a.cmp(&b)));

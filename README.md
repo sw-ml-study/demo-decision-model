@@ -150,6 +150,29 @@ prepared it.
 memory, no calibration, no browser UI. It exists so there is something real to
 judge before anything is deepened. Numbers: [`SL01`](docs/reference/results.md).
 
+### Model 2: fewer confident wrong replies
+
+The first live model often asked about machines, or greeted, when the visitor
+had done neither. A probe traced both to hash collisions (unseen words reading as
+trained ones) and to cues in the training frames (*you* alone pushed toward
+COMPUTER). Model 2 ([`EH01`](catalog/lessons.toml)) replaces hashing with an exact
+vocabulary, adds a trained "none of these" class and an explicit escalation
+outcome, and covers seventeen kinds of reply. Scored on 96 hand-labelled probes
+whose labels were frozen before any new training frame was written:
+
+| What a visitor sees | Model 1 | Model 2 |
+|---|---|---|
+| reply class correct | 40% | **69%** |
+| right when it does not escalate | 38% | **78%** |
+| wrong "machines" replies | 12 | **1** |
+| wrong greetings | 7 | **0** |
+| escalated to "I can't tell" | 9% | 33% |
+
+On the 78 probes never seen in training it is 62% against 38%, and it is 0.36
+confident when wrong against 0.72. A third of inputs still escalate, and in the
+browser that means a flat "Please go on."; reflection, recall, and the ELIZA-
+oracle corpus are next. Details: [`SL01-dialog-probe.md`](docs/experiments/SL01-dialog-probe.md).
+
 ### Training, visible
 
 The page shows training, not only inference. One MLPL run from random weights
@@ -182,8 +205,8 @@ under `1e-9`, the matcher identical on every input. Rounding the weights to
 `1e-6` for transport changed no decision.
 
 `crates/tdm-web` is the Yew page. It embeds the bundle, so the site is one
-static download: 634 KB of WASM, 254 KB gzipped, of which the model is about
-150 KB. In memory the model is 33,065 f64 values, 264 KB. It is built locally
+static download: 2.43 MB of WASM, 865 KB gzipped, most of it the five
+embedded training snapshots. In memory the model is 33,065 f64 values, 264 KB. It is built locally
 into `pages/` with `just site`, committed, and published unchanged by a GitHub
 Actions workflow; CI builds nothing. The footer names the source commit it was
 built from, the host, and the time, and marks a build from uncommitted source

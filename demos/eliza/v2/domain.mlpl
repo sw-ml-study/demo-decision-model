@@ -1,0 +1,185 @@
+# Demo 01, version 2: seventeen response classes including a trained NONE escape hatch, their canned replies, a 1966-style keyword matcher as the yardstick, and the sentence frames the corpus is generated from. Written after the 96 probe labels were frozen, and deliberately against the spurious cues the v1 probe found: words like you, do, are and eliza appear across many classes so none of them can stand in for a class on its own. Version 1 stays beside it untouched because SL01 is published and must remain reproducible.
+include "../../../lib/text.mlpl";
+
+def u:e2_labels() {
+  "The seventeen classes, in label order. NONE is the trained escape hatch: none of the others applies.";
+  "GREET|FAMILY|FEELING|DESIRE|DREAM|COMPUTER|YES|NO|DONT_KNOW|QUESTION|ALWAYS|HOSTILE|SORRY|CLOSING|WORK|LOSS|NONE"
+}
+
+def u:e2_count() {
+  "How many classes there are.";
+  list_len(str_split(u:e2_labels(), "|"))
+}
+
+def u:e2_label(i) {
+  "The i-th class name.";
+  u:text_lg(str_split(u:e2_labels(), "|"), i)
+}
+
+def u:e2_index(name) {
+  "Index of a class by name, or -1.";
+  ls = str_split(u:e2_labels(), "|");
+  n = list_len(ls);
+  found = 0 - 1;
+  i = 0;
+  while lt(i, n) {
+    found = if str_eq(u:text_lg(ls, i), name) {
+      i
+    } else {
+      found
+    };
+    i = i + 1
+  };
+  found
+}
+
+def u:e2_responses(i) {
+  "Canned replies for class i, |-joined. Several are Weizenbaum's own DOCTOR lines. These are the only strings the demo can say.";
+  all = ["How do you do. Please tell me your problem.|Hello. What brings you here today?|Hi. What would you like to talk about?", "Tell me more about your family.|Who else in your family comes to mind?|How do you get along with them?", "Why do you think you feel that way?|How long have you felt like this?|Does that feeling come and go?", "What would it mean to you if you got it?|Why do you want that?|What stands in the way?", "What does that dream suggest to you?|Do you dream often?|Who else appears in your dreams?", "Do computers worry you?|Why do you mention machines?|What do you think machines have to do with your problem?", "You seem quite sure.|I see. Please go on.|I understand.", "Why not?|Are you saying no just to be negative?|You are being a bit negative.", "You don't seem quite certain.|Take your time. What comes to mind?|Is it hard to put into words?", "Why do you ask?|What answer would please you most?|What do you think?", "Can you think of a specific example?|Really, everyone?|When did you first notice that?", "We were discussing you, not me.|Does it upset you to talk about this?|You seem frustrated. What is behind that?", "Please don't apologize.|Apologies are not necessary.|What feelings do you have when you apologize?", "Thank you for talking with me. Take care.|Goodbye. I hope you feel better.|You are welcome to come back anytime.", "How do you feel about your work?|Tell me more about the situation at work.|What would make work easier for you?", "I am sorry to hear about your loss. How are you coping?|Tell me more about what you lost.|Losing someone is hard. What do you miss most?", "Please go on.|Tell me more about that.|I see. What else is on your mind?"];
+  u:text_lg(all, i)
+}
+
+def u:e2_keywords(i) {
+  "The yardstick's keyword list for class i, as a 1966 author would have written it; empty for the classes ELIZA had no keyword for.";
+  all = ["hello hi", "mother father sister brother family wife husband children", "sad unhappy depressed feel feels", "want wish need", "dream dreams dreamt dreamed", "computer computers machine machines", "yes", "no", "perhaps maybe", "why what how", "always everyone everybody nobody", "", "sorry apologize", "", "", "", ""];
+  u:text_lg(all, i)
+}
+
+def u:e2_match_order() {
+  "Class indices in keyword-priority order, after ELIZA's ranks: an apology or a computer outranks what it is about, and a question word is a last resort.";
+  [12, 4, 5, 10, 1, 2, 3, 8, 7, 6, 9, 0]
+}
+
+def u:e2_matcher(text) {
+  "The yardstick: first class in priority order with a whole-word keyword hit, else NONE.";
+  words = str_split(u:text_words(text), " ");
+  nw = list_len(words);
+  order = u:e2_match_order();
+  none = u:e2_index("NONE");
+  found = none;
+  oi = 0;
+  while lt(oi, reduce_mul(shape(order))) * eq(found, none) {
+    c = take(order, 0, oi);
+    keys = str_split(u:e2_keywords(c), " ");
+    nk = list_len(keys);
+    hit = 0;
+    wi = 0;
+    while lt(wi, nw) {
+      ki = 0;
+      while lt(ki, nk) {
+        hit = hit + str_eq(u:text_lg(words, wi), u:text_lg(keys, ki)) * gt(str_len(u:text_lg(keys, ki)), 0);
+        ki = ki + 1
+      };
+      wi = wi + 1
+    };
+    found = if gt(hit, 0) {
+      c
+    } else {
+      found
+    };
+    oi = oi + 1
+  };
+  found
+}
+
+def u:e2_train_frames(i) {
+  "Training frames for class i, |-joined; {} marks the filler slot, and a frame without one is used once as written.";
+  all = ["{}|{} eliza|{} there|{} doctor|well {} there|{} again", "my {} never listens to me|i argued with my {} today|do you think my {} loves me|my {} is always on my case|i really miss my {}|you remind me of my {}", "i feel {}|i have been so {} lately|do you ever feel {}|i am {} today|everything makes me {}|i think i am {}", "i want {}|i wish i had {}|all i need is {}|do you think i will ever get {}|i would really like {}|someday i hope for {}", "i had a dream about {}|last night i dreamt about {}|i keep having nightmares about {}|do you think my dream about {} means anything|in my dream there was {}|you were in my dream about {}", "{} scare me|i do not trust {}|are you one of those {}|do you think {} can think|are you really {}|i think {} are taking over", "{}|{} i think so|{} that is right|oh {}|{} of course|{} i agree", "{}|{} not really|{} i do not think so|oh {}|{} never|{} i disagree", "{}|{} i guess|hmm {}|honestly {}|{} what to say|well {}", "why do you {}|what do you mean by {}|how do you {}|can you {}|what should i {}|why would you {}", "everyone {}|nobody {}|i always {}|people always {}|no one ever {}|everybody {}", "you are {}|this is {}|that was {}|you are being {}|this conversation is {}|i hate you|you do not understand|you never listen|shut up", "{}|{} about that|i am {}|{} for being rude|oh {}|{} again", "{}|{} for listening|ok {}|{} doctor|{} eliza|well {}", "my {} is stressing me out|i hate my {}|i might lose my {}|my {} is too demanding|i worry about my {}|do you think i should quit my {}", "my {} died|i lost my {}|i miss my {} so much|my {} passed away|i am grieving my {}|my {} is gone", "the weather was {} today|i watched a movie about {}|we talked about {} at lunch|the news was all about {}|did you know about {}|what do you think of {}|qwerty|zzz|hmm ok|lmao|hahaha|this is sparta|much wow|yolo|it is what it is|big mood"];
+  u:text_lg(all, i)
+}
+
+def u:e2_val_frames(i) {
+  "Held-out frames for class i: phrasings the model never trains on, with fillers it does.";
+  all = ["{} how is your day|oh {}", "i cannot talk to my {} anymore|my {} and i had a fight", "why am i always so {}|i just feel {} again", "i keep hoping for {}|what i need is {}", "i had a strange dream about {}|my nightmares are about {}", "i spend all day with {}|can {} really understand people", "{} definitely|well {}", "{} not at all|well {}", "i am {}|{} really", "do you really {}|how can you {}", "they always {}|nobody ever {}", "you are so {}|honestly this is {}", "{} my fault|well {}", "{} for your help|alright {}", "i have problems at my {}|my {} makes me miserable", "i cannot get over losing my {}|since my {} died i feel empty", "someone mentioned {} yesterday|i saw a video about {}"];
+  u:text_lg(all, i)
+}
+
+def u:e2_fillers(i) {
+  "Slot fillers for class i, |-joined.";
+  all = ["hello|hi|hey|good morning|good afternoon|greetings|howdy", "mother|father|mom|dad|sister|brother|parents|wife|husband|son|daughter|grandmother|girlfriend|boyfriend", "sad|anxious|lonely|depressed|miserable|empty|angry|tired|scared|hopeless|stressed|afraid", "a vacation|more money|some peace|a fresh start|someone to talk to|help|a break|to be happy|a better life", "falling|being chased|the ocean|my old school|flying|a dark house|my teeth falling out|a storm", "computers|machines|robots|programs|algorithms|chatbots|a computer|a machine|a robot|a program", "yes|yeah|yep|sure|absolutely|correct|i do|that is true|uh huh", "no|nope|nah|not really|no way|definitely not|i do not|never", "i don't know|i dont know|not sure|maybe|perhaps|who knows|i have no idea|i cannot say|hard to say", "say that|mean|know|think so|help|feel|do that|understand|care", "ignores me|hates me|leaves|lets me down|messes things up|understands me|cares|laughs at me|forgets about me", "stupid|useless|annoying|pointless|dumb|a waste of time|ridiculous|boring", "sorry|so sorry|i apologize|my apologies|forgive me|pardon me", "thank you|thanks|goodbye|bye|see you later|i have to go|take care", "job|boss|work|career|manager|coworkers|exams|classes|deadline|promotion", "dog|cat|pet|best friend|friend|goldfish|hamster|horse", "the economy|sports|cooking|gardening|traffic|history|the moon|taxes|trains|pizza|the internet|music"];
+  u:text_lg(all, i)
+}
+
+def u:e2_render(frame, filler) {
+  "Fill a frame's single {} slot; a frame without one is returned as written.";
+  str_join(str_split(frame, "{}"), filler)
+}
+
+def u:e2_expand(frames, fillers, c, lines, y) {
+  "Append every frame-filler combination for class c to the running newline-joined lines and label array; a frame without a slot contributes one sentence.";
+  fs = str_split(fillers, "|");
+  ts = str_split(frames, "|");
+  nt = list_len(ts);
+  nf = list_len(fs);
+  out = lines;
+  labels = y;
+  t = 0;
+  while lt(t, nt) {
+    frame = u:text_lg(ts, t);
+    reps = if gt(str_find(frame, "{}"), 0 - 1) {
+      nf
+    } else {
+      1
+    };
+    fi = 0;
+    while lt(fi, reps) {
+      s = u:e2_render(frame, u:text_lg(fs, fi));
+      out = if gt(str_len(out), 0) {
+        str_concat(str_concat(out, "\n"), s)
+      } else {
+        s
+      };
+      labels = concat(labels, [c]);
+      fi = fi + 1
+    };
+    t = t + 1
+  };
+  {lines: out, y: labels}
+}
+
+def u:e2_corpus(split) {
+  "The generated corpus for a split: 0 for training frames, 1 for held-out validation frames. Returns the sentences as a string list and their labels as an array, in the same order.";
+  k = u:e2_count();
+  acc = {lines: "", y: fill([0], 0)};
+  c = 0;
+  while lt(c, k) {
+    frames = if eq(split, 0) {
+      u:e2_train_frames(c)
+    } else {
+      u:e2_val_frames(c)
+    };
+    acc = u:e2_expand(frames, u:e2_fillers(c), c, acc.lines, acc.y);
+    c = c + 1
+  };
+  {texts: str_split(acc.lines, "\n"), y: acc.y}
+}
+
+def u:e2_probes(path) {
+  "The frozen, hand-labelled probe set: one LABEL<TAB>text per line. Returns the texts and their label indices.";
+  rows = str_split(unwrap(read_text(path)), "\n");
+  n = list_len(rows);
+  lines = "";
+  y = fill([0], 0);
+  i = 0;
+  while lt(i, n) {
+    row = u:text_lg(rows, i);
+    parts = str_split(row, "\t");
+    keep = eq(list_len(parts), 2);
+    lines = if keep {
+      if gt(str_len(lines), 0) {
+        str_concat(str_concat(lines, "\n"), u:text_lg(parts, 1))
+      } else {
+        u:text_lg(parts, 1)
+      }
+    } else {
+      lines
+    };
+    y = if keep {
+      concat(y, [u:e2_index(u:text_lg(parts, 0))])
+    } else {
+      y
+    };
+    i = i + 1
+  };
+  {texts: str_split(lines, "\n"), y: y}
+}

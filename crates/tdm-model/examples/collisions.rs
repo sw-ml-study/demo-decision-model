@@ -16,10 +16,13 @@ fn main() {
         .nth(1)
         .expect("usage: collisions BUNDLE < inputs");
     let b = Bundle::parse(&std::fs::read_to_string(path).expect("read")).expect("parse");
+    let slots = b
+        .slots
+        .expect("this diagnostic reads a hashed (version 2) bundle");
     let mut owner: HashMap<usize, String> = HashMap::new();
     let mut vocab: HashSet<String> = HashSet::new();
     for s in &b.parity.inputs[..TRAIN] {
-        let f = featurize(s, b.slots, b.width);
+        let f = featurize(s, slots, b.width);
         for (tok, slot) in f.tokens.iter().zip(&f.slots) {
             vocab.insert(tok.clone());
             owner.entry(*slot).or_insert_with(|| tok.clone());
@@ -29,13 +32,13 @@ fn main() {
         "training vocabulary: {} distinct features in {} of {} slots\n",
         vocab.len(),
         owner.len(),
-        b.slots
+        slots
     );
     let mut input = String::new();
     std::io::stdin().read_to_string(&mut input).expect("stdin");
     let (mut seen, mut borrowed, mut empty) = (0, 0, 0);
     for line in input.lines().filter(|l| !l.trim().is_empty()) {
-        let f = featurize(line, b.slots, b.width);
+        let f = featurize(line, slots, b.width);
         let mut notes = Vec::new();
         for (tok, slot) in f.tokens.iter().zip(&f.slots) {
             if vocab.contains(tok) {

@@ -88,7 +88,7 @@ struct Proposed<'a> {
 impl Proposed<'_> {
     fn reply(&mut self, line: &str) -> (String, &'static str) {
         let b = self.b;
-        let f = featurize(line, b.slots, b.width);
+        let f = featurize(line, b.slots.expect("hashed bundle"), b.width);
         let (tokens, slots): (Vec<String>, Vec<usize>) = f
             .tokens
             .iter()
@@ -104,7 +104,11 @@ impl Proposed<'_> {
         let t = self.turn;
         self.turn += 1;
         let out = if content {
-            let logits = Model::new(b).logits(&Features { slots, tokens });
+            let logits = Model::new(b).logits(&Features {
+                known: vec![true; tokens.len()],
+                slots,
+                tokens,
+            });
             let probs = softmax(&logits);
             let best = (0..probs.len())
                 .max_by(|&x, &y| probs[x].total_cmp(&probs[y]))
@@ -152,7 +156,7 @@ fn main() {
     let b = Bundle::parse(&std::fs::read_to_string(path).expect("read")).expect("parse");
     let vocab = b.parity.inputs[..TRAIN]
         .iter()
-        .flat_map(|s| featurize(s, b.slots, b.width).tokens)
+        .flat_map(|s| featurize(s, b.slots.expect("hashed bundle"), b.width).tokens)
         .collect();
     let mut p = Proposed {
         b: &b,

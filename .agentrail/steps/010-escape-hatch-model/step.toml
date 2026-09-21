@@ -1,6 +1,6 @@
-number = 12
+number = 10
 slug = "escape-hatch-model"
-status = "pending"
+status = "in-progress"
 description = "Fix the model's confidently-wrong reporting found by 007-dialog-probe, in thi..."
 role = "production"
 context_files = []

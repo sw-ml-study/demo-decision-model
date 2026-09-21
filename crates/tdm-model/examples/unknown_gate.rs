@@ -22,9 +22,12 @@ fn main() {
         .nth(1)
         .expect("usage: unknown_gate BUNDLE < inputs");
     let b = Bundle::parse(&std::fs::read_to_string(path).expect("read")).expect("parse");
+    let slots = b
+        .slots
+        .expect("this diagnostic reads a hashed (version 2) bundle");
     let vocab: HashSet<String> = b.parity.inputs[..TRAIN]
         .iter()
-        .flat_map(|s| featurize(s, b.slots, b.width).tokens)
+        .flat_map(|s| featurize(s, slots, b.width).tokens)
         .collect();
     let model = Model::new(&b);
     let mut input = String::new();
@@ -32,7 +35,7 @@ fn main() {
     let (mut changed, mut abstained) = (0, 0);
     for line in input.lines().filter(|l| !l.trim().is_empty()) {
         let before = model.decide(line);
-        let f = featurize(line, b.slots, b.width);
+        let f = featurize(line, slots, b.width);
         let (tokens, slots): (Vec<String>, Vec<usize>) = f
             .tokens
             .iter()
@@ -45,6 +48,7 @@ fn main() {
             .any(|t| !t.contains('_') && !STOP.contains(&t.as_str()));
         let after = if content {
             let logits = model.logits(&Features {
+                known: vec![true; tokens.len()],
                 slots,
                 tokens: tokens.clone(),
             });

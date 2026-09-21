@@ -5,6 +5,19 @@ use crate::bundle::Bundle;
 use crate::matcher::KeywordMatcher;
 use crate::model::{Decision, Model};
 
+/// What the program decided to do with the model's choice.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Outcome {
+    /// Confident enough, on enough evidence: reply for the chosen label.
+    Act,
+    /// The model chose the escape hatch: none of the offered options applies.
+    NoneApplies,
+    /// Not enough evidence or confidence to act: hand the decision to a larger
+    /// decider over the same options. Where none is available (in a browser),
+    /// reply from the fallback table and say so.
+    Escalate,
+}
+
 /// The reply the program chose, and why.
 #[derive(Clone, Debug)]
 pub struct Reply {
@@ -16,6 +29,7 @@ pub struct Reply {
     pub text: String,
     /// Whether the policy acted on the model's choice, or abstained to fallback.
     pub acted: bool,
+    pub outcome: Outcome,
 }
 
 /// Everything one turn produced, for the chat view and the trace view.
@@ -40,14 +54,24 @@ pub fn respond(bundle: &Bundle, text: &str, turn: usize) -> Turn {
 #[must_use]
 pub fn respond_at(bundle: &Bundle, snapshot: usize, text: &str, turn: usize) -> Turn {
     let decision = Model::at(bundle, snapshot).decide(text);
-    let acted = decision.confidence >= bundle.threshold;
-    let label = if acted {
-        decision.selected
-    } else {
-        bundle
-            .label_index(&bundle.fallback)
-            .unwrap_or(decision.selected)
+    let fallback = bundle
+        .label_index(&bundle.fallback)
+        .unwrap_or(decision.selected);
+    let outcome = match bundle.escalation {
+        Some(_) if decision.selected == fallback => Outcome::NoneApplies,
+        Some(e)
+            if decision.features.slots.len() < e.min_known
+                || decision.confidence < e.min_confidence
+                || decision.margin < e.min_margin =>
+        {
+            Outcome::Escalate
+        }
+        Some(_) => Outcome::Act,
+        None if decision.confidence >= bundle.threshold => Outcome::Act,
+        None => Outcome::Escalate,
     };
+    let acted = outcome == Outcome::Act;
+    let label = if acted { decision.selected } else { fallback };
     let replies = bundle.replies(label);
     let index = turn % replies.len();
     let reply = Reply {
@@ -55,6 +79,7 @@ pub fn respond_at(bundle: &Bundle, snapshot: usize, text: &str, turn: usize) -> 
         index,
         text: replies[index].to_owned(),
         acted,
+        outcome,
     };
     let matcher = KeywordMatcher::new(bundle).classify(text);
     Turn {

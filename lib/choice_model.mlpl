@@ -90,3 +90,64 @@ def u:cm_accuracy_by_label(pred, y, k) {
   };
   {acc: acc, count: cnt}
 }
+
+def u:cm_featurize_vocab(texts, vocab, f) {
+  "Feature matrices against an exact vocabulary: row ids [N, f], the known-feature mask [N, f], pooling weights [N, f, 1] averaging only known features, and known counts [N]. An input with no known feature pools to zero, so its logits are the bias alone.";
+  n = list_len(texts);
+  ids = fill([0], 0);
+  m = fill([0], 0);
+  counts = fill([0], 0);
+  i = 0;
+  while lt(i, n) {
+    r = u:text_vocab_features(u:text_lg(texts, i), vocab, f);
+    ids = concat(ids, r.ids);
+    m = concat(m, r.mask);
+    counts = concat(counts, [r.n]);
+    i = i + 1
+  };
+  mask = reshape(m, [n, f]);
+  {ids: reshape(ids, [n, f]), mask: mask, wmask: u:cm_pool_weights(mask), counts: counts}
+}
+
+def u:cm_pool_weights(mask) {
+  "Mean-pool weights [N, F, 1] from a feature mask [N, F]: each kept feature gets one over its row's count; a row with none kept gets zeros.";
+  s = shape(mask);
+  n = take(s, 0, 0);
+  f = take(s, 0, 1);
+  counts = reduce_add(mask, 1);
+  safe = counts + eq(counts, 0);
+  reshape(mask / reshape(safe, [n, 1]), [n, f, 1])
+}
+
+def u:cm_dropout(fz, p, seed) {
+  "A copy of a featurized batch with each known feature independently dropped with probability p. Trained on alongside the original, it teaches the model that thin evidence is not grounds for certainty.";
+  s = shape(fz.mask);
+  kept = fz.mask * ge(random(seed, s), p);
+  {ids: fz.ids, mask: kept, wmask: u:cm_pool_weights(kept), counts: reduce_add(kept, 1)}
+}
+
+def u:cm_smooth_loss(ids, wmask, y, eps) {
+  "Label-smoothed cross-entropy over the caller's global params: (1 - eps) times the loss on the true label plus eps times the mean loss over all labels, so no answer is ever worth pushing to probability one.";
+  logits = u:cm_logits(ids, wmask);
+  (1 - eps) * cross_entropy(logits, y) + eps * (0 - mean(log(softmax(logits, 1))))
+}
+
+def u:cm_train_smooth(ids, wmask, y, steps, lr, eps) {
+  "Full-batch Adam on the label-smoothed loss for a fixed number of steps; returns the final plain cross-entropy.";
+  train steps {
+    adam(u:cm_smooth_loss(ids, wmask, y, eps), [cm_E, cm_W, cm_b], lr, 0.9, 0.999, 0.00000001)
+  };
+  cross_entropy(u:cm_logits(ids, wmask), y)
+}
+
+def u:cm_stack(a, b) {
+  "Stack two arrays of any equal trailing shape along their first axis (concat joins only rank-1 arrays).";
+  s = shape(a);
+  rows = take(s, 0, 0) + take(shape(b), 0, 0);
+  reshape(concat(reshape(a, [reduce_mul(s)]), reshape(b, [reduce_mul(shape(b))])), scatter(s, 0, rows))
+}
+
+def u:cm_stack_batches(a, b) {
+  "Stack two featurized batches row-wise, keeping ids and pooling weights aligned.";
+  {ids: u:cm_stack(a.ids, b.ids), wmask: u:cm_stack(a.wmask, b.wmask)}
+}

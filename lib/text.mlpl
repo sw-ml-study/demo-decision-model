@@ -111,3 +111,78 @@ def u:text_features(s, slots, f) {
   };
   {ids: ids, mask: mask, n: n, tokens: tokens}
 }
+
+def u:text_vocab(texts, f) {
+  "An exact vocabulary over the features of a string list: the distinct tokens, |-joined in first-seen order, and a record mapping each token to its row (1-based; row 0 is reserved for unknown). Replaces hashing, under which an unseen word lands on a slot some trained word owns and silently inherits its meaning.";
+  n = list_len(texts);
+  seen = "|";
+  order = "";
+  count = 0;
+  json = "{";
+  i = 0;
+  while lt(i, n) {
+    toks = str_split(u:text_features(u:text_lg(texts, i), 1, f).tokens, "|");
+    nt = list_len(toks);
+    j = 0;
+    while lt(j, nt) {
+      t = u:text_lg(toks, j);
+      probe = str_concat(str_concat("|", t), "|");
+      fresh = gt(str_len(t), 0) * lt(str_find(seen, probe), 0);
+      count = count + fresh;
+      seen = if fresh {
+        str_concat(seen, str_concat(t, "|"))
+      } else {
+        seen
+      };
+      order = if fresh {
+        if gt(count, 1) {
+          str_concat(str_concat(order, "|"), t)
+        } else {
+          t
+        }
+      } else {
+        order
+      };
+      json = if fresh {
+        str_concat(json, str_concat(str_concat(str_concat(if gt(count, 1) {
+                  ","
+                } else {
+                  ""
+                }, "\""), t), str_concat("\":", to_string(count))))
+      } else {
+        json
+      };
+      j = j + 1
+    };
+    i = i + 1
+  };
+  {tokens: order, size: count, index: unwrap(parse_json(str_concat(json, "}")))}
+}
+
+def u:text_vocab_features(s, vocab, f) {
+  "Feature record for one input against an exact vocabulary: row ids [f], a mask [f] marking only the tokens the vocabulary knows, the count of known features, and all feature tokens for display. An unknown token contributes nothing, rather than someone else's meaning.";
+  r = u:text_features(s, 1, f);
+  toks = str_split(r.tokens, "|");
+  nt = if gt(r.n, 0) {
+    list_len(toks)
+  } else {
+    0
+  };
+  ids = fill([f], 0);
+  mask = fill([f], 0);
+  known = 0;
+  j = 0;
+  while lt(j, nt) {
+    t = u:text_lg(toks, j);
+    hit = has_field(vocab.index, t);
+    ids = if hit {
+      scatter(ids, j, unwrap(record_get(vocab.index, t)))
+    } else {
+      ids
+    };
+    mask = scatter(mask, j, hit);
+    known = known + hit;
+    j = j + 1
+  };
+  {ids: ids, mask: mask, n: known, tokens: r.tokens}
+}

@@ -13,7 +13,7 @@ use crate::trace::Trace;
 
 /// The trained model and its demo data, embedded at build time so the page is
 /// one static download with nothing to fetch.
-const BUNDLE: &str = include_str!("../../../fixtures/bundles/demo01.json");
+const BUNDLE: &str = include_str!("../../../fixtures/bundles/demo01-model2.json");
 
 /// The bundle, shared by pointer. Props compare by identity: the bundle never
 /// changes after load, and comparing 33,000 weights on every render would be

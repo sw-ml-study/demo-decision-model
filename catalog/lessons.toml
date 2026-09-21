@@ -40,3 +40,17 @@ memory = "five snapshots of the 33,065-parameter Choice model, rounded to 1e-4: 
 speed = "one full-batch Adam run, snapshots after 0, 11, 22, 55 and 110 steps = 0, 1, 2, 5 and 10 s on an M1 Max (segments measured 1.04, 1.02, 3.05, 5.10 s); browser inference about 5 us per decision"
 quality = "val accuracy 0.069 / 0.845 / 0.879 / 0.879 / 0.879; wild 0.10 / 0.80 / 0.75 / 0.75 / 0.75; mean confidence on 95 unlabelled probe inputs 0.115 / 0.514 / 0.740 / 0.808 / 0.811. Snapshot 0 is a uniform guess (0.11 per class). Accuracy settles at 2 s; confidence on inputs never trained on keeps rising to 10 s. The 1 s snapshot is the best behaved on the hand-written set. Rounding changed no decision (max 5.4e-5)."
 status = "accepted"
+
+[[lesson]]
+id = "EH01"
+slug = "escape-hatch-model"
+title = "An exact vocabulary, a trained escape hatch and an escalation policy: fewer confident wrong replies"
+source = "demos/eliza/v2/export.mlpl"
+library = ["lib/text.mlpl", "lib/choice_model.mlpl", "demos/eliza/v2/domain.mlpl"]
+test = ["crates/tdm-model/tests/vocab_bundle.rs", "demos/eliza/sim/tests/probe_ratchet.rs"]
+fixture = "fixtures/bundles/demo01-model2.json"
+implementation = "from-scratch"
+memory = "38,129 parameters (1,174 x 32 vocabulary embedding, 32 x 17 head, 17 biases); five snapshots in a 2,157,264-byte bundle; page WASM 2.43 MB, 865 KB gzipped"
+speed = "one Adam run over 2,808 rows (936 generated sentences plus two word-dropout copies), about 2.8 s per step in the interpreter; snapshots after 0, 3, 20, 100, 200 steps = 0 s, 9 s, 61 s, 280 s, 564 s measured"
+quality = "on 96 frozen hand-labelled probes, after the policy (default 5 min snapshot, chosen by validation 0.884): reply class correct 69% vs 40% for the v1 model; right on 78% of non-escalated replies vs 38%; visible wrong COMPUTER replies 1 vs 12, wrong GREET 0 vs 7; escalates 33%, and in 28 of those 32 the model's own choice would have been wrong. Strict (78 probes never in training): 62% vs 38%, 70% vs 36% when not escalating, confidence when wrong 0.36 vs 0.72. Training past 5 min lowers validation (0.794 at 10 min). Labels, frames and yardstick are all the author's; the ELIZA-oracle corpus is the planned remedy."
+status = "accepted"

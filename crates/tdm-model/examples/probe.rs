@@ -20,9 +20,12 @@ fn main() {
         .expect("usage: probe BUNDLE < inputs");
     let bundle =
         Bundle::parse(&std::fs::read_to_string(path).expect("read bundle")).expect("parse bundle");
+    let slots = bundle
+        .slots
+        .expect("this diagnostic reads a hashed (version 2) bundle");
     let known: HashSet<usize> = bundle.parity.inputs[..TRAIN]
         .iter()
-        .flat_map(|s| featurize(s, bundle.slots, bundle.width).slots)
+        .flat_map(|s| featurize(s, slots, bundle.width).slots)
         .collect();
     let mut input = String::new();
     std::io::stdin()

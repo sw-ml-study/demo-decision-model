@@ -1,0 +1,111 @@
+# Trains demo 01's version 2 model and exports it for the browser: one Adam run from seeded random initialization on the 936 generated sentences plus two word-dropout copies, snapshotted after 0, 3, 20, 100 and 200 steps -- about 0 s, 10 s, 1 min, 5 min and 10 min of training on an M1 Max -- with every snapshot scored identically on the held-out frames and on the 96 frozen, hand-labelled probes. The default snapshot is chosen by validation accuracy, never by the probes, which are the test. Writes the bundle the live page embeds, with an exact vocabulary instead of hashing, the escape-hatch and escalation policy, and a parity set.
+include "../../../lib/choice_model.mlpl";
+include "domain.mlpl";
+
+def u:x2_round(a) {
+  "Round to four decimal places for transport; parity is computed from the rounded weights.";
+  floor(a * 10000 + 0.5) / 10000
+}
+
+def u:x2_flat(a) {
+  "An array as rank 1.";
+  reshape(a, [reduce_mul(shape(a))])
+}
+
+def u:x2_count_where(pred, truth, label) {
+  "How many inputs the model assigned to label when that was not their true label.";
+  reduce_add(eq(pred, label) * (1 - eq(truth, label)))
+}
+
+def u:x2_join(texts) {
+  "A string list as one newline-joined string.";
+  str_join(texts, "\n")
+}
+
+x2_width = 24;
+x2_dim = 32;
+x2_eps = 0.1;
+x2_lr = 0.02;
+x2_steps = [0, 3, 20, 100, 200];
+x2_budget = ["0 s", "10 s", "1 min", "5 min", "10 min"];
+x2_k = u:e2_count();
+
+x2_tr = u:e2_corpus(0);
+x2_va = u:e2_corpus(1);
+x2_pr = u:e2_probes("demos/eliza/probe-labels.tsv");
+x2_examples = str_split("I don't have any problems|my mom never listens to me|I don't know|you are just a computer|hello there|i lost my job last week|everyone hates me|thank you", "|");
+x2_vocab = u:text_vocab(x2_tr.texts, x2_width);
+x2_rows = x2_vocab.size + 1;
+
+x2_trf = u:cm_featurize_vocab(x2_tr.texts, x2_vocab, x2_width);
+x2_vaf = u:cm_featurize_vocab(x2_va.texts, x2_vocab, x2_width);
+x2_prf = u:cm_featurize_vocab(x2_pr.texts, x2_vocab, x2_width);
+x2_all = str_split(str_join([u:x2_join(x2_va.texts), u:x2_join(x2_pr.texts), u:x2_join(x2_examples)], "\n"), "\n");
+x2_n = list_len(x2_all);
+x2_alf = u:cm_featurize_vocab(x2_all, x2_vocab, x2_width);
+x2_aug = u:cm_stack_batches(u:cm_stack_batches(x2_trf, u:cm_dropout(x2_trf, 0.3, 21)), u:cm_dropout(x2_trf, 0.3, 22));
+x2_y = concat(concat(x2_tr.y, x2_tr.y), x2_tr.y);
+
+cm_E = param[1174, 32];
+cm_E = randn(11, [1174, 32]) * 0.1;
+cm_W = param[32, 17];
+cm_W = randn(12, [32, 17]) * 0.1;
+cm_b = param[17];
+cm_b = fill([17], 0);
+
+x2_E = fill([0], 0);
+x2_Wh = fill([0], 0);
+x2_B = fill([0], 0);
+x2_P = fill([0], 0);
+x2_M = fill([0], 0);
+x2_secs = fill([0], 0);
+x2_done = 0;
+x2_elapsed = 0;
+x2_c = 0;
+while lt(x2_c, 5) {
+  x2_target = take(x2_steps, 0, x2_c);
+  x2_t0 = clock_ms();
+  x2_l = if gt(x2_target, x2_done) {
+    u:cm_train_smooth(x2_aug.ids, x2_aug.wmask, x2_y, x2_target - x2_done, x2_lr, x2_eps)
+  } else {
+    0
+  };
+  x2_elapsed = x2_elapsed + clock_ms() - x2_t0;
+  x2_secs = concat(x2_secs, [floor(x2_elapsed / 100) / 10]);
+  x2_done = x2_target;
+  x2_w = {E: u:x2_round(cm_E), W: u:x2_round(cm_W), b: u:x2_round(cm_b)};
+  x2_pv = softmax(u:cm_infer(x2_w, x2_vaf.ids, x2_vaf.wmask), 1);
+  x2_pp = softmax(u:cm_infer(x2_w, x2_prf.ids, x2_prf.wmask), 1);
+  x2_predp = argmax(x2_pp, 1);
+  x2_ok = eq(x2_predp, x2_pr.y);
+  x2_conf = reduce(:max, x2_pp, 1);
+  x2_wrong = reduce_add(1 - x2_ok);
+  x2_right = reduce_add(x2_ok);
+  x2_row = [cross_entropy(u:cm_infer(x2_w, x2_trf.ids, x2_trf.wmask), x2_tr.y), mean(eq(argmax(x2_pv, 1), x2_va.y)), mean(x2_ok), reduce_add(x2_conf * (1 - x2_ok)) / (x2_wrong + eq(x2_wrong, 0)), reduce_add(x2_conf * x2_ok) / (x2_right + eq(x2_right, 0)), u:x2_count_where(x2_predp, x2_pr.y, u:e2_index("COMPUTER")), u:x2_count_where(x2_predp, x2_pr.y, u:e2_index("GREET")), mean(x2_conf)];
+  x2_M = concat(x2_M, x2_row);
+  x2_E = concat(x2_E, u:x2_flat(x2_w.E));
+  x2_Wh = concat(x2_Wh, u:x2_flat(x2_w.W));
+  x2_B = concat(x2_B, x2_w.b);
+  x2_P = concat(x2_P, u:x2_flat(softmax(u:cm_infer(x2_w, x2_alf.ids, x2_alf.wmask), 1)));
+  print("snapshot", u:text_lg(x2_budget, x2_c), " steps", x2_target, " seconds", floor(x2_elapsed / 1000), " val", take(x2_row, 0, 1), " probe", take(x2_row, 0, 2), " conf wrong", take(x2_row, 0, 3), " conf right", take(x2_row, 0, 4), " false COMPUTER", take(x2_row, 0, 5), " false GREET", take(x2_row, 0, 6));
+  x2_c = x2_c + 1
+};
+
+x2_Mr = reshape(x2_M, [5, 8]);
+x2_best = argmax(reshape(gather_rows(transpose(x2_Mr), [1]), [5]));
+print("default snapshot, chosen by validation accuracy:", u:text_lg(x2_budget, x2_best));
+
+x2_match = fill([0], 0);
+x2_i = 0;
+while lt(x2_i, x2_n) {
+  x2_match = concat(x2_match, [u:e2_matcher(u:text_lg(x2_all, x2_i))]);
+  x2_i = x2_i + 1
+};
+
+x2_resp = fill([0], 0);
+x2_bundle = {schema: "sw-ml-study.decision-bundle", version: 3, provenance: {producer: "demos/eliza/v2/export.mlpl", producer_revision: "model2-v1", generated_at: "2026-09-21", source_description: "demo 01 model 2: seventeen classes with a trained NONE escape hatch and an exact vocabulary; one Adam run (lr 0.02, label smoothing 0.1, two word-dropout copies at 0.3) from seeded random initialization over 936 generated sentences, snapshotted after 0, 3, 20, 100 and 200 steps, about 0 s, 10 s, 1 min, 5 min and 10 min of training on an M1 Max with mlpl-repl 0.22.0. Weights rounded to 1e-4."}, demo: "demo 01", title: "ELIZA", question: "what should the reply be?", opening: "The doctor is in. What seems to be your problem?", labels: str_split(u:e2_labels(), "|"), fallback: "NONE", threshold: 0.4, escalation: {min_confidence: 0.4, min_margin: 0.15, min_known: 1}, vocab: str_split(x2_vocab.tokens, "|"), width: x2_width, dim: x2_dim, snapshots: {steps: x2_steps, seconds: x2_secs, budgets: x2_budget, metric_names: ["train loss", "val accuracy", "probe accuracy", "probe confidence when wrong", "probe confidence when right", "false COMPUTER", "false GREET", "probe confidence"], metrics: x2_Mr, embedding: reshape(x2_E, [5, 37568]), head: reshape(x2_Wh, [5, 544]), bias: reshape(x2_B, [5, 17])}, default_snapshot: x2_best, responses: str_split(str_join([u:e2_responses(0), u:e2_responses(1), u:e2_responses(2), u:e2_responses(3), u:e2_responses(4), u:e2_responses(5), u:e2_responses(6), u:e2_responses(7), u:e2_responses(8), u:e2_responses(9), u:e2_responses(10), u:e2_responses(11), u:e2_responses(12), u:e2_responses(13), u:e2_responses(14), u:e2_responses(15), u:e2_responses(16)], "\n"), "\n"), keywords: str_split(str_join([u:e2_keywords(0), u:e2_keywords(1), u:e2_keywords(2), u:e2_keywords(3), u:e2_keywords(4), u:e2_keywords(5), u:e2_keywords(6), u:e2_keywords(7), u:e2_keywords(8), u:e2_keywords(9), u:e2_keywords(10), u:e2_keywords(11), u:e2_keywords(12), u:e2_keywords(13), u:e2_keywords(14), u:e2_keywords(15), u:e2_keywords(16)], "\n"), "\n"), match_order: u:e2_match_order(), examples: x2_examples, parity: {inputs: x2_all, probs: reshape(x2_P, [5, x2_n * x2_k]), matcher: x2_match}};
+
+x2_json = unwrap(to_json(x2_bundle));
+x2_saved = write_atomic("fixtures/bundles/demo01-model2.json", x2_json);
+print("bundle written", x2_saved, "bytes", str_len(x2_json), "parity inputs", x2_n, "vocab", x2_vocab.size);
+print("")

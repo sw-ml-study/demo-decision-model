@@ -42,7 +42,7 @@ pub fn footer(props: &FooterProps) -> Html {
             <p>
                 { format!("Runs entirely in your browser: {} parameters, trained from random initialization in sw-MLPL. ",
                     b.param_count()) }
-                { "This is a thin slice: one uncalibrated Choice, so confidences near 1.00 are not probabilities yet." }
+                { "Every reply is chosen from a canned set; when the model cannot tell, the program escalates instead of guessing. Its confidences are not yet formally calibrated." }
             </p>
             <p>
                 <a href="literate.html">{ "How the MLPL code works — the literate document" }</a>
