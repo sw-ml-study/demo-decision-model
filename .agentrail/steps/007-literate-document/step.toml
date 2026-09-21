@@ -1,0 +1,8 @@
+number = 7
+slug = "literate-document"
+status = "pending"
+description = "User request: an Emacs org-mode literate, reproducible-research document for ..."
+role = "production"
+context_files = []
+created_at = "2026-09-20T19:46:58"
+commits = []
