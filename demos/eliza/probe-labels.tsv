@@ -1,0 +1,96 @@
+GREET	hello
+GREET	hi eliza
+QUESTION	how are you
+DONT_KNOW	I don't know
+DONT_KNOW	i dont know
+DONT_KNOW	not sure
+DONT_KNOW	maybe
+QUESTION	why?
+QUESTION	why do you ask
+QUESTION	what do you mean
+QUESTION	what is the point?
+DONT_KNOW	nothing
+NO	no
+YES	yes
+YES	I guess so
+DESIRE	i need help
+QUESTION	can you help me
+FEELING	I feel sad
+FEELING	i am so tired of everything
+ALWAYS	nobody cares about me
+FEELING	i feel like a failure
+LOSS	my dog died last week
+LOSS	it won't bring back my pet
+WORK	i lost my job
+WORK	my boss hates me
+WORK	work is stressful
+FEELING	i can't sleep
+FEELING	i have been drinking too much
+FAMILY	my mother never listens to me
+FAMILY	my dad left when i was young
+FAMILY	my wife wants a divorce
+FAMILY	my kids don't respect me
+FAMILY	i miss my grandmother
+DESIRE	i want to be happy
+DESIRE	i wish things were different
+DESIRE	i need a vacation
+DREAM	i had a strange dream last night
+DREAM	i keep having the same nightmare
+QUESTION	do you understand me?
+COMPUTER	are you a computer?
+COMPUTER	you are just a program
+COMPUTER	computers can't feel anything
+HOSTILE	i hate you
+HOSTILE	you don't understand
+HOSTILE	this is stupid
+NONE	tell me a joke
+QUESTION	what should i do?
+FEELING	i am afraid of dying
+ALWAYS	everyone hates me
+ALWAYS	i always mess things up
+FAMILY	my girlfriend cheated on me
+FEELING	i am lonely
+FEELING	life is hard
+CLOSING	thank you
+CLOSING	goodbye
+SORRY	sorry
+FEELING	i think i am depressed
+FAMILY	my brother is sick
+NONE	i bought a new car
+NONE	it rained all day
+NONE	this is fine
+NONE	it's over 9000
+NONE	never gonna give you up
+NONE	touch grass
+HOSTILE	ok boomer
+HOSTILE	skill issue
+NONE	no cap
+NONE	that's sus
+NONE	i can haz cheezburger
+NONE	the cake is a lie
+NONE	asdf
+NONE	123
+NONE	lol
+NONE	?
+NONE	pineapple belongs on pizza
+NONE	the mitochondria is the powerhouse of the cell
+NONE	my flight got cancelled
+WORK	i failed my exam
+NONE	my cat knocked over my coffee
+FAMILY	i'm getting married next week
+NONE	i think my roommate is stealing my food
+WORK	i got promoted today
+NONE	my car broke down on the highway
+WORK	i have a job interview tomorrow
+NONE	my phone battery is always dying
+NONE	i spilled wine on the carpet
+NONE	my landlord raised the rent
+LOSS	my best friend moved away
+NONE	i ate too much pizza
+FEELING	i am addicted to my phone
+WORK	my code won't compile
+COMPUTER	i think my computer is haunted
+COMPUTER	chatgpt is better than you
+COMPUTER	are you sentient
+COMPUTER	do you dream
+QUESTION	what is the meaning of life
