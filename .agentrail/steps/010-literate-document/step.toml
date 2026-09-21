@@ -1,4 +1,4 @@
-number = 9
+number = 10
 slug = "literate-document"
 status = "pending"
 description = "User request: an Emacs org-mode literate, reproducible-research document for ..."

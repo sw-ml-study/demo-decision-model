@@ -1,4 +1,4 @@
-number = 10
+number = 11
 slug = "train-in-browser"
 status = "pending"
 description = "User request: demo training in the browser without dragging sw-MLPL into this..."

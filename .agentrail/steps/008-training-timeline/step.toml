@@ -1,0 +1,8 @@
+number = 8
+slug = "training-timeline"
+status = "in-progress"
+description = "User request: the live demo shows only inference; show training. One MLPL tra..."
+role = "production"
+context_files = []
+created_at = "2026-09-20T19:57:53"
+commits = []

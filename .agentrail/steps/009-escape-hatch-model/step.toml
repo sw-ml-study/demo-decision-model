@@ -1,4 +1,4 @@
-number = 8
+number = 9
 slug = "escape-hatch-model"
 status = "pending"
 description = "Fix the model's confidently-wrong reporting found by 007-dialog-probe, in thi..."

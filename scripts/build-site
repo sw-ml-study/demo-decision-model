@@ -18,8 +18,9 @@ TDM_BUILD_SHA=$(git -C "$repo_root" rev-parse --short HEAD 2>/dev/null || echo u
 # pages/ is committed, so it is always built from the commit before it. Mark a
 # build whose source (anything outside pages/) had uncommitted changes, so the
 # footer never claims a SHA the running code does not match.
-if ! git -C "$repo_root" diff --quiet HEAD -- . ':!pages' 2>/dev/null \
-    || [ -n "$(git -C "$repo_root" ls-files --others --exclude-standard -- . ':!pages' 2>/dev/null)" ]; then
+# Saga metadata under .agentrail/ is not an input to the site, so it is ignored.
+if ! git -C "$repo_root" diff --quiet HEAD -- . ':!pages' ':!.agentrail' 2>/dev/null \
+    || [ -n "$(git -C "$repo_root" ls-files --others --exclude-standard -- . ':!pages' ':!.agentrail' 2>/dev/null)" ]; then
     TDM_BUILD_SHA="$TDM_BUILD_SHA-dirty"
 fi
 TDM_BUILD_HOST=$(hostname 2>/dev/null || echo unknown)
