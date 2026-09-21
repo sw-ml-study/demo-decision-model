@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/tdm-trace", "crates/tdm-model", "crates/tdm-web"]
+members = ["crates/tdm-trace", "crates/tdm-model", "crates/tdm-web", "demos/eliza/sim"]
 resolver = "2"
 
 [workspace.package]

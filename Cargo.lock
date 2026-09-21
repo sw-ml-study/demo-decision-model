@@ -52,6 +52,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "eliza-sim"
+version = "0.0.0"
+dependencies = [
+ "tdm-model",
+]
+
+[[package]]
 name = "equivalent"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
