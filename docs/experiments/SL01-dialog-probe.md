@@ -113,14 +113,18 @@ on "I don't know" has to be learned from inputs unlike the training classes.
 
 The target is a usable demo, not fast training (user direction, 2026-09-20).
 `SL01` trains in 24 s only because nothing asked it to train longer. Step `008`
-therefore compares the same fixed model and data under two wall-clock budgets
-— **10 seconds and 5 minutes** — each in its own process (finding Q4: an
+therefore compares the same fixed model and data under four wall-clock budgets
+— **10 seconds, 1 minute, 5 minutes, 10 minutes**, roughly evenly spaced in log
+time — each in its own process (finding Q4: an
 in-process sweep inherits Adam's moments and flatters whichever run went last).
 Each budget is scored on the same four numbers: the sensible-reply rate on both
 probe sets, and the mean confidence the model reports on the answers it gets
-wrong, in-distribution and out. A **1 hour** run is deferred until those two
-results say it is worth running (user direction, 2026-09-20). The demo ships the
-cheapest budget that reaches the quality bar.
+wrong, in-distribution and out. Four points are enough to see whether quality
+is still climbing against log time or has flattened, and so to **predict what a
+1 hour run would buy before spending the hour** (user direction, 2026-09-20). The
+hour is run only if that extrapolation says it is worth it, and the prediction is
+recorded first so the run can confirm or refute it. The demo ships the cheapest
+budget that reaches the quality bar.
 
 These probe sets become the regression benchmark for each step: the sensible
 rate and, more importantly, the confidence the model reports when it is wrong.
