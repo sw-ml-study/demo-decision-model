@@ -47,6 +47,11 @@ pub struct NoulRules {
 pub struct NoulRule {
     pub noul: String,
     pub threshold: f64,
+    /// For a deflection: the threshold when the input has no question mark.
+    /// The mark is strong evidence; without it the program asks for more
+    /// confidence before turning a statement away as a question.
+    #[serde(default)]
+    pub threshold_without_mark: Option<f64>,
     #[serde(default)]
     pub labels: Vec<String>,
     pub frames: Vec<String>,
@@ -271,7 +276,12 @@ impl<'a> Conversation<'a> {
         let rule = self.script.nouls.as_ref()?.deflect.clone()?;
         let p = self.noul(turn, &rule.noul).unwrap_or(0.0);
         let by_label = acted && rule.labels.iter().any(|l| l == label);
-        if p < rule.threshold && !by_label {
+        let threshold = if turn.input.contains('?') {
+            rule.threshold
+        } else {
+            rule.threshold_without_mark.unwrap_or(rule.threshold)
+        };
+        if p < threshold && !by_label {
             return None;
         }
         // Never answer a question by echoing it: skip a frame that says what

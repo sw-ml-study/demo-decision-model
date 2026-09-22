@@ -1,4 +1,4 @@
-number = 17
+number = 18
 slug = "response-table"
 status = "pending"
 description = "the ELIZA response table as committed data plus the byte-identity no-generation gate test"

@@ -1,0 +1,8 @@
+number = 13
+slug = "question-evidence"
+status = "in-progress"
+description = "User report: 'because we did' was deflected as a question. Diagnosed: 'becaus..."
+role = "production"
+context_files = []
+created_at = "2026-09-21T21:46:02"
+commits = []

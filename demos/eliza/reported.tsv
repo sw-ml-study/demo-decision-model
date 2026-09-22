@@ -1,0 +1,4 @@
+# Failures a person reported on the live demo, with what must not happen again.
+# Columns: expectation<TAB>input. Expectations: not-deflected, deflected.
+# Each line is checked against model 3 and the script by tests/reported.rs.
+not-deflected	because we did

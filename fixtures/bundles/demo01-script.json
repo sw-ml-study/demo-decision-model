@@ -460,7 +460,8 @@
     "I'm not here to answer questions. What do you think?",
     "Does that question interest you?",
     "What answer would please you most?"
-   ]
+   ],
+   "threshold_without_mark": 0.9
   },
   "sentiment": [
    {

@@ -179,3 +179,22 @@ Noul training annotation existed. Results on the default snapshot: question
 positive 0.94 (1 of 5 caught). The positive head is the weak one, and the
 reason is data: 76 positive training sentences of 1,000, and 5 positive probes
 of 96.
+
+## User-reported: "because we did" was deflected as a question
+
+A visitor's report, traced with `noul_blame`: *because* is not in the
+vocabulary at all, and *did* pushes +5.4 toward "question" because its only
+training appearance is the question frame "did you know about {}?". The same
+failure as *you* -> COMPUTER in model 1: a word seen in only one kind of
+sentence becomes a cue for that kind.
+
+Policy fix, shipped: a question mark is strong evidence, so without one the
+program deflects only when the question Noul is at least 0.9 (0.5 with one).
+"because we did" (0.79) now reaches Weizenbaum's own *because* rule -- "Is that
+the real reason?" -- while "what should i do" (0.99) and "why do you ask" (1.00)
+are still turned back. Data fix, queued for the next retrain: statements using
+*did / do / does* and *because* across several classes.
+
+Every reported failure now goes into
+[`demos/eliza/reported.tsv`](../../demos/eliza/reported.tsv), which a test replays
+against the shipped model on every commit.
