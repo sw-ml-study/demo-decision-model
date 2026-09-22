@@ -1,0 +1,8 @@
+number = 11
+slug = "eliza-mechanics"
+status = "in-progress"
+description = "User: the demo is not ELIZA-like and never says 'earlier you said'. Piece 1 (..."
+role = "production"
+context_files = []
+created_at = "2026-09-21T17:00:21"
+commits = []

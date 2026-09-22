@@ -1,0 +1,433 @@
+{
+ "schema": "sw-ml-study.conversation-script",
+ "version": 1,
+ "note": "Demo 01's conversation script: the deterministic half of ELIZA. The model chooses a class; this script decides how to answer it from the visitor's own words. Patterns match cleaned words (apostrophes removed, so don't is dont); * matches any run of words; {1}, {2} are the wildcard captures and {all} the whole input, each reflected (my -> your, i -> you); {w} is the word a find rule found. Many reassemblies are Weizenbaum's 1966 DOCTOR script.",
+ "stopwords": [
+  "i",
+  "me",
+  "my",
+  "mine",
+  "myself",
+  "you",
+  "your",
+  "yours",
+  "yourself",
+  "we",
+  "us",
+  "our",
+  "he",
+  "him",
+  "his",
+  "she",
+  "her",
+  "it",
+  "its",
+  "they",
+  "them",
+  "their",
+  "a",
+  "an",
+  "the",
+  "is",
+  "am",
+  "are",
+  "was",
+  "were",
+  "be",
+  "been",
+  "being",
+  "do",
+  "does",
+  "did",
+  "doing",
+  "have",
+  "has",
+  "had",
+  "to",
+  "of",
+  "in",
+  "on",
+  "at",
+  "for",
+  "with",
+  "about",
+  "and",
+  "or",
+  "but",
+  "so",
+  "if",
+  "then",
+  "than",
+  "that",
+  "this",
+  "these",
+  "those",
+  "what",
+  "why",
+  "how",
+  "when",
+  "where",
+  "who",
+  "which",
+  "not",
+  "no",
+  "yes",
+  "just",
+  "really",
+  "very",
+  "too",
+  "also",
+  "can",
+  "could",
+  "would",
+  "should",
+  "will",
+  "shall",
+  "may",
+  "might",
+  "must",
+  "there",
+  "here",
+  "up",
+  "down",
+  "out",
+  "over",
+  "again",
+  "today",
+  "now",
+  "some",
+  "any",
+  "all",
+  "ok",
+  "oh",
+  "well",
+  "like",
+  "get",
+  "got",
+  "im",
+  "dont",
+  "cant",
+  "wont",
+  "thats",
+  "ive",
+  "youre",
+  "id",
+  "lol",
+  "please",
+  "thanks",
+  "thank",
+  "hello",
+  "hi",
+  "hey"
+ ],
+ "reflections": {
+  "i": "you",
+  "me": "you",
+  "my": "your",
+  "mine": "yours",
+  "myself": "yourself",
+  "am": "are",
+  "im": "you are",
+  "ive": "you have",
+  "id": "you would",
+  "ill": "you will",
+  "you": "I",
+  "your": "my",
+  "yours": "mine",
+  "yourself": "myself",
+  "youre": "I am",
+  "youve": "I have",
+  "was": "were"
+ },
+ "recall": {
+  "min_gap": 2,
+  "frames": [
+   "Earlier you said {all}.",
+   "You mentioned before that {all}. Does that still bother you?",
+   "Does that have anything to do with the fact that {all}?"
+  ]
+ },
+ "memory": {
+  "trigger": "my",
+  "min_words": 3,
+  "frames": [
+   "Earlier you said {all}.",
+   "Let's discuss further why {all}.",
+   "Does that have anything to do with the fact that {all}?"
+  ]
+ },
+ "reflect": {
+  "min_words": 3,
+  "frames": [
+   "Why do you say {all}?",
+   "What makes you say {all}?",
+   "Why do you tell me {all}?"
+  ]
+ },
+ "generic": [
+  {
+   "pattern": "* i dont *",
+   "replies": [
+    "Don't you really {2}?",
+    "Why don't you {2}?",
+    "Do you wish to be able to {2}?"
+   ]
+  },
+  {
+   "pattern": "* i cant *",
+   "replies": [
+    "How do you know you can't {2}?",
+    "Have you tried?",
+    "Perhaps you could {2} now."
+   ]
+  },
+  {
+   "pattern": "* i am *",
+   "replies": [
+    "Is it because you are {2} that you came to me?",
+    "How long have you been {2}?",
+    "Do you believe it is normal to be {2}?"
+   ]
+  },
+  {
+   "pattern": "* because *",
+   "replies": [
+    "Is that the real reason?",
+    "Don't any other reasons come to mind?",
+    "Does that reason seem to explain anything else?"
+   ]
+  },
+  {
+   "pattern": "* i think *",
+   "replies": [
+    "Do you really think so?",
+    "But you are not sure {2}?",
+    "Why do you think {2}?"
+   ]
+  }
+ ],
+ "rules": {
+  "FAMILY": [
+   {
+    "find": [
+     "mother",
+     "father",
+     "mom",
+     "dad",
+     "mum",
+     "sister",
+     "brother",
+     "parents",
+     "wife",
+     "husband",
+     "son",
+     "daughter",
+     "kids",
+     "children",
+     "grandmother",
+     "grandfather",
+     "girlfriend",
+     "boyfriend",
+     "family",
+     "aunt",
+     "uncle"
+    ],
+    "replies": [
+     "Tell me more about your {w}.",
+     "How do you get along with your {w}?",
+     "Does your {w} know how you feel?",
+     "Who else in your family comes to mind when you think of your {w}?"
+    ]
+   }
+  ],
+  "FEELING": [
+   {
+    "pattern": "* i feel *",
+    "replies": [
+     "Do you often feel {2}?",
+     "What makes you feel {2}?",
+     "Tell me more about feeling {2}."
+    ]
+   },
+   {
+    "pattern": "* i am *",
+    "replies": [
+     "How long have you been {2}?",
+     "Do you believe it is normal to be {2}?",
+     "Do you enjoy being {2}?"
+    ]
+   },
+   {
+    "pattern": "* i have been *",
+    "replies": [
+     "How long have you been {2}?",
+     "What do you think is behind being {2}?"
+    ]
+   }
+  ],
+  "DESIRE": [
+   {
+    "pattern": "* i want *",
+    "replies": [
+     "What would it mean to you if you got {2}?",
+     "Why do you want {2}?",
+     "Suppose you got {2} soon."
+    ]
+   },
+   {
+    "pattern": "* i need *",
+    "replies": [
+     "Why do you need {2}?",
+     "Would it really help you to get {2}?",
+     "What if you never got {2}?"
+    ]
+   },
+   {
+    "pattern": "* i wish *",
+    "replies": [
+     "Why do you wish {2}?",
+     "What would change if {2}?"
+    ]
+   }
+  ],
+  "DREAM": [
+   {
+    "pattern": "* i dreamt *",
+    "replies": [
+     "Really, {2}?",
+     "Have you ever fantasized {2} while you were awake?"
+    ]
+   },
+   {
+    "pattern": "* i dreamed *",
+    "replies": [
+     "Really, {2}?",
+     "Have you ever fantasized {2} while you were awake?"
+    ]
+   },
+   {
+    "pattern": "* dream about *",
+    "replies": [
+     "What does dreaming about {2} suggest to you?",
+     "Do you often dream about {2}?"
+    ]
+   }
+  ],
+  "QUESTION": [
+   {
+    "pattern": "* are you *",
+    "replies": [
+     "Why are you interested in whether I am {2} or not?",
+     "Would you prefer if I weren't {2}?"
+    ]
+   },
+   {
+    "pattern": "* can you *",
+    "replies": [
+     "You believe I can {2}, don't you?",
+     "Whether or not I can {2} depends on you more than on me."
+    ]
+   },
+   {
+    "pattern": "* why dont you *",
+    "replies": [
+     "Do you believe I don't {2}?",
+     "Perhaps I will {2} in good time."
+    ]
+   }
+  ],
+  "ALWAYS": [
+   {
+    "pattern": "* everyone *",
+    "replies": [
+     "Really, everyone?",
+     "Surely not everyone.",
+     "Can you think of anyone in particular?"
+    ]
+   },
+   {
+    "pattern": "* everybody *",
+    "replies": [
+     "Really, everybody?",
+     "Surely not everybody."
+    ]
+   },
+   {
+    "pattern": "* nobody *",
+    "replies": [
+     "Really, nobody?",
+     "Surely someone does."
+    ]
+   },
+   {
+    "pattern": "* always *",
+    "replies": [
+     "Can you think of a specific example?",
+     "When?",
+     "Really, always?"
+    ]
+   }
+  ],
+  "HOSTILE": [
+   {
+    "pattern": "* you are *",
+    "replies": [
+     "What makes you think I am {2}?",
+     "Does it please you to believe I am {2}?"
+    ]
+   },
+   {
+    "pattern": "* i hate *",
+    "replies": [
+     "Why do you hate {2}?",
+     "What is behind that feeling?"
+    ]
+   }
+  ],
+  "WORK": [
+   {
+    "find": [
+     "job",
+     "boss",
+     "work",
+     "career",
+     "manager",
+     "coworkers",
+     "exams",
+     "exam",
+     "classes",
+     "deadline",
+     "promotion",
+     "interview",
+     "code",
+     "school"
+    ],
+    "replies": [
+     "Tell me more about your {w}.",
+     "How do you feel about your {w}?",
+     "What bothers you most about your {w}?"
+    ]
+   }
+  ],
+  "LOSS": [
+   {
+    "find": [
+     "dog",
+     "cat",
+     "pet",
+     "friend",
+     "goldfish",
+     "hamster",
+     "horse",
+     "grandmother",
+     "grandfather"
+    ],
+    "replies": [
+     "I am sorry about your {w}. How are you coping?",
+     "Tell me more about your {w}.",
+     "What do you miss most about your {w}?"
+    ]
+   }
+  ]
+ }
+}

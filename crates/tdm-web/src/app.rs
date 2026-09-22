@@ -3,7 +3,7 @@
 
 use std::rc::Rc;
 
-use tdm_model::{Bundle, Turn, respond_at};
+use tdm_model::{Bundle, Conversation, Remembered, Script, ScriptReply, Turn, respond_at};
 use yew::prelude::*;
 
 use crate::chat::Chat;
@@ -34,11 +34,19 @@ impl std::ops::Deref for Shared {
     }
 }
 
-/// A turn plus how long the decision took in this browser.
+/// The conversation script: the deterministic half of the demo, as data.
+const SCRIPT: &str = include_str!("../../../fixtures/bundles/demo01-script.json");
+
+/// A turn: the model's decision, how long it took in this browser, and what the
+/// program did with it -- the reply it built, and what it remembered.
 #[derive(Clone)]
 pub struct Timed {
     pub turn: Turn,
     pub micros: f64,
+    pub reply: ScriptReply,
+    pub keywords: Vec<String>,
+    /// Memory as it stood when this input arrived.
+    pub memory: Vec<Remembered>,
 }
 
 fn search() -> String {
@@ -56,10 +64,24 @@ fn initial_inputs() -> Vec<String> {
 /// conversation is stored as inputs, so choosing another point on the training
 /// timeline re-decides all of it and the difference is visible turn by turn.
 fn decide_all(bundle: &Bundle, snapshot: usize, inputs: &[String]) -> Vec<Timed> {
+    let script: Script =
+        serde_json::from_str(SCRIPT).expect("the embedded script is validated by the demo tests");
+    let mut conversation = Conversation::new(bundle, &script, snapshot);
     inputs
         .iter()
         .enumerate()
-        .map(|(i, text)| timed(bundle, snapshot, text, i))
+        .map(|(i, text)| {
+            let memory = conversation.memory().to_vec();
+            let micros = time_decision(bundle, snapshot, text, i);
+            let x = conversation.say(text);
+            Timed {
+                turn: x.turn,
+                micros,
+                reply: x.reply,
+                keywords: x.keywords,
+                memory,
+            }
+        })
         .collect()
 }
 
@@ -68,16 +90,13 @@ fn decide_all(bundle: &Bundle, snapshot: usize, inputs: &[String]) -> Vec<Timed>
 /// this many repetitions and the mean is reported.
 const TIMING_RUNS: u32 = 100;
 
-fn timed(bundle: &Bundle, snapshot: usize, text: &str, index: usize) -> Timed {
+/// Mean microseconds for the model's decision on one input.
+fn time_decision(bundle: &Bundle, snapshot: usize, text: &str, index: usize) -> f64 {
     let start = now_ms();
-    for _ in 1..TIMING_RUNS {
+    for _ in 0..TIMING_RUNS {
         let _ = respond_at(bundle, snapshot, text, index);
     }
-    let turn = respond_at(bundle, snapshot, text, index);
-    Timed {
-        turn,
-        micros: (now_ms() - start) * 1000.0 / f64::from(TIMING_RUNS),
-    }
+    (now_ms() - start) * 1000.0 / f64::from(TIMING_RUNS)
 }
 
 fn now_ms() -> f64 {
@@ -99,7 +118,7 @@ fn header(props: &HeaderProps) -> Html {
         <header>
             <div>
                 <h1>{ "Typed Decision Model" }</h1>
-                <p class="sub">{ format!("{} · the model chooses every reply from a bounded set; it never writes one", props.demo) }</p>
+                <p class="sub">{ format!("{} · the model decides; the program answers in your own words; nothing is generated", props.demo) }</p>
             </div>
             <button class={classes!("toggle", props.tracing.then_some("on"))} onclick={props.on_toggle.clone()}>
                 { if props.tracing { "trace: on" } else { "trace: off" } }

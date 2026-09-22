@@ -2,7 +2,7 @@
 //! offered, the distribution that came out, the policy that consumed it, and
 //! the table entry that resulted.
 
-use tdm_model::{Bundle, Outcome};
+use tdm_model::{Bundle, Move, Outcome};
 use yew::prelude::*;
 
 use crate::app::{Shared, Timed};
@@ -71,6 +71,66 @@ fn policy(bundle: &Bundle, t: &Timed) -> Html {
     html! { <p class={classes!("mono", (r.outcome == Outcome::Escalate).then_some("escalate"))}>{ text }</p> }
 }
 
+fn describe(by: &Move) -> String {
+    match by {
+        Move::Recall { turn, keyword } => format!(
+            "repeat rule: \"{keyword}\" was used before, in turn {}, which is brought back",
+            turn + 1
+        ),
+        Move::Memory { turn } => format!(
+            "memory rule: nothing else fit, so a remembered statement from turn {} comes back",
+            turn + 1
+        ),
+        Move::LabelRule { label, rule } => format!("{label} rule: {rule}"),
+        Move::KeywordRule { rule } => format!("keyword rule for any label: {rule}"),
+        Move::Reflect => {
+            "reflection: nothing matched, so the visitor's own words come back".to_owned()
+        }
+        Move::Canned => "the chosen label's canned reply".to_owned(),
+    }
+}
+
+fn built(t: &Timed) -> Html {
+    let r = &t.reply;
+    let slots = r
+        .slots
+        .iter()
+        .map(|(n, v)| format!("{{{n}}} = \"{v}\""))
+        .collect::<Vec<_>>()
+        .join(",  ");
+    html! {
+        <>
+            <p class="mono">{ describe(&r.by) }</p>
+            <p class="mono">{ format!("frame: \"{}\"", r.frame) }</p>
+            if !slots.is_empty() {
+                <p class="mono">{ format!("slots: {slots}  — the visitor's own words, pronouns reflected") }</p>
+            }
+            <p class="meta">{ "The reply is exactly the frame with the slots filled. Nothing is generated." }</p>
+        </>
+    }
+}
+
+fn memory(t: &Timed) -> Html {
+    let recalled = match t.reply.by {
+        Move::Recall { turn, .. } | Move::Memory { turn } => Some(turn),
+        _ => None,
+    };
+    if t.memory.is_empty() {
+        return html! { <p class="meta">{ "Nothing remembered yet." }</p> };
+    }
+    html! {
+        <div class="memory">
+            { for t.memory.iter().map(|m| html! {
+                <p class={classes!("mono", (Some(m.turn) == recalled).then_some("recalled"))}>
+                    { format!("{:>2}. {}{}", m.turn + 1, m.text, if m.mine { "   [my …]" } else { "" }) }
+                    <span class="kw">{ format!("  {}", m.keywords.join(" ")) }</span>
+                </p>
+            }) }
+            <p class="meta">{ format!("this input's keywords: {}", if t.keywords.is_empty() { "none".to_owned() } else { t.keywords.join(", ") }) }</p>
+        </div>
+    }
+}
+
 fn features(b: &Bundle, t: &Timed) -> Html {
     let f = &t.turn.decision.features;
     let known = f.known.iter().filter(|k| **k).count();
@@ -128,7 +188,10 @@ pub fn trace(props: &TraceProps) -> Html {
             { policy(b, t) }
 
             <h2>{ "Output" }</h2>
-            <p class="mono">{ format!("table {}, entry {} — quoted verbatim, not composed", b.labels[t.turn.reply.label], t.turn.reply.index) }</p>
+            { built(t) }
+
+            <h2>{ "Memory" }<span class="aside">{ " kept by the program, not the model" }</span></h2>
+            { memory(t) }
 
             <h2>{ "Yardstick" }</h2>
             <p class={classes!("mono", if agree { "agree" } else { "disagree" })}>

@@ -16,7 +16,7 @@ pub struct ChatProps {
 
 impl PartialEq for Timed {
     fn eq(&self, other: &Self) -> bool {
-        self.turn.input == other.turn.input && self.turn.reply.text == other.turn.reply.text
+        self.turn.input == other.turn.input && self.reply.text == other.reply.text
     }
 }
 
@@ -38,7 +38,7 @@ fn log(props: &ChatProps) -> Html {
                     <div class={classes!("exchange", chosen.then_some("chosen"))}
                          onclick={Callback::from(move |_: MouseEvent| pick.emit(i))}>
                         <p class="you"><span>{ "YOU" }</span>{ &t.turn.input }</p>
-                        <p class="them"><span>{ &props.bundle.title }</span>{ &t.turn.reply.text }</p>
+                        <p class="them"><span>{ &props.bundle.title }</span>{ &t.reply.text }</p>
                     </div>
                 }
             }) }

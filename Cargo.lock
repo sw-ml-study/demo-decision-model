@@ -55,6 +55,7 @@ dependencies = [
 name = "eliza-sim"
 version = "0.0.0"
 dependencies = [
+ "serde_json",
  "tdm-model",
 ]
 
@@ -882,6 +883,7 @@ dependencies = [
 name = "tdm-web"
 version = "0.0.0"
 dependencies = [
+ "serde_json",
  "tdm-model",
  "web-sys",
  "yew",

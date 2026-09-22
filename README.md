@@ -150,6 +150,28 @@ prepared it.
 memory, no calibration, no browser UI. It exists so there is something real to
 judge before anything is deepened. Numbers: [`SL01`](docs/reference/results.md).
 
+### ELIZA's mechanics, back in the program
+
+The model only decides what kind of reply fits. What made ELIZA feel like ELIZA
+was the program around that decision, and it now lives here too, driven by a
+data script ([`demo01-script.json`](fixtures/bundles/demo01-script.json)) that a
+demo-neutral engine in `tdm-model` runs:
+
+- **Memory, kept by the program.** Every statement is remembered with its
+  content words.
+- **"Earlier you said..."** when a visitor reuses a content word from an earlier
+  turn, and Weizenbaum's MEMORY rule (bring back a remembered "my ..." statement)
+  when nothing else fits. Each memory is brought back once, and never twice in a
+  row.
+- **Decomposition and reassembly** keyed by the model's choice: `* i want *`
+  becomes "What would it mean to you if you got a better job?", with the
+  visitor's words reflected (my -> your). "I don't have any problems" gets
+  Weizenbaum's own "Don't you really have any problems?".
+
+Every reply is a fixed frame with slots filled by the visitor's own reflected
+words, the trace shows the frame and the slots, and a test rebuilds every reply
+from exactly those parts. Nothing is generated.
+
 ### Model 2: fewer confident wrong replies
 
 The first live model often asked about machines, or greeted, when the visitor

@@ -8,6 +8,7 @@ description = "Demo 01 prototype: replay a conversation under today's policy and
 
 [dependencies]
 tdm-model = { path = "../../../crates/tdm-model" }
+serde_json = "1"
 
 [lints]
 workspace = true
