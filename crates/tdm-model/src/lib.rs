@@ -16,9 +16,10 @@ mod matcher;
 mod model;
 mod responder;
 
-pub use bundle::{Bundle, BundleError, Escalation, Snapshots, Weights};
+pub use bundle::{Bundle, BundleError, Escalation, Nouls, Snapshots, Weights};
 pub use conversation::{
-    Conversation, Exchange, Move, Remembered, Reply as ScriptReply, Rule, Script,
+    Conversation, Exchange, Move, NoulRule, NoulRules, Remembered, Reply as ScriptReply, Rule,
+    Script,
 };
 pub use features::{Features, featurize, featurize_vocab, hash, tokens, words};
 pub use matcher::KeywordMatcher;

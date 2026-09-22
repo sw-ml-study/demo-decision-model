@@ -87,6 +87,12 @@ fn describe(by: &Move) -> String {
             "reflection: nothing matched, so the visitor's own words come back".to_owned()
         }
         Move::Canned => "the chosen label's canned reply".to_owned(),
+        Move::Deflect { noul, p } => format!(
+            "deflection: the {noul} Noul said {p:.2}, and questions are turned back, not answered"
+        ),
+        Move::Sentiment { noul, p } => {
+            format!("sentiment reflection: nothing fit the label, and the {noul} Noul said {p:.2}")
+        }
     }
 }
 
@@ -128,6 +134,30 @@ fn memory(t: &Timed) -> Html {
             }) }
             <p class="meta">{ format!("this input's keywords: {}", if t.keywords.is_empty() { "none".to_owned() } else { t.keywords.join(", ") }) }</p>
         </div>
+    }
+}
+
+fn nouls(b: &Bundle, t: &Timed) -> Html {
+    let names = b.noul_names();
+    if names.is_empty() {
+        return html! {};
+    }
+    html! {
+        <>
+            <h2>{ "Noul" }<span class="aside">{ format!(" {} yes-or-no questions, from the same forward pass", names.len()) }</span></h2>
+            <div class="bars">
+                { for names.iter().zip(&t.turn.decision.nouls).map(|(n, p)| {
+                    let style = format!("width: {:.1}%", p * 100.0);
+                    html! {
+                        <div class={classes!("bar", (*p >= 0.5).then_some("top"))}>
+                            <span class="label">{ format!("{n}?") }</span>
+                            <span class="track"><span class="fill" style={style}></span></span>
+                            <span class="num">{ format!("{p:.3}") }</span>
+                        </div>
+                    }
+                }) }
+            </div>
+        </>
     }
 }
 
@@ -183,6 +213,8 @@ pub fn trace(props: &TraceProps) -> Html {
                 b.snapshots.steps[props.snapshot]) }</p>
             { bars(b, t) }
             <p class="mono">{ format!("confidence {:.3}   margin {:.3}   decided in {:.1} µs (mean of 100 runs)", d.confidence, d.margin, t.micros) }</p>
+
+            { nouls(b, t) }
 
             <h2>{ "Policy" }<span class="aside">{ " ordinary code, not the model" }</span></h2>
             { policy(b, t) }

@@ -83,21 +83,49 @@ def u:e2_matcher(text) {
 }
 
 def u:e2_train_frames(i) {
-  "Training frames for class i, |-joined; {} marks the filler slot, and a frame without one is used once as written.";
-  all = ["{}|{} eliza|{} there|{} doctor|well {} there|{} again", "my {} never listens to me|i argued with my {} today|do you think my {} loves me|my {} is always on my case|i really miss my {}|you remind me of my {}", "i feel {}|i have been so {} lately|do you ever feel {}|i am {} today|everything makes me {}|i think i am {}", "i want {}|i wish i had {}|all i need is {}|do you think i will ever get {}|i would really like {}|someday i hope for {}", "i had a dream about {}|last night i dreamt about {}|i keep having nightmares about {}|do you think my dream about {} means anything|in my dream there was {}|you were in my dream about {}", "{} scare me|i do not trust {}|are you one of those {}|do you think {} can think|are you really {}|i think {} are taking over", "{}|{} i think so|{} that is right|oh {}|{} of course|{} i agree", "{}|{} not really|{} i do not think so|oh {}|{} never|{} i disagree", "{}|{} i guess|hmm {}|honestly {}|{} what to say|well {}", "why do you {}|what do you mean by {}|how do you {}|can you {}|what should i {}|why would you {}", "everyone {}|nobody {}|i always {}|people always {}|no one ever {}|everybody {}", "you are {}|this is {}|that was {}|you are being {}|this conversation is {}|i hate you|you do not understand|you never listen|shut up", "{}|{} about that|i am {}|{} for being rude|oh {}|{} again", "{}|{} for listening|ok {}|{} doctor|{} eliza|well {}", "my {} is stressing me out|i hate my {}|i might lose my {}|my {} is too demanding|i worry about my {}|do you think i should quit my {}", "my {} died|i lost my {}|i miss my {} so much|my {} passed away|i am grieving my {}|my {} is gone", "the weather was {} today|i watched a movie about {}|we talked about {} at lunch|the news was all about {}|did you know about {}|what do you think of {}|qwerty|zzz|hmm ok|lmao|hahaha|this is sparta|much wow|yolo|it is what it is|big mood"];
+  "Training frames for class i, |-joined; {} marks the filler slot, and a frame without one is used once as written. Some question frames end in a question mark and some do not, so both the words and the mark carry the signal.";
+  all = ["{}|{} eliza|{} there|{} doctor|well {} there|{} again", "my {} never listens to me|i argued with my {} today|do you think my {} loves me?|my {} is always on my case|i really miss my {}|you remind me of my {}", "i feel {}|i have been so {} lately|do you ever feel {}?|i am {} today|everything makes me {}|i think i am {}", "i want {}|i wish i had {}|all i need is {}|do you think i will ever get {}|i would really like {}|someday i hope for {}", "i had a dream about {}|last night i dreamt about {}|i keep having nightmares about {}|do you think my dream about {} means anything?|in my dream there was {}|you were in my dream about {}", "{} scare me|i do not trust {}|are you one of those {}?|do you think {} can think|are you really {}?|i think {} are taking over", "{}|{} i think so|{} that is right|oh {}|{} of course|{} i agree", "{}|{} not really|{} i do not think so|oh {}|{} never|{} i disagree", "{}|{} i guess|hmm {}|honestly {}|{} what to say|well {}", "why do you {}|what do you mean by {}?|how do you {}|can you {}?|what should i {}|why would you {}?", "everyone {}|nobody {}|i always {}|people always {}|no one ever {}|everybody {}", "you are {}|this is {}|that was {}|you are being {}|this conversation is {}|i hate you|you do not understand|you never listen|shut up", "{}|{} about that|i am {}|{} for being rude|oh {}|{} again", "{}|{} for listening|ok {}|{} doctor|{} eliza|well {}", "my {} is stressing me out|i hate my {}|i might lose my {}|my {} is too demanding|i worry about my {}|do you think i should quit my {}|i love my {}|my {} is going great", "my {} died|i lost my {}|i miss my {} so much|my {} passed away|i am grieving my {}|my {} is gone", "the weather was {} today|i watched a movie about {}|we talked about {} at lunch|the news was all about {}|did you know about {}?|what do you think of {}|qwerty|zzz|hmm ok|lmao|hahaha|this is sparta|much wow|yolo|it is what it is|big mood|that was fun|life is good|things are going well|i had a great day|haha that is funny|nice|ugh|this day is the worst"];
   u:text_lg(all, i)
 }
 
 def u:e2_val_frames(i) {
   "Held-out frames for class i: phrasings the model never trains on, with fillers it does.";
-  all = ["{} how is your day|oh {}", "i cannot talk to my {} anymore|my {} and i had a fight", "why am i always so {}|i just feel {} again", "i keep hoping for {}|what i need is {}", "i had a strange dream about {}|my nightmares are about {}", "i spend all day with {}|can {} really understand people", "{} definitely|well {}", "{} not at all|well {}", "i am {}|{} really", "do you really {}|how can you {}", "they always {}|nobody ever {}", "you are so {}|honestly this is {}", "{} my fault|well {}", "{} for your help|alright {}", "i have problems at my {}|my {} makes me miserable", "i cannot get over losing my {}|since my {} died i feel empty", "someone mentioned {} yesterday|i saw a video about {}"];
+  all = ["{} how is your day?|oh {}", "i cannot talk to my {} anymore|my {} and i had a fight", "why am i always so {}|i just feel {} again", "i keep hoping for {}|what i need is {}", "i had a strange dream about {}|my nightmares are about {}", "i spend all day with {}|can {} really understand people?", "{} definitely|well {}", "{} not at all|well {}", "i am {}|{} really", "do you really {}?|how can you {}", "they always {}|nobody ever {}", "you are so {}|honestly this is {}", "{} my fault|well {}", "{} for your help|alright {}", "i have problems at my {}|my {} makes me miserable", "i cannot get over losing my {}|since my {} died i feel empty", "someone mentioned {} yesterday|i saw a video about {}"];
   u:text_lg(all, i)
 }
 
 def u:e2_fillers(i) {
-  "Slot fillers for class i, |-joined.";
-  all = ["hello|hi|hey|good morning|good afternoon|greetings|howdy", "mother|father|mom|dad|sister|brother|parents|wife|husband|son|daughter|grandmother|girlfriend|boyfriend", "sad|anxious|lonely|depressed|miserable|empty|angry|tired|scared|hopeless|stressed|afraid", "a vacation|more money|some peace|a fresh start|someone to talk to|help|a break|to be happy|a better life", "falling|being chased|the ocean|my old school|flying|a dark house|my teeth falling out|a storm", "computers|machines|robots|programs|algorithms|chatbots|a computer|a machine|a robot|a program", "yes|yeah|yep|sure|absolutely|correct|i do|that is true|uh huh", "no|nope|nah|not really|no way|definitely not|i do not|never", "i don't know|i dont know|not sure|maybe|perhaps|who knows|i have no idea|i cannot say|hard to say", "say that|mean|know|think so|help|feel|do that|understand|care", "ignores me|hates me|leaves|lets me down|messes things up|understands me|cares|laughs at me|forgets about me", "stupid|useless|annoying|pointless|dumb|a waste of time|ridiculous|boring", "sorry|so sorry|i apologize|my apologies|forgive me|pardon me", "thank you|thanks|goodbye|bye|see you later|i have to go|take care", "job|boss|work|career|manager|coworkers|exams|classes|deadline|promotion", "dog|cat|pet|best friend|friend|goldfish|hamster|horse", "the economy|sports|cooking|gardening|traffic|history|the moon|taxes|trains|pizza|the internet|music"];
+  "Slot fillers for class i, |-joined. FEELING now carries positive fillers as well as negative ones, because the corpus had no positive sentences at all.";
+  all = ["hello|hi|hey|good morning|good afternoon|greetings|howdy", "mother|father|mom|dad|sister|brother|parents|wife|husband|son|daughter|grandmother|girlfriend|boyfriend", "sad|anxious|lonely|depressed|miserable|empty|angry|tired|scared|hopeless|stressed|afraid|happy|great|better|excited|relieved|hopeful", "a vacation|more money|some peace|a fresh start|someone to talk to|help|a break|to be happy|a better life", "falling|being chased|the ocean|my old school|flying|a dark house|my teeth falling out|a storm", "computers|machines|robots|programs|algorithms|chatbots|a computer|a machine|a robot|a program", "yes|yeah|yep|sure|absolutely|correct|i do|that is true|uh huh", "no|nope|nah|not really|no way|definitely not|i do not|never", "i don't know|i dont know|not sure|maybe|perhaps|who knows|i have no idea|i cannot say|hard to say", "say that|mean|know|think so|help|feel|do that|understand|care", "ignores me|hates me|leaves|lets me down|messes things up|understands me|cares|laughs at me|forgets about me", "stupid|useless|annoying|pointless|dumb|a waste of time|ridiculous|boring", "sorry|so sorry|i apologize|my apologies|forgive me|pardon me", "thank you|thanks|goodbye|bye|see you later|i have to go|take care", "job|boss|work|career|manager|coworkers|exams|classes|deadline|promotion", "dog|cat|pet|best friend|friend|goldfish|hamster|horse", "the economy|sports|cooking|gardening|traffic|history|the moon|taxes|trains|pizza|the internet|music"];
   u:text_lg(all, i)
+}
+
+def u:e2_train_tags(i) {
+  "Noul tags for each training frame of class i, |-joined and aligned with u:e2_train_frames: two characters, q or - for is-this-a-question, then n, p or 0 for negative, positive or neither, or f to take the sentiment from the filler.";
+  all = ["-0|-0|-0|-0|-0|-0", "-n|-n|q0|-n|-n|-0", "-f|-f|qf|-f|-f|-f", "-0|-0|-0|q0|-0|-0", "-0|-0|-n|q0|-0|-0", "-n|-n|q0|q0|q0|-n", "-0|-0|-0|-0|-0|-0", "-0|-0|-0|-0|-0|-0", "-0|-0|-0|-0|-0|-0", "q0|q0|q0|q0|q0|q0", "-n|-n|-n|-n|-n|-n", "-n|-n|-n|-n|-n|-n|-n|-n|-n", "-0|-0|-0|-0|-0|-0", "-f|-f|-f|-f|-f|-f", "-n|-n|-n|-n|-n|q0|-p|-p", "-n|-n|-n|-n|-n|-n", "-0|-0|-0|-0|q0|q0|-0|-0|-0|-p|-p|-0|-0|-0|-0|-0|-p|-p|-p|-p|-p|-p|-n|-n"];
+  u:text_lg(all, i)
+}
+
+def u:e2_val_tags(i) {
+  "Noul tags for each held-out frame of class i, aligned with u:e2_val_frames.";
+  all = ["q0|-0", "-n|-n", "qf|-f", "-0|-0", "-0|-n", "-0|q0", "-0|-0", "-0|-0", "-0|-0", "q0|q0", "-n|-n", "-n|-n", "-0|-0", "-f|-f", "-n|-n", "-n|-n", "-0|-0"];
+  u:text_lg(all, i)
+}
+
+def u:e2_filler_tags(i) {
+  "Sentiment of each filler of class i (n, p or 0), |-joined and aligned with u:e2_fillers; empty when no frame of the class takes sentiment from its filler.";
+  all = ["", "", "n|n|n|n|n|n|n|n|n|n|n|n|p|p|p|p|p|p", "", "", "", "", "", "", "", "", "", "", "p|p|0|0|0|0|0", "", "", ""];
+  u:text_lg(all, i)
+}
+
+def u:e2_noul_names() {
+  "The three Noul questions asked of every input, in column order.";
+  "question|negative|positive"
+}
+
+def u:e2_prep(s) {
+  "Make a question mark visible to the featurizer, which otherwise treats punctuation as a separator: each one becomes the word qmark.";
+  str_join(str_split(s, "?"), " qmark ")
 }
 
 def u:e2_render(frame, filler) {
@@ -105,17 +133,38 @@ def u:e2_render(frame, filler) {
   str_join(str_split(frame, "{}"), filler)
 }
 
-def u:e2_expand(frames, fillers, c, lines, y) {
-  "Append every frame-filler combination for class c to the running newline-joined lines and label array; a frame without a slot contributes one sentence.";
+def u:e2_noul_row(tag, filler_tag) {
+  "The three Noul labels [question, negative, positive] for one sentence, from its frame's two-character tag and its filler's sentiment.";
+  q = str_eq(str_slice(tag, 0, 1), "q");
+  sent = str_slice(tag, 1, 1);
+  mood = if str_eq(sent, "f") {
+    filler_tag
+  } else {
+    sent
+  };
+  [q, str_eq(mood, "n"), str_eq(mood, "p")]
+}
+
+def u:e2_expand(frames, fillers, tags, filler_tags, c, acc) {
+  "Append every frame-filler combination for class c to the running corpus: sentences (newline-joined), class labels, and Noul labels (three per sentence). A frame without a slot contributes one sentence.";
   fs = str_split(fillers, "|");
   ts = str_split(frames, "|");
+  gs = str_split(tags, "|");
+  ft = if gt(str_len(filler_tags), 0) {
+    str_split(filler_tags, "|")
+  } else {
+    str_split("", "|")
+  };
+  has_ft = gt(str_len(filler_tags), 0);
   nt = list_len(ts);
   nf = list_len(fs);
-  out = lines;
-  labels = y;
+  out = acc.lines;
+  labels = acc.y;
+  nouls = acc.nouls;
   t = 0;
   while lt(t, nt) {
     frame = u:text_lg(ts, t);
+    tag = u:text_lg(gs, t);
     reps = if gt(str_find(frame, "{}"), 0 - 1) {
       nf
     } else {
@@ -130,17 +179,23 @@ def u:e2_expand(frames, fillers, c, lines, y) {
         s
       };
       labels = concat(labels, [c]);
+      mood = if has_ft {
+        u:text_lg(ft, fi)
+      } else {
+        "0"
+      };
+      nouls = concat(nouls, u:e2_noul_row(tag, mood));
       fi = fi + 1
     };
     t = t + 1
   };
-  {lines: out, y: labels}
+  {lines: out, y: labels, nouls: nouls}
 }
 
 def u:e2_corpus(split) {
-  "The generated corpus for a split: 0 for training frames, 1 for held-out validation frames. Returns the sentences as a string list and their labels as an array, in the same order.";
+  "The generated corpus for a split: 0 for training frames, 1 for held-out validation frames. Returns the sentences as a string list, their class labels, and their Noul labels as an [N, 3] array (question, negative, positive).";
   k = u:e2_count();
-  acc = {lines: "", y: fill([0], 0)};
+  acc = {lines: "", y: fill([0], 0), nouls: fill([0], 0)};
   c = 0;
   while lt(c, k) {
     frames = if eq(split, 0) {
@@ -148,10 +203,37 @@ def u:e2_corpus(split) {
     } else {
       u:e2_val_frames(c)
     };
-    acc = u:e2_expand(frames, u:e2_fillers(c), c, acc.lines, acc.y);
+    tags = if eq(split, 0) {
+      u:e2_train_tags(c)
+    } else {
+      u:e2_val_tags(c)
+    };
+    acc = u:e2_expand(frames, u:e2_fillers(c), tags, u:e2_filler_tags(c), c, acc);
     c = c + 1
   };
-  {texts: str_split(acc.lines, "\n"), y: acc.y}
+  n = reduce_mul(shape(acc.y));
+  {texts: str_split(acc.lines, "\n"), y: acc.y, nouls: reshape(acc.nouls, [n, 3])}
+}
+
+def u:e2_probe_nouls(path) {
+  "The frozen Noul labels for the probes: one q<TAB>n<TAB>p<TAB>text line each, in the same order as the class-labelled probes. Returns an [N, 3] array.";
+  rows = str_split(unwrap(read_text(path)), "\n");
+  n = list_len(rows);
+  vals = fill([0], 0);
+  count = 0;
+  i = 0;
+  while lt(i, n) {
+    parts = str_split(u:text_lg(rows, i), "\t");
+    keep = eq(list_len(parts), 4);
+    vals = if keep {
+      concat(vals, [unwrap(to_number(u:text_lg(parts, 0))), unwrap(to_number(u:text_lg(parts, 1))), unwrap(to_number(u:text_lg(parts, 2)))])
+    } else {
+      vals
+    };
+    count = count + keep;
+    i = i + 1
+  };
+  reshape(vals, [count, 3])
 }
 
 def u:e2_probes(path) {

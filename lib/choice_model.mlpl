@@ -151,3 +151,33 @@ def u:cm_stack_batches(a, b) {
   "Stack two featurized batches row-wise, keeping ids and pooling weights aligned.";
   {ids: u:cm_stack(a.ids, b.ids), wmask: u:cm_stack(a.wmask, b.wmask)}
 }
+
+def u:cm_pooled(ids, wmask) {
+  "The shared state representation over the caller's global embedding: the mean of the rows the known features address. Every decision head reads this one vector, which is what makes several typed questions cost one pass.";
+  reduce_add(gather_rows(cm_E, ids) * wmask, 1)
+}
+
+def u:cm_noul_logits(ids, wmask) {
+  "Logits [N, m] of the caller's global Noul heads cm_N [d, m] and cm_nb [m]: one independent yes-or-no question per column, over the same pooled state as the Choice.";
+  matmul(u:cm_pooled(ids, wmask), cm_N) + cm_nb
+}
+
+def u:cm_joint_loss(ids, wmask, y, ny, eps) {
+  "Label-smoothed Choice cross-entropy plus the mean binary cross-entropy of every Noul column against its 0-or-1 labels ny [N, m]. Composed from log and sigmoid because there is no binary cross-entropy builtin; the small constant keeps the log finite.";
+  p = sigmoid(u:cm_noul_logits(ids, wmask));
+  bce = 0 - mean(ny * log(p + 0.000000001) + (1 - ny) * log(1 - p + 0.000000001));
+  u:cm_smooth_loss(ids, wmask, y, eps) + bce
+}
+
+def u:cm_train_joint(ids, wmask, y, ny, steps, lr, eps) {
+  "Full-batch Adam on the joint Choice-and-Noul loss over all five global params; returns the final plain Choice cross-entropy.";
+  train steps {
+    adam(u:cm_joint_loss(ids, wmask, y, ny, eps), [cm_E, cm_W, cm_b, cm_N, cm_nb], lr, 0.9, 0.999, 0.00000001)
+  };
+  cross_entropy(u:cm_logits(ids, wmask), y)
+}
+
+def u:cm_infer_nouls(weights, ids, wmask) {
+  "Noul probabilities [N, m] from a plain weights record carrying N and nb: the inference half of u:cm_noul_logits, with a sigmoid.";
+  sigmoid(matmul(reduce_add(gather_rows(weights.E, ids) * wmask, 1), weights.N) + weights.nb)
+}

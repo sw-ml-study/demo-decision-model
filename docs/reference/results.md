@@ -14,6 +14,7 @@ calibration numbers, and its margin over the `MB01` matcher on the same split.
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | SL01 | 1 Choice, 9 classes, 1024 slots x 32 dim, 200 steps | mlpl-repl 0.22.0 | 33,065 | 33,065 | 264,688 | 1 | ~1,300 | val 0.879 | - | - | - | - | - | +0.483 |
 | EH01 | 17 classes + NONE, exact vocab 1,173, dropout 0.3, smoothing 0.1, lr 0.02, 100 steps (5 min) | mlpl-repl 0.22.0 | 38,129 | 38,129 | 2,157,264 | 1 | ~5 (browser) | probes 69% (strict 62%) after policy | - | - | - | - | - | vs v1 model: +29 pts |
+| NH01 | model 3: Choice + 3 Nouls (question, negative, positive), exact vocab 1,291, qmark token, 100 steps (12 min) | mlpl-repl 0.22.0 | 41,905 | 41,905 | 2,466,150 | 4 | ~5 (browser) | probes 71% after policy; question Noul 12/13 | - | - | - | - | - | escalates 19% (EH01 33%) |
 
 ## Reading the SL01 row
 

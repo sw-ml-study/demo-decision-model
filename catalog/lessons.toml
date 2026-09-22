@@ -54,3 +54,17 @@ memory = "38,129 parameters (1,174 x 32 vocabulary embedding, 32 x 17 head, 17 b
 speed = "one Adam run over 2,808 rows (936 generated sentences plus two word-dropout copies), about 2.8 s per step in the interpreter; snapshots after 0, 3, 20, 100, 200 steps = 0 s, 9 s, 61 s, 280 s, 564 s measured"
 quality = "on 96 frozen hand-labelled probes, after the policy (default 5 min snapshot, chosen by validation 0.884): reply class correct 69% vs 40% for the v1 model; right on 78% of non-escalated replies vs 38%; visible wrong COMPUTER replies 1 vs 12, wrong GREET 0 vs 7; escalates 33%, and in 28 of those 32 the model's own choice would have been wrong. Strict (78 probes never in training): 62% vs 38%, 70% vs 36% when not escalating, confidence when wrong 0.36 vs 0.72. Training past 5 min lowers validation (0.794 at 10 min). Labels, frames and yardstick are all the author's; the ELIZA-oracle corpus is the planned remedy."
 status = "accepted"
+
+[[lesson]]
+id = "NH01"
+slug = "noul-heads"
+title = "Several typed questions per input from one forward pass; questions are turned back, not answered"
+source = "demos/eliza/v2/export.mlpl"
+library = ["lib/choice_model.mlpl", "demos/eliza/v2/domain.mlpl"]
+test = ["crates/tdm-model/tests/noul_bundle.rs", "demos/eliza/sim/tests/probe_ratchet.rs", "demos/eliza/sim/tests/conversation.rs"]
+fixture = "fixtures/bundles/demo01-model3.json"
+implementation = "from-scratch"
+memory = "41,905 parameters: a 1,292 x 32 vocabulary embedding, a 32 x 17 Choice head and a 32 x 3 Noul head over the same pooled state; bundle 2.47 MB"
+speed = "one joint Adam run over 3,000 rows, about 7 s per step in the interpreter; snapshots at 0, 3, 20, 100, 200 steps measured at 0 s, 19 s, 2.3 min, 12 min, 23.1 min; all three Nouls come from the Choice's forward pass at no extra encoder cost"
+quality = "default 12 min, chosen by mean validation accuracy over all four heads (0.898), not by the Choice alone, which peaks at 2.3 min while the Nouls keep improving. On 96 frozen probes: question Noul 0.98 accurate, catching 12 of 13 questions with 1% false alarms; negative 0.79 (recall 0.66); positive 0.94 but catching only 1 of 5 -- positives are rare in training and probes. Reply class correct 71% after policy, 77% when not escalating, escalated 19% (model 2: 33%); visible wrong COMPUTER 1, GREET 0."
+status = "accepted"

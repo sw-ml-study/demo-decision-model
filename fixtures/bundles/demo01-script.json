@@ -1,7 +1,7 @@
 {
  "schema": "sw-ml-study.conversation-script",
  "version": 1,
- "note": "Demo 01's conversation script: the deterministic half of ELIZA. The model chooses a class; this script decides how to answer it from the visitor's own words. Patterns match cleaned words (apostrophes removed, so don't is dont); * matches any run of words; {1}, {2} are the wildcard captures and {all} the whole input, each reflected (my -> your, i -> you); {w} is the word a find rule found. Many reassemblies are Weizenbaum's 1966 DOCTOR script.",
+ "note": "Demo 01's conversation script: the deterministic half of ELIZA. The model chooses a class; this script decides how to answer it from the visitor's own words. Patterns match cleaned words (apostrophes removed, so don't is dont); * matches any run of words; {1}, {2} are the wildcard captures and {all} the whole input, each reflected (my -> your, i -> you); {w} is the word a find rule found. Many reassemblies are Weizenbaum's 1966 DOCTOR script. Nouls: a question is deflected first, as Weizenbaum's program did; when the model cannot decide, a longer input is reflected with its sentiment, and a short one brings back a memory.",
  "stopwords": [
   "i",
   "me",
@@ -154,6 +154,22 @@
    "Earlier you said {all}.",
    "Let's discuss further why {all}.",
    "Does that have anything to do with the fact that {all}?"
+  ],
+  "lead_fillers": [
+   "well",
+   "oh",
+   "so",
+   "and",
+   "but",
+   "um",
+   "uh",
+   "like",
+   "anyway",
+   "ok",
+   "okay",
+   "yeah",
+   "hmm",
+   "honestly"
   ]
  },
  "reflect": {
@@ -426,6 +442,43 @@
      "I am sorry about your {w}. How are you coping?",
      "Tell me more about your {w}.",
      "What do you miss most about your {w}?"
+    ]
+   }
+  ]
+ },
+ "nouls": {
+  "deflect": {
+   "noul": "question",
+   "threshold": 0.5,
+   "labels": [
+    "QUESTION"
+   ],
+   "frames": [
+    "We were discussing you, not me.",
+    "I ask the questions here.",
+    "Why do you ask?",
+    "I'm not here to answer questions. What do you think?",
+    "Does that question interest you?",
+    "What answer would please you most?"
+   ]
+  },
+  "sentiment": [
+   {
+    "noul": "negative",
+    "threshold": 0.6,
+    "frames": [
+     "You seem upset that {all}.",
+     "It sounds hard that {all}. Tell me more.",
+     "How does it feel that {all}?"
+    ]
+   },
+   {
+    "noul": "positive",
+    "threshold": 0.6,
+    "frames": [
+     "It is good to hear that {all}. How does that make you feel?",
+     "You seem pleased that {all}.",
+     "That sounds good. What else is on your mind?"
     ]
    }
   ]

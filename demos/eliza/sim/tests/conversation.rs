@@ -77,3 +77,49 @@ fn it_never_says_the_same_thing_twice_in_a_row() {
         assert_ne!(pair[0].1, pair[1].1, "repeated reply after {:?}", pair[1].0);
     }
 }
+
+const BUNDLE3: &str = include_str!("../../../../fixtures/bundles/demo01-model3.json");
+
+#[test]
+fn with_noul_heads_it_turns_questions_back_instead_of_answering() {
+    let b = Bundle::parse(BUNDLE3).expect("model 3");
+    let s: Script = serde_json::from_str(SCRIPT).expect("script");
+    let mut c = Conversation::new(&b, &s, b.default_snapshot);
+    let lines = [
+        "my mom never listens to me",
+        "are you a computer?",
+        "what should i do",
+        "why do you ask?",
+        "i lost my job last week",
+        "skill issue",
+        "my job is killing me",
+    ];
+    let out: Vec<(String, Move)> = lines
+        .iter()
+        .map(|l| {
+            let x = c.say(l);
+            (x.reply.text, x.reply.by)
+        })
+        .collect();
+    for i in [1, 2, 3] {
+        assert!(
+            matches!(out[i].1, Move::Deflect { .. }),
+            "{:?} was answered, not deflected: {:?}",
+            lines[i],
+            out[i]
+        );
+        assert_ne!(
+            tdm_model::words(&out[i].0),
+            tdm_model::words(lines[i]),
+            "a question is never echoed back"
+        );
+    }
+    assert!(
+        matches!(out[5].1, Move::Memory { .. }),
+        "a short, unclear input brings back a memory"
+    );
+    assert_eq!(
+        out[6].0, "Earlier you said you lost your job last week.",
+        "the repeat rule quotes the whole statement, not from \"my\" on"
+    );
+}

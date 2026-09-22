@@ -12,6 +12,7 @@ const PROBE: &str = "probe confidence";
 const TEST: &str = "probe accuracy";
 const WRONG: &str = "probe confidence when wrong";
 const RIGHT: &str = "probe confidence when right";
+const ALL: &str = "val accuracy, all heads";
 const W: f64 = 360.0;
 const H: f64 = 110.0;
 const PAD: f64 = 14.0;
@@ -91,9 +92,14 @@ fn reading(b: &Bundle) -> String {
     if b.metric(0, TEST).is_some() {
         let d = b.default_snapshot;
         return format!(
-            "The page uses the {} snapshot, chosen by accuracy on held-out frames ({:.2}), never by the probes. On the 96 hand-labelled probes it is right {:.0}% of the time, and it knows when it is not: {:.2} confident when wrong against {:.2} when right, which is what the escalation threshold relies on.",
+            "The page uses the {} snapshot, chosen by {} ({:.2}), never by the probes. On the 96 hand-labelled probes it is right {:.0}% of the time, and it knows when it is not: {:.2} confident when wrong against {:.2} when right, which is what the escalation threshold relies on.",
             label(b, d),
-            get(d, ACC),
+            if b.metric(d, ALL).is_some() {
+                "mean validation accuracy over all its heads"
+            } else {
+                "accuracy on held-out frames"
+            },
+            b.metric(d, ALL).unwrap_or_else(|| get(d, ACC)),
             100.0 * get(d, TEST),
             get(d, WRONG),
             get(d, RIGHT)
@@ -118,6 +124,11 @@ fn reading(b: &Bundle) -> String {
     )
 }
 
+/// Metrics that count things rather than measure a rate.
+fn m_is_count(name: &str) -> bool {
+    name.starts_with("false ")
+}
+
 #[function_component(Timeline)]
 pub fn timeline(props: &TimelineProps) -> Html {
     let b = &props.bundle;
@@ -126,7 +137,7 @@ pub fn timeline(props: &TimelineProps) -> Html {
         b.metric(s, name).map_or_else(
             || "—".to_owned(),
             |v| {
-                if v.fract() == 0.0 && v.abs() >= 1.0 {
+                if v.fract() == 0.0 && m_is_count(name) {
                     format!("{v:.0}")
                 } else {
                     format!("{v:.3}")

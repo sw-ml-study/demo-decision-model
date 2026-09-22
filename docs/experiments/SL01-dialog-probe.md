@@ -162,3 +162,20 @@ from the NONE table ("Please go on."), which is safe but flat. Next: reflection
 and recall for escalations, a local escalation path to a larger decider over the
 same options, and the ELIZA-oracle corpus so the frames, labels and yardstick
 stop being one person's.
+
+## Follow-up: conversation mechanics and Noul heads (`NH01`)
+
+The dialog complaints after model 2 were about *control*, not classification:
+the demo never said "earlier you said", never used the visitor's words, and
+answered questions ELIZA would have turned back. The program now owns memory,
+keyword tracking, recall and ELIZA-style reassembly (driven by
+[`demo01-script.json`](../../fixtures/bundles/demo01-script.json)), and model 3
+adds question, negative and positive Noul heads that the program uses to
+deflect questions and to reflect sentiment.
+
+Noul labels for the probes were frozen and committed (`2beb786`) before any
+Noul training annotation existed. Results on the default snapshot: question
+0.98 accurate (12 of 13 caught, 1% false alarms), negative 0.79 (66% caught),
+positive 0.94 (1 of 5 caught). The positive head is the weak one, and the
+reason is data: 76 positive training sentences of 1,000, and 5 positive probes
+of 96.

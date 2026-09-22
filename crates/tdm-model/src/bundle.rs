@@ -49,6 +49,13 @@ pub struct Bundle {
     /// single `threshold`.
     #[serde(default)]
     pub escalation: Option<Escalation>,
+    /// When set, every `?` in an input becomes this word before featurizing,
+    /// so the model can see a question mark the cleaner would otherwise drop.
+    #[serde(default)]
+    pub question_token: Option<String>,
+    /// Independent yes-or-no heads over the same pooled state as the Choice.
+    #[serde(default)]
+    pub nouls: Option<Nouls>,
     pub width: usize,
     pub dim: usize,
     /// The training timeline: one run, snapshotted at fixed step counts.
@@ -65,6 +72,15 @@ pub struct Bundle {
     #[serde(default)]
     pub examples: Vec<String>,
     pub parity: Parity,
+}
+
+/// Noul heads: one sigmoid per named proposition, per snapshot.
+#[derive(Clone, Debug, Deserialize)]
+pub struct Nouls {
+    pub names: Vec<String>,
+    /// Per snapshot, row-major `[dim, names]` weights.
+    pub head: Vec<Vec<f64>>,
+    pub bias: Vec<Vec<f64>>,
 }
 
 /// The thresholds under which the program will not act on the model's choice.
@@ -101,6 +117,9 @@ pub struct Weights<'a> {
     pub embedding: &'a [f64],
     pub head: &'a [f64],
     pub bias: &'a [f64],
+    /// Noul head and bias for this snapshot, when the bundle has Noul heads.
+    pub noul_head: Option<&'a [f64]>,
+    pub noul_bias: Option<&'a [f64]>,
 }
 
 /// Inputs with the numbers MLPL produced for them, so a port can prove itself.
@@ -109,6 +128,9 @@ pub struct Parity {
     pub inputs: Vec<String>,
     /// Per snapshot, row-major `[inputs, labels]` probabilities.
     pub probs: Vec<Vec<f64>>,
+    /// Per snapshot, row-major `[inputs, nouls]` probabilities.
+    #[serde(default)]
+    pub nouls: Option<Vec<Vec<f64>>>,
     /// The keyword matcher's label index for each input.
     pub matcher: Vec<usize>,
 }
@@ -191,6 +213,16 @@ impl Bundle {
         if !shapes_ok {
             return Err(BundleError::Shape("snapshot weights"));
         }
+        if let Some(n) = &self.nouls {
+            let m = n.names.len();
+            let ok = n.head.len() == c
+                && n.bias.len() == c
+                && n.head.iter().all(|h| h.len() == self.dim * m)
+                && n.bias.iter().all(|b| b.len() == m);
+            if !ok {
+                return Err(BundleError::Shape("noul heads"));
+            }
+        }
         Ok(())
     }
 
@@ -223,6 +255,12 @@ impl Bundle {
         }
     }
 
+    /// The names of the Noul heads, in output order; empty without heads.
+    #[must_use]
+    pub fn noul_names(&self) -> &[String] {
+        self.nouls.as_ref().map_or(&[], |n| n.names.as_slice())
+    }
+
     /// How many snapshots the timeline has.
     #[must_use]
     pub fn snapshot_count(&self) -> usize {
@@ -236,6 +274,8 @@ impl Bundle {
             embedding: &self.snapshots.embedding[snapshot],
             head: &self.snapshots.head[snapshot],
             bias: &self.snapshots.bias[snapshot],
+            noul_head: self.nouls.as_ref().map(|n| n.head[snapshot].as_slice()),
+            noul_bias: self.nouls.as_ref().map(|n| n.bias[snapshot].as_slice()),
         }
     }
 

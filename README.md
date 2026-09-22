@@ -150,6 +150,28 @@ prepared it.
 memory, no calibration, no browser UI. It exists so there is something real to
 judge before anything is deepened. Numbers: [`SL01`](docs/reference/results.md).
 
+### Several questions per input: the Noul heads
+
+Model 3 ([`NH01`](catalog/lessons.toml)) asks three yes-or-no questions of every
+input -- *is it a question? is it negative? is it positive?* -- from the same
+forward pass as the reply Choice: one pooled state, four typed decisions. A
+question mark is visible to it now, where the cleaner used to drop it.
+
+Weizenbaum's ELIZA did not answer questions; it turned them back. So a question
+is deflected first -- "We were discussing you, not me.", "I ask the questions
+here.", "I'm not here to answer questions. What do you think?" -- and never by
+echoing it. When the model cannot decide, a longer input is reflected with its
+sentiment and a short one brings back a memory.
+
+On the 96 frozen probes the question Noul catches 12 of 13 questions with a 1%
+false-alarm rate; the negative Noul catches 66% of negative inputs; the positive
+Noul catches only 1 of 5, because positives are rare in both the training data
+and the probes. The default snapshot is chosen by validation accuracy over all
+four heads, not the Choice alone: the Choice peaks at 2.3 minutes while the
+Nouls keep improving to 12, and choosing by the Choice would have shipped a
+question detector that missed half the questions. Model 3 escalates 19% of
+inputs, against a third for model 2, with the same accuracy when it replies.
+
 ### ELIZA's mechanics, back in the program
 
 The model only decides what kind of reply fits. What made ELIZA feel like ELIZA
