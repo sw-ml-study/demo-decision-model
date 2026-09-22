@@ -1,8 +1,9 @@
 number = 17
 slug = "dynamic-choice-sets"
-status = "pending"
+status = "completed"
 description = "Deliver PR05, the lesson sw-atlas is blocked on (docs/plan.md Saga 4 step 1; ..."
 role = "production"
 context_files = []
 created_at = "2026-09-22T11:33:26"
-commits = []
+completed_at = "2026-09-22T14:20:07"
+commits = ["64313f1f83e8f6ca17686c0c25c5184228cb22be"]
