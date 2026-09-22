@@ -3,7 +3,10 @@
 
 use std::rc::Rc;
 
-use tdm_model::{Bundle, Conversation, Remembered, Script, ScriptReply, Turn, respond_at};
+use tdm_model::{
+    Bundle, Conversation, KeywordEngine, KeywordScript, Remembered, Script, ScriptReply, Turn,
+    respond_at,
+};
 use yew::prelude::*;
 
 use crate::chat::Chat;
@@ -13,7 +16,7 @@ use crate::trace::Trace;
 
 /// The trained model and its demo data, embedded at build time so the page is
 /// one static download with nothing to fetch.
-const BUNDLE: &str = include_str!("../../../fixtures/bundles/demo01-model3.json");
+const BUNDLE: &str = include_str!("../../../fixtures/bundles/demo01-model4.json");
 
 /// The bundle, shared by pointer. Props compare by identity: the bundle never
 /// changes after load, and comparing 33,000 weights on every render would be
@@ -37,6 +40,17 @@ impl std::ops::Deref for Shared {
 /// The conversation script: the deterministic half of the demo, as data.
 const SCRIPT: &str = include_str!("../../../fixtures/bundles/demo01-script.json");
 
+/// The keyword script whose rules the model chooses among, and which answers
+/// the rule it chose.
+pub const KEYWORDS: &str = include_str!("../../../fixtures/bundles/demo01-doctor.json");
+
+/// The keyword script, parsed.
+#[must_use]
+pub fn keywords() -> KeywordScript {
+    serde_json::from_str(KEYWORDS)
+        .expect("the embedded keyword script is validated by the demo tests")
+}
+
 /// A turn: the model's decision, how long it took in this browser, and what the
 /// program did with it -- the reply it built, and what it remembered.
 #[derive(Clone)]
@@ -45,6 +59,8 @@ pub struct Timed {
     pub micros: f64,
     pub reply: ScriptReply,
     pub keywords: Vec<String>,
+    /// The rule the keyword script alone would have used: the yardstick.
+    pub oracle: String,
     /// Memory as it stood when this input arrived.
     pub memory: Vec<Remembered>,
 }
@@ -66,7 +82,8 @@ fn initial_inputs() -> Vec<String> {
 fn decide_all(bundle: &Bundle, snapshot: usize, inputs: &[String]) -> Vec<Timed> {
     let script: Script =
         serde_json::from_str(SCRIPT).expect("the embedded script is validated by the demo tests");
-    let mut conversation = Conversation::new(bundle, &script, snapshot);
+    let doctor = keywords();
+    let mut conversation = Conversation::with_keywords(bundle, &script, &doctor, snapshot);
     inputs
         .iter()
         .enumerate()
@@ -74,7 +91,9 @@ fn decide_all(bundle: &Bundle, snapshot: usize, inputs: &[String]) -> Vec<Timed>
             let memory = conversation.memory().to_vec();
             let micros = time_decision(bundle, snapshot, text, i);
             let x = conversation.say(text);
+            let oracle = KeywordEngine::new(&doctor).respond(text).rule;
             Timed {
+                oracle,
                 turn: x.turn,
                 micros,
                 reply: x.reply,

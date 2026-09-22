@@ -72,13 +72,27 @@ status = "accepted"
 [[lesson]]
 id = "OR01"
 slug = "oracle-corpus"
-title = "Weizenbaum's own decisions as labels: a DOCTOR oracle over 8,462 inputs nobody here labelled"
+title = "Weizenbaum's own decisions as labels: a DOCTOR oracle over 8,464 inputs nobody here labelled"
 source = "demos/eliza/sim/src/bin/label.rs"
 library = ["demos/eliza/sim/src/bin/corpus.rs"]
 test = ["demos/eliza/sim/tests/oracle.rs"]
 fixture = "fixtures/bundles/demo01-doctor.json"
 implementation = "from-scratch"
-memory = "the DOCTOR script as data: 35 keywords, 52 decomposition rules; corpus 8,462 labelled inputs"
+memory = "the DOCTOR script as data: 35 keywords, 52 decomposition rules; corpus 8,464 labelled inputs"
 speed = "labelling the whole corpus takes under a second in Rust"
-quality = "oracle reproduces the published 1966 transcript exchanges (tests). Corpus: 7,000 sentences of novel dialogue from ten public-domain books, 181 everyday lines, 1,322 generated sentences; 32% of inputs match no ELIZA keyword; 44 rules used."
+quality = "oracle reproduces the published 1966 transcript exchanges (tests). Corpus: 7,000 sentences of novel dialogue from ten public-domain books (question marks kept, as a free question label), 180 everyday lines, 1,284 generated sentences; 31% of inputs match no ELIZA keyword; 45 rules used."
+status = "accepted"
+
+[[lesson]]
+id = "RC01"
+slug = "rule-choice"
+title = "A Choice over another program's rules, learned from that program's own decisions"
+source = "demos/eliza/v4/export.mlpl"
+library = ["lib/choice_model.mlpl", "demos/eliza/sim/src/bin/featurize.rs"]
+test = ["crates/tdm-model/tests/rule_bundle.rs", "demos/eliza/sim/tests/rules.rs", "demos/eliza/sim/tests/reported.rs"]
+fixture = "fixtures/bundles/demo01-model4.json"
+implementation = "from-scratch"
+memory = "65,286 parameters: a 2,001 x 32 vocabulary embedding, a 32 x 35 Choice head over the script's rules and a 32 x 3 Noul head over the same pooled state; bundle 2.55 MB"
+speed = "minibatches of 256 because one full-batch step over 7,595 rows costs 30 s in the interpreter; Adam's moments persist between calls, so 1,268 minibatch steps (42 epochs) fit in 10 min. Snapshots measured at 0 s, 10 s, 1 min, 5 min, 10 min."
+quality = "default 5 min, chosen by mean validation accuracy over all four heads (0.950). Agreement with the oracle: 84.9% on the 869 held-out inputs (majority class 30.1%), 93.8% on the 96 probes (majority class 21.9%); the chosen rule's pattern fits the input 97.1% of the time and the reply is the oracle's word for word 85.5% of the time. Underconfident: mean confidence 0.72 when right, 0.43 when wrong, ECE 0.169. Question Noul 0.99 accurate (12 of 13 probes, no false alarms); positive Noul still catches only 1 of 5. Past 5 min validation agreement falls while confidence rises."
 status = "accepted"

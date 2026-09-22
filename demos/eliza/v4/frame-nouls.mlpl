@@ -1,0 +1,24 @@
+# Writes the Noul labels of model 3's generated sentences to demos/eliza/oracle/frame-nouls.tsv, one "text<TAB>question<TAB>negative<TAB>positive" row per sentence, both splits. The oracle labels the Choice for these sentences; only their tags say whether they are negative or positive, so model 4 learns those two Nouls from these rows alone.
+include "../../../lib/choice_model.mlpl";
+include "../v2/domain.mlpl";
+
+def u:fn_rows(c) {
+  "The TSV rows of one generated split, newline-joined.";
+  n = list_len(c.texts);
+  out = "";
+  i = 0;
+  while lt(i, n) {
+    r = gather_rows(c.nouls, [i]);
+    row = str_join([u:text_lg(c.texts, i), to_string(take(reshape(r, [3]), 0, 0)), to_string(take(reshape(r, [3]), 0, 1)), to_string(take(reshape(r, [3]), 0, 2))], "\t");
+    out = if gt(str_len(out), 0) {
+      str_concat(str_concat(out, "\n"), row)
+    } else {
+      row
+    };
+    i = i + 1
+  };
+  out
+}
+
+fn_text = str_concat(str_join([u:fn_rows(u:e2_corpus(0)), u:fn_rows(u:e2_corpus(1))], "\n"), "\n");
+print("frame-nouls bytes", write_atomic("demos/eliza/oracle/frame-nouls.tsv", fn_text))

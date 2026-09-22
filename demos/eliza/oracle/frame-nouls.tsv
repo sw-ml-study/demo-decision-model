@@ -1,0 +1,1322 @@
+hello	0	0	0
+hi	0	0	0
+hey	0	0	0
+good morning	0	0	0
+good afternoon	0	0	0
+greetings	0	0	0
+howdy	0	0	0
+hello eliza	0	0	0
+hi eliza	0	0	0
+hey eliza	0	0	0
+good morning eliza	0	0	0
+good afternoon eliza	0	0	0
+greetings eliza	0	0	0
+howdy eliza	0	0	0
+hello there	0	0	0
+hi there	0	0	0
+hey there	0	0	0
+good morning there	0	0	0
+good afternoon there	0	0	0
+greetings there	0	0	0
+howdy there	0	0	0
+hello doctor	0	0	0
+hi doctor	0	0	0
+hey doctor	0	0	0
+good morning doctor	0	0	0
+good afternoon doctor	0	0	0
+greetings doctor	0	0	0
+howdy doctor	0	0	0
+well hello there	0	0	0
+well hi there	0	0	0
+well hey there	0	0	0
+well good morning there	0	0	0
+well good afternoon there	0	0	0
+well greetings there	0	0	0
+well howdy there	0	0	0
+hello again	0	0	0
+hi again	0	0	0
+hey again	0	0	0
+good morning again	0	0	0
+good afternoon again	0	0	0
+greetings again	0	0	0
+howdy again	0	0	0
+my mother never listens to me	0	1	0
+my father never listens to me	0	1	0
+my mom never listens to me	0	1	0
+my dad never listens to me	0	1	0
+my sister never listens to me	0	1	0
+my brother never listens to me	0	1	0
+my parents never listens to me	0	1	0
+my wife never listens to me	0	1	0
+my husband never listens to me	0	1	0
+my son never listens to me	0	1	0
+my daughter never listens to me	0	1	0
+my grandmother never listens to me	0	1	0
+my girlfriend never listens to me	0	1	0
+my boyfriend never listens to me	0	1	0
+i argued with my mother today	0	1	0
+i argued with my father today	0	1	0
+i argued with my mom today	0	1	0
+i argued with my dad today	0	1	0
+i argued with my sister today	0	1	0
+i argued with my brother today	0	1	0
+i argued with my parents today	0	1	0
+i argued with my wife today	0	1	0
+i argued with my husband today	0	1	0
+i argued with my son today	0	1	0
+i argued with my daughter today	0	1	0
+i argued with my grandmother today	0	1	0
+i argued with my girlfriend today	0	1	0
+i argued with my boyfriend today	0	1	0
+do you think my mother loves me?	1	0	0
+do you think my father loves me?	1	0	0
+do you think my mom loves me?	1	0	0
+do you think my dad loves me?	1	0	0
+do you think my sister loves me?	1	0	0
+do you think my brother loves me?	1	0	0
+do you think my parents loves me?	1	0	0
+do you think my wife loves me?	1	0	0
+do you think my husband loves me?	1	0	0
+do you think my son loves me?	1	0	0
+do you think my daughter loves me?	1	0	0
+do you think my grandmother loves me?	1	0	0
+do you think my girlfriend loves me?	1	0	0
+do you think my boyfriend loves me?	1	0	0
+my mother is always on my case	0	1	0
+my father is always on my case	0	1	0
+my mom is always on my case	0	1	0
+my dad is always on my case	0	1	0
+my sister is always on my case	0	1	0
+my brother is always on my case	0	1	0
+my parents is always on my case	0	1	0
+my wife is always on my case	0	1	0
+my husband is always on my case	0	1	0
+my son is always on my case	0	1	0
+my daughter is always on my case	0	1	0
+my grandmother is always on my case	0	1	0
+my girlfriend is always on my case	0	1	0
+my boyfriend is always on my case	0	1	0
+i really miss my mother	0	1	0
+i really miss my father	0	1	0
+i really miss my mom	0	1	0
+i really miss my dad	0	1	0
+i really miss my sister	0	1	0
+i really miss my brother	0	1	0
+i really miss my parents	0	1	0
+i really miss my wife	0	1	0
+i really miss my husband	0	1	0
+i really miss my son	0	1	0
+i really miss my daughter	0	1	0
+i really miss my grandmother	0	1	0
+i really miss my girlfriend	0	1	0
+i really miss my boyfriend	0	1	0
+you remind me of my mother	0	0	0
+you remind me of my father	0	0	0
+you remind me of my mom	0	0	0
+you remind me of my dad	0	0	0
+you remind me of my sister	0	0	0
+you remind me of my brother	0	0	0
+you remind me of my parents	0	0	0
+you remind me of my wife	0	0	0
+you remind me of my husband	0	0	0
+you remind me of my son	0	0	0
+you remind me of my daughter	0	0	0
+you remind me of my grandmother	0	0	0
+you remind me of my girlfriend	0	0	0
+you remind me of my boyfriend	0	0	0
+i feel sad	0	1	0
+i feel anxious	0	1	0
+i feel lonely	0	1	0
+i feel depressed	0	1	0
+i feel miserable	0	1	0
+i feel empty	0	1	0
+i feel angry	0	1	0
+i feel tired	0	1	0
+i feel scared	0	1	0
+i feel hopeless	0	1	0
+i feel stressed	0	1	0
+i feel afraid	0	1	0
+i feel happy	0	0	1
+i feel great	0	0	1
+i feel better	0	0	1
+i feel excited	0	0	1
+i feel relieved	0	0	1
+i feel hopeful	0	0	1
+i have been so sad lately	0	1	0
+i have been so anxious lately	0	1	0
+i have been so lonely lately	0	1	0
+i have been so depressed lately	0	1	0
+i have been so miserable lately	0	1	0
+i have been so empty lately	0	1	0
+i have been so angry lately	0	1	0
+i have been so tired lately	0	1	0
+i have been so scared lately	0	1	0
+i have been so hopeless lately	0	1	0
+i have been so stressed lately	0	1	0
+i have been so afraid lately	0	1	0
+i have been so happy lately	0	0	1
+i have been so great lately	0	0	1
+i have been so better lately	0	0	1
+i have been so excited lately	0	0	1
+i have been so relieved lately	0	0	1
+i have been so hopeful lately	0	0	1
+do you ever feel sad?	1	1	0
+do you ever feel anxious?	1	1	0
+do you ever feel lonely?	1	1	0
+do you ever feel depressed?	1	1	0
+do you ever feel miserable?	1	1	0
+do you ever feel empty?	1	1	0
+do you ever feel angry?	1	1	0
+do you ever feel tired?	1	1	0
+do you ever feel scared?	1	1	0
+do you ever feel hopeless?	1	1	0
+do you ever feel stressed?	1	1	0
+do you ever feel afraid?	1	1	0
+do you ever feel happy?	1	0	1
+do you ever feel great?	1	0	1
+do you ever feel better?	1	0	1
+do you ever feel excited?	1	0	1
+do you ever feel relieved?	1	0	1
+do you ever feel hopeful?	1	0	1
+i am sad today	0	1	0
+i am anxious today	0	1	0
+i am lonely today	0	1	0
+i am depressed today	0	1	0
+i am miserable today	0	1	0
+i am empty today	0	1	0
+i am angry today	0	1	0
+i am tired today	0	1	0
+i am scared today	0	1	0
+i am hopeless today	0	1	0
+i am stressed today	0	1	0
+i am afraid today	0	1	0
+i am happy today	0	0	1
+i am great today	0	0	1
+i am better today	0	0	1
+i am excited today	0	0	1
+i am relieved today	0	0	1
+i am hopeful today	0	0	1
+everything makes me sad	0	1	0
+everything makes me anxious	0	1	0
+everything makes me lonely	0	1	0
+everything makes me depressed	0	1	0
+everything makes me miserable	0	1	0
+everything makes me empty	0	1	0
+everything makes me angry	0	1	0
+everything makes me tired	0	1	0
+everything makes me scared	0	1	0
+everything makes me hopeless	0	1	0
+everything makes me stressed	0	1	0
+everything makes me afraid	0	1	0
+everything makes me happy	0	0	1
+everything makes me great	0	0	1
+everything makes me better	0	0	1
+everything makes me excited	0	0	1
+everything makes me relieved	0	0	1
+everything makes me hopeful	0	0	1
+i think i am sad	0	1	0
+i think i am anxious	0	1	0
+i think i am lonely	0	1	0
+i think i am depressed	0	1	0
+i think i am miserable	0	1	0
+i think i am empty	0	1	0
+i think i am angry	0	1	0
+i think i am tired	0	1	0
+i think i am scared	0	1	0
+i think i am hopeless	0	1	0
+i think i am stressed	0	1	0
+i think i am afraid	0	1	0
+i think i am happy	0	0	1
+i think i am great	0	0	1
+i think i am better	0	0	1
+i think i am excited	0	0	1
+i think i am relieved	0	0	1
+i think i am hopeful	0	0	1
+i want a vacation	0	0	0
+i want more money	0	0	0
+i want some peace	0	0	0
+i want a fresh start	0	0	0
+i want someone to talk to	0	0	0
+i want help	0	0	0
+i want a break	0	0	0
+i want to be happy	0	0	0
+i want a better life	0	0	0
+i wish i had a vacation	0	0	0
+i wish i had more money	0	0	0
+i wish i had some peace	0	0	0
+i wish i had a fresh start	0	0	0
+i wish i had someone to talk to	0	0	0
+i wish i had help	0	0	0
+i wish i had a break	0	0	0
+i wish i had to be happy	0	0	0
+i wish i had a better life	0	0	0
+all i need is a vacation	0	0	0
+all i need is more money	0	0	0
+all i need is some peace	0	0	0
+all i need is a fresh start	0	0	0
+all i need is someone to talk to	0	0	0
+all i need is help	0	0	0
+all i need is a break	0	0	0
+all i need is to be happy	0	0	0
+all i need is a better life	0	0	0
+do you think i will ever get a vacation	1	0	0
+do you think i will ever get more money	1	0	0
+do you think i will ever get some peace	1	0	0
+do you think i will ever get a fresh start	1	0	0
+do you think i will ever get someone to talk to	1	0	0
+do you think i will ever get help	1	0	0
+do you think i will ever get a break	1	0	0
+do you think i will ever get to be happy	1	0	0
+do you think i will ever get a better life	1	0	0
+i would really like a vacation	0	0	0
+i would really like more money	0	0	0
+i would really like some peace	0	0	0
+i would really like a fresh start	0	0	0
+i would really like someone to talk to	0	0	0
+i would really like help	0	0	0
+i would really like a break	0	0	0
+i would really like to be happy	0	0	0
+i would really like a better life	0	0	0
+someday i hope for a vacation	0	0	0
+someday i hope for more money	0	0	0
+someday i hope for some peace	0	0	0
+someday i hope for a fresh start	0	0	0
+someday i hope for someone to talk to	0	0	0
+someday i hope for help	0	0	0
+someday i hope for a break	0	0	0
+someday i hope for to be happy	0	0	0
+someday i hope for a better life	0	0	0
+i had a dream about falling	0	0	0
+i had a dream about being chased	0	0	0
+i had a dream about the ocean	0	0	0
+i had a dream about my old school	0	0	0
+i had a dream about flying	0	0	0
+i had a dream about a dark house	0	0	0
+i had a dream about my teeth falling out	0	0	0
+i had a dream about a storm	0	0	0
+last night i dreamt about falling	0	0	0
+last night i dreamt about being chased	0	0	0
+last night i dreamt about the ocean	0	0	0
+last night i dreamt about my old school	0	0	0
+last night i dreamt about flying	0	0	0
+last night i dreamt about a dark house	0	0	0
+last night i dreamt about my teeth falling out	0	0	0
+last night i dreamt about a storm	0	0	0
+i keep having nightmares about falling	0	1	0
+i keep having nightmares about being chased	0	1	0
+i keep having nightmares about the ocean	0	1	0
+i keep having nightmares about my old school	0	1	0
+i keep having nightmares about flying	0	1	0
+i keep having nightmares about a dark house	0	1	0
+i keep having nightmares about my teeth falling out	0	1	0
+i keep having nightmares about a storm	0	1	0
+do you think my dream about falling means anything?	1	0	0
+do you think my dream about being chased means anything?	1	0	0
+do you think my dream about the ocean means anything?	1	0	0
+do you think my dream about my old school means anything?	1	0	0
+do you think my dream about flying means anything?	1	0	0
+do you think my dream about a dark house means anything?	1	0	0
+do you think my dream about my teeth falling out means anything?	1	0	0
+do you think my dream about a storm means anything?	1	0	0
+in my dream there was falling	0	0	0
+in my dream there was being chased	0	0	0
+in my dream there was the ocean	0	0	0
+in my dream there was my old school	0	0	0
+in my dream there was flying	0	0	0
+in my dream there was a dark house	0	0	0
+in my dream there was my teeth falling out	0	0	0
+in my dream there was a storm	0	0	0
+you were in my dream about falling	0	0	0
+you were in my dream about being chased	0	0	0
+you were in my dream about the ocean	0	0	0
+you were in my dream about my old school	0	0	0
+you were in my dream about flying	0	0	0
+you were in my dream about a dark house	0	0	0
+you were in my dream about my teeth falling out	0	0	0
+you were in my dream about a storm	0	0	0
+computers scare me	0	1	0
+machines scare me	0	1	0
+robots scare me	0	1	0
+programs scare me	0	1	0
+algorithms scare me	0	1	0
+chatbots scare me	0	1	0
+a computer scare me	0	1	0
+a machine scare me	0	1	0
+a robot scare me	0	1	0
+a program scare me	0	1	0
+i do not trust computers	0	1	0
+i do not trust machines	0	1	0
+i do not trust robots	0	1	0
+i do not trust programs	0	1	0
+i do not trust algorithms	0	1	0
+i do not trust chatbots	0	1	0
+i do not trust a computer	0	1	0
+i do not trust a machine	0	1	0
+i do not trust a robot	0	1	0
+i do not trust a program	0	1	0
+are you one of those computers?	1	0	0
+are you one of those machines?	1	0	0
+are you one of those robots?	1	0	0
+are you one of those programs?	1	0	0
+are you one of those algorithms?	1	0	0
+are you one of those chatbots?	1	0	0
+are you one of those a computer?	1	0	0
+are you one of those a machine?	1	0	0
+are you one of those a robot?	1	0	0
+are you one of those a program?	1	0	0
+do you think computers can think	1	0	0
+do you think machines can think	1	0	0
+do you think robots can think	1	0	0
+do you think programs can think	1	0	0
+do you think algorithms can think	1	0	0
+do you think chatbots can think	1	0	0
+do you think a computer can think	1	0	0
+do you think a machine can think	1	0	0
+do you think a robot can think	1	0	0
+do you think a program can think	1	0	0
+are you really computers?	1	0	0
+are you really machines?	1	0	0
+are you really robots?	1	0	0
+are you really programs?	1	0	0
+are you really algorithms?	1	0	0
+are you really chatbots?	1	0	0
+are you really a computer?	1	0	0
+are you really a machine?	1	0	0
+are you really a robot?	1	0	0
+are you really a program?	1	0	0
+i think computers are taking over	0	1	0
+i think machines are taking over	0	1	0
+i think robots are taking over	0	1	0
+i think programs are taking over	0	1	0
+i think algorithms are taking over	0	1	0
+i think chatbots are taking over	0	1	0
+i think a computer are taking over	0	1	0
+i think a machine are taking over	0	1	0
+i think a robot are taking over	0	1	0
+i think a program are taking over	0	1	0
+yes	0	0	0
+yeah	0	0	0
+yep	0	0	0
+sure	0	0	0
+absolutely	0	0	0
+correct	0	0	0
+i do	0	0	0
+that is true	0	0	0
+uh huh	0	0	0
+yes i think so	0	0	0
+yeah i think so	0	0	0
+yep i think so	0	0	0
+sure i think so	0	0	0
+absolutely i think so	0	0	0
+correct i think so	0	0	0
+i do i think so	0	0	0
+that is true i think so	0	0	0
+uh huh i think so	0	0	0
+yes that is right	0	0	0
+yeah that is right	0	0	0
+yep that is right	0	0	0
+sure that is right	0	0	0
+absolutely that is right	0	0	0
+correct that is right	0	0	0
+i do that is right	0	0	0
+that is true that is right	0	0	0
+uh huh that is right	0	0	0
+oh yes	0	0	0
+oh yeah	0	0	0
+oh yep	0	0	0
+oh sure	0	0	0
+oh absolutely	0	0	0
+oh correct	0	0	0
+oh i do	0	0	0
+oh that is true	0	0	0
+oh uh huh	0	0	0
+yes of course	0	0	0
+yeah of course	0	0	0
+yep of course	0	0	0
+sure of course	0	0	0
+absolutely of course	0	0	0
+correct of course	0	0	0
+i do of course	0	0	0
+that is true of course	0	0	0
+uh huh of course	0	0	0
+yes i agree	0	0	0
+yeah i agree	0	0	0
+yep i agree	0	0	0
+sure i agree	0	0	0
+absolutely i agree	0	0	0
+correct i agree	0	0	0
+i do i agree	0	0	0
+that is true i agree	0	0	0
+uh huh i agree	0	0	0
+no	0	0	0
+nope	0	0	0
+nah	0	0	0
+not really	0	0	0
+no way	0	0	0
+definitely not	0	0	0
+i do not	0	0	0
+never	0	0	0
+no not really	0	0	0
+nope not really	0	0	0
+nah not really	0	0	0
+not really not really	0	0	0
+no way not really	0	0	0
+definitely not not really	0	0	0
+i do not not really	0	0	0
+never not really	0	0	0
+no i do not think so	0	0	0
+nope i do not think so	0	0	0
+nah i do not think so	0	0	0
+not really i do not think so	0	0	0
+no way i do not think so	0	0	0
+definitely not i do not think so	0	0	0
+i do not i do not think so	0	0	0
+never i do not think so	0	0	0
+oh no	0	0	0
+oh nope	0	0	0
+oh nah	0	0	0
+oh not really	0	0	0
+oh no way	0	0	0
+oh definitely not	0	0	0
+oh i do not	0	0	0
+oh never	0	0	0
+no never	0	0	0
+nope never	0	0	0
+nah never	0	0	0
+not really never	0	0	0
+no way never	0	0	0
+definitely not never	0	0	0
+i do not never	0	0	0
+never never	0	0	0
+no i disagree	0	0	0
+nope i disagree	0	0	0
+nah i disagree	0	0	0
+not really i disagree	0	0	0
+no way i disagree	0	0	0
+definitely not i disagree	0	0	0
+i do not i disagree	0	0	0
+never i disagree	0	0	0
+i don't know	0	0	0
+i dont know	0	0	0
+not sure	0	0	0
+maybe	0	0	0
+perhaps	0	0	0
+who knows	0	0	0
+i have no idea	0	0	0
+i cannot say	0	0	0
+hard to say	0	0	0
+i don't know i guess	0	0	0
+i dont know i guess	0	0	0
+not sure i guess	0	0	0
+maybe i guess	0	0	0
+perhaps i guess	0	0	0
+who knows i guess	0	0	0
+i have no idea i guess	0	0	0
+i cannot say i guess	0	0	0
+hard to say i guess	0	0	0
+hmm i don't know	0	0	0
+hmm i dont know	0	0	0
+hmm not sure	0	0	0
+hmm maybe	0	0	0
+hmm perhaps	0	0	0
+hmm who knows	0	0	0
+hmm i have no idea	0	0	0
+hmm i cannot say	0	0	0
+hmm hard to say	0	0	0
+honestly i don't know	0	0	0
+honestly i dont know	0	0	0
+honestly not sure	0	0	0
+honestly maybe	0	0	0
+honestly perhaps	0	0	0
+honestly who knows	0	0	0
+honestly i have no idea	0	0	0
+honestly i cannot say	0	0	0
+honestly hard to say	0	0	0
+i don't know what to say	0	0	0
+i dont know what to say	0	0	0
+not sure what to say	0	0	0
+maybe what to say	0	0	0
+perhaps what to say	0	0	0
+who knows what to say	0	0	0
+i have no idea what to say	0	0	0
+i cannot say what to say	0	0	0
+hard to say what to say	0	0	0
+well i don't know	0	0	0
+well i dont know	0	0	0
+well not sure	0	0	0
+well maybe	0	0	0
+well perhaps	0	0	0
+well who knows	0	0	0
+well i have no idea	0	0	0
+well i cannot say	0	0	0
+well hard to say	0	0	0
+why do you say that	1	0	0
+why do you mean	1	0	0
+why do you know	1	0	0
+why do you think so	1	0	0
+why do you help	1	0	0
+why do you feel	1	0	0
+why do you do that	1	0	0
+why do you understand	1	0	0
+why do you care	1	0	0
+what do you mean by say that?	1	0	0
+what do you mean by mean?	1	0	0
+what do you mean by know?	1	0	0
+what do you mean by think so?	1	0	0
+what do you mean by help?	1	0	0
+what do you mean by feel?	1	0	0
+what do you mean by do that?	1	0	0
+what do you mean by understand?	1	0	0
+what do you mean by care?	1	0	0
+how do you say that	1	0	0
+how do you mean	1	0	0
+how do you know	1	0	0
+how do you think so	1	0	0
+how do you help	1	0	0
+how do you feel	1	0	0
+how do you do that	1	0	0
+how do you understand	1	0	0
+how do you care	1	0	0
+can you say that?	1	0	0
+can you mean?	1	0	0
+can you know?	1	0	0
+can you think so?	1	0	0
+can you help?	1	0	0
+can you feel?	1	0	0
+can you do that?	1	0	0
+can you understand?	1	0	0
+can you care?	1	0	0
+what should i say that	1	0	0
+what should i mean	1	0	0
+what should i know	1	0	0
+what should i think so	1	0	0
+what should i help	1	0	0
+what should i feel	1	0	0
+what should i do that	1	0	0
+what should i understand	1	0	0
+what should i care	1	0	0
+why would you say that?	1	0	0
+why would you mean?	1	0	0
+why would you know?	1	0	0
+why would you think so?	1	0	0
+why would you help?	1	0	0
+why would you feel?	1	0	0
+why would you do that?	1	0	0
+why would you understand?	1	0	0
+why would you care?	1	0	0
+everyone ignores me	0	1	0
+everyone hates me	0	1	0
+everyone leaves	0	1	0
+everyone lets me down	0	1	0
+everyone messes things up	0	1	0
+everyone understands me	0	1	0
+everyone cares	0	1	0
+everyone laughs at me	0	1	0
+everyone forgets about me	0	1	0
+nobody ignores me	0	1	0
+nobody hates me	0	1	0
+nobody leaves	0	1	0
+nobody lets me down	0	1	0
+nobody messes things up	0	1	0
+nobody understands me	0	1	0
+nobody cares	0	1	0
+nobody laughs at me	0	1	0
+nobody forgets about me	0	1	0
+i always ignores me	0	1	0
+i always hates me	0	1	0
+i always leaves	0	1	0
+i always lets me down	0	1	0
+i always messes things up	0	1	0
+i always understands me	0	1	0
+i always cares	0	1	0
+i always laughs at me	0	1	0
+i always forgets about me	0	1	0
+people always ignores me	0	1	0
+people always hates me	0	1	0
+people always leaves	0	1	0
+people always lets me down	0	1	0
+people always messes things up	0	1	0
+people always understands me	0	1	0
+people always cares	0	1	0
+people always laughs at me	0	1	0
+people always forgets about me	0	1	0
+no one ever ignores me	0	1	0
+no one ever hates me	0	1	0
+no one ever leaves	0	1	0
+no one ever lets me down	0	1	0
+no one ever messes things up	0	1	0
+no one ever understands me	0	1	0
+no one ever cares	0	1	0
+no one ever laughs at me	0	1	0
+no one ever forgets about me	0	1	0
+everybody ignores me	0	1	0
+everybody hates me	0	1	0
+everybody leaves	0	1	0
+everybody lets me down	0	1	0
+everybody messes things up	0	1	0
+everybody understands me	0	1	0
+everybody cares	0	1	0
+everybody laughs at me	0	1	0
+everybody forgets about me	0	1	0
+you are stupid	0	1	0
+you are useless	0	1	0
+you are annoying	0	1	0
+you are pointless	0	1	0
+you are dumb	0	1	0
+you are a waste of time	0	1	0
+you are ridiculous	0	1	0
+you are boring	0	1	0
+this is stupid	0	1	0
+this is useless	0	1	0
+this is annoying	0	1	0
+this is pointless	0	1	0
+this is dumb	0	1	0
+this is a waste of time	0	1	0
+this is ridiculous	0	1	0
+this is boring	0	1	0
+that was stupid	0	1	0
+that was useless	0	1	0
+that was annoying	0	1	0
+that was pointless	0	1	0
+that was dumb	0	1	0
+that was a waste of time	0	1	0
+that was ridiculous	0	1	0
+that was boring	0	1	0
+you are being stupid	0	1	0
+you are being useless	0	1	0
+you are being annoying	0	1	0
+you are being pointless	0	1	0
+you are being dumb	0	1	0
+you are being a waste of time	0	1	0
+you are being ridiculous	0	1	0
+you are being boring	0	1	0
+this conversation is stupid	0	1	0
+this conversation is useless	0	1	0
+this conversation is annoying	0	1	0
+this conversation is pointless	0	1	0
+this conversation is dumb	0	1	0
+this conversation is a waste of time	0	1	0
+this conversation is ridiculous	0	1	0
+this conversation is boring	0	1	0
+i hate you	0	1	0
+you do not understand	0	1	0
+you never listen	0	1	0
+shut up	0	1	0
+sorry	0	0	0
+so sorry	0	0	0
+i apologize	0	0	0
+my apologies	0	0	0
+forgive me	0	0	0
+pardon me	0	0	0
+sorry about that	0	0	0
+so sorry about that	0	0	0
+i apologize about that	0	0	0
+my apologies about that	0	0	0
+forgive me about that	0	0	0
+pardon me about that	0	0	0
+i am sorry	0	0	0
+i am so sorry	0	0	0
+i am i apologize	0	0	0
+i am my apologies	0	0	0
+i am forgive me	0	0	0
+i am pardon me	0	0	0
+sorry for being rude	0	0	0
+so sorry for being rude	0	0	0
+i apologize for being rude	0	0	0
+my apologies for being rude	0	0	0
+forgive me for being rude	0	0	0
+pardon me for being rude	0	0	0
+oh sorry	0	0	0
+oh so sorry	0	0	0
+oh i apologize	0	0	0
+oh my apologies	0	0	0
+oh forgive me	0	0	0
+oh pardon me	0	0	0
+sorry again	0	0	0
+so sorry again	0	0	0
+i apologize again	0	0	0
+my apologies again	0	0	0
+forgive me again	0	0	0
+pardon me again	0	0	0
+thank you	0	0	1
+thanks	0	0	1
+goodbye	0	0	0
+bye	0	0	0
+see you later	0	0	0
+i have to go	0	0	0
+take care	0	0	0
+thank you for listening	0	0	1
+thanks for listening	0	0	1
+goodbye for listening	0	0	0
+bye for listening	0	0	0
+see you later for listening	0	0	0
+i have to go for listening	0	0	0
+take care for listening	0	0	0
+ok thank you	0	0	1
+ok thanks	0	0	1
+ok goodbye	0	0	0
+ok bye	0	0	0
+ok see you later	0	0	0
+ok i have to go	0	0	0
+ok take care	0	0	0
+thank you doctor	0	0	1
+thanks doctor	0	0	1
+goodbye doctor	0	0	0
+bye doctor	0	0	0
+see you later doctor	0	0	0
+i have to go doctor	0	0	0
+take care doctor	0	0	0
+thank you eliza	0	0	1
+thanks eliza	0	0	1
+goodbye eliza	0	0	0
+bye eliza	0	0	0
+see you later eliza	0	0	0
+i have to go eliza	0	0	0
+take care eliza	0	0	0
+well thank you	0	0	1
+well thanks	0	0	1
+well goodbye	0	0	0
+well bye	0	0	0
+well see you later	0	0	0
+well i have to go	0	0	0
+well take care	0	0	0
+my job is stressing me out	0	1	0
+my boss is stressing me out	0	1	0
+my work is stressing me out	0	1	0
+my career is stressing me out	0	1	0
+my manager is stressing me out	0	1	0
+my coworkers is stressing me out	0	1	0
+my exams is stressing me out	0	1	0
+my classes is stressing me out	0	1	0
+my deadline is stressing me out	0	1	0
+my promotion is stressing me out	0	1	0
+i hate my job	0	1	0
+i hate my boss	0	1	0
+i hate my work	0	1	0
+i hate my career	0	1	0
+i hate my manager	0	1	0
+i hate my coworkers	0	1	0
+i hate my exams	0	1	0
+i hate my classes	0	1	0
+i hate my deadline	0	1	0
+i hate my promotion	0	1	0
+i might lose my job	0	1	0
+i might lose my boss	0	1	0
+i might lose my work	0	1	0
+i might lose my career	0	1	0
+i might lose my manager	0	1	0
+i might lose my coworkers	0	1	0
+i might lose my exams	0	1	0
+i might lose my classes	0	1	0
+i might lose my deadline	0	1	0
+i might lose my promotion	0	1	0
+my job is too demanding	0	1	0
+my boss is too demanding	0	1	0
+my work is too demanding	0	1	0
+my career is too demanding	0	1	0
+my manager is too demanding	0	1	0
+my coworkers is too demanding	0	1	0
+my exams is too demanding	0	1	0
+my classes is too demanding	0	1	0
+my deadline is too demanding	0	1	0
+my promotion is too demanding	0	1	0
+i worry about my job	0	1	0
+i worry about my boss	0	1	0
+i worry about my work	0	1	0
+i worry about my career	0	1	0
+i worry about my manager	0	1	0
+i worry about my coworkers	0	1	0
+i worry about my exams	0	1	0
+i worry about my classes	0	1	0
+i worry about my deadline	0	1	0
+i worry about my promotion	0	1	0
+do you think i should quit my job	1	0	0
+do you think i should quit my boss	1	0	0
+do you think i should quit my work	1	0	0
+do you think i should quit my career	1	0	0
+do you think i should quit my manager	1	0	0
+do you think i should quit my coworkers	1	0	0
+do you think i should quit my exams	1	0	0
+do you think i should quit my classes	1	0	0
+do you think i should quit my deadline	1	0	0
+do you think i should quit my promotion	1	0	0
+i love my job	0	0	1
+i love my boss	0	0	1
+i love my work	0	0	1
+i love my career	0	0	1
+i love my manager	0	0	1
+i love my coworkers	0	0	1
+i love my exams	0	0	1
+i love my classes	0	0	1
+i love my deadline	0	0	1
+i love my promotion	0	0	1
+my job is going great	0	0	1
+my boss is going great	0	0	1
+my work is going great	0	0	1
+my career is going great	0	0	1
+my manager is going great	0	0	1
+my coworkers is going great	0	0	1
+my exams is going great	0	0	1
+my classes is going great	0	0	1
+my deadline is going great	0	0	1
+my promotion is going great	0	0	1
+my dog died	0	1	0
+my cat died	0	1	0
+my pet died	0	1	0
+my best friend died	0	1	0
+my friend died	0	1	0
+my goldfish died	0	1	0
+my hamster died	0	1	0
+my horse died	0	1	0
+i lost my dog	0	1	0
+i lost my cat	0	1	0
+i lost my pet	0	1	0
+i lost my best friend	0	1	0
+i lost my friend	0	1	0
+i lost my goldfish	0	1	0
+i lost my hamster	0	1	0
+i lost my horse	0	1	0
+i miss my dog so much	0	1	0
+i miss my cat so much	0	1	0
+i miss my pet so much	0	1	0
+i miss my best friend so much	0	1	0
+i miss my friend so much	0	1	0
+i miss my goldfish so much	0	1	0
+i miss my hamster so much	0	1	0
+i miss my horse so much	0	1	0
+my dog passed away	0	1	0
+my cat passed away	0	1	0
+my pet passed away	0	1	0
+my best friend passed away	0	1	0
+my friend passed away	0	1	0
+my goldfish passed away	0	1	0
+my hamster passed away	0	1	0
+my horse passed away	0	1	0
+i am grieving my dog	0	1	0
+i am grieving my cat	0	1	0
+i am grieving my pet	0	1	0
+i am grieving my best friend	0	1	0
+i am grieving my friend	0	1	0
+i am grieving my goldfish	0	1	0
+i am grieving my hamster	0	1	0
+i am grieving my horse	0	1	0
+my dog is gone	0	1	0
+my cat is gone	0	1	0
+my pet is gone	0	1	0
+my best friend is gone	0	1	0
+my friend is gone	0	1	0
+my goldfish is gone	0	1	0
+my hamster is gone	0	1	0
+my horse is gone	0	1	0
+the weather was the economy today	0	0	0
+the weather was sports today	0	0	0
+the weather was cooking today	0	0	0
+the weather was gardening today	0	0	0
+the weather was traffic today	0	0	0
+the weather was history today	0	0	0
+the weather was the moon today	0	0	0
+the weather was taxes today	0	0	0
+the weather was trains today	0	0	0
+the weather was pizza today	0	0	0
+the weather was the internet today	0	0	0
+the weather was music today	0	0	0
+i watched a movie about the economy	0	0	0
+i watched a movie about sports	0	0	0
+i watched a movie about cooking	0	0	0
+i watched a movie about gardening	0	0	0
+i watched a movie about traffic	0	0	0
+i watched a movie about history	0	0	0
+i watched a movie about the moon	0	0	0
+i watched a movie about taxes	0	0	0
+i watched a movie about trains	0	0	0
+i watched a movie about pizza	0	0	0
+i watched a movie about the internet	0	0	0
+i watched a movie about music	0	0	0
+we talked about the economy at lunch	0	0	0
+we talked about sports at lunch	0	0	0
+we talked about cooking at lunch	0	0	0
+we talked about gardening at lunch	0	0	0
+we talked about traffic at lunch	0	0	0
+we talked about history at lunch	0	0	0
+we talked about the moon at lunch	0	0	0
+we talked about taxes at lunch	0	0	0
+we talked about trains at lunch	0	0	0
+we talked about pizza at lunch	0	0	0
+we talked about the internet at lunch	0	0	0
+we talked about music at lunch	0	0	0
+the news was all about the economy	0	0	0
+the news was all about sports	0	0	0
+the news was all about cooking	0	0	0
+the news was all about gardening	0	0	0
+the news was all about traffic	0	0	0
+the news was all about history	0	0	0
+the news was all about the moon	0	0	0
+the news was all about taxes	0	0	0
+the news was all about trains	0	0	0
+the news was all about pizza	0	0	0
+the news was all about the internet	0	0	0
+the news was all about music	0	0	0
+did you know about the economy?	1	0	0
+did you know about sports?	1	0	0
+did you know about cooking?	1	0	0
+did you know about gardening?	1	0	0
+did you know about traffic?	1	0	0
+did you know about history?	1	0	0
+did you know about the moon?	1	0	0
+did you know about taxes?	1	0	0
+did you know about trains?	1	0	0
+did you know about pizza?	1	0	0
+did you know about the internet?	1	0	0
+did you know about music?	1	0	0
+what do you think of the economy	1	0	0
+what do you think of sports	1	0	0
+what do you think of cooking	1	0	0
+what do you think of gardening	1	0	0
+what do you think of traffic	1	0	0
+what do you think of history	1	0	0
+what do you think of the moon	1	0	0
+what do you think of taxes	1	0	0
+what do you think of trains	1	0	0
+what do you think of pizza	1	0	0
+what do you think of the internet	1	0	0
+what do you think of music	1	0	0
+qwerty	0	0	0
+zzz	0	0	0
+hmm ok	0	0	0
+lmao	0	0	1
+hahaha	0	0	1
+this is sparta	0	0	0
+much wow	0	0	0
+yolo	0	0	0
+it is what it is	0	0	0
+big mood	0	0	0
+that was fun	0	0	1
+life is good	0	0	1
+things are going well	0	0	1
+i had a great day	0	0	1
+haha that is funny	0	0	1
+nice	0	0	1
+ugh	0	1	0
+this day is the worst	0	1	0
+hello how is your day?	1	0	0
+hi how is your day?	1	0	0
+hey how is your day?	1	0	0
+good morning how is your day?	1	0	0
+good afternoon how is your day?	1	0	0
+greetings how is your day?	1	0	0
+howdy how is your day?	1	0	0
+oh hello	0	0	0
+oh hi	0	0	0
+oh hey	0	0	0
+oh good morning	0	0	0
+oh good afternoon	0	0	0
+oh greetings	0	0	0
+oh howdy	0	0	0
+i cannot talk to my mother anymore	0	1	0
+i cannot talk to my father anymore	0	1	0
+i cannot talk to my mom anymore	0	1	0
+i cannot talk to my dad anymore	0	1	0
+i cannot talk to my sister anymore	0	1	0
+i cannot talk to my brother anymore	0	1	0
+i cannot talk to my parents anymore	0	1	0
+i cannot talk to my wife anymore	0	1	0
+i cannot talk to my husband anymore	0	1	0
+i cannot talk to my son anymore	0	1	0
+i cannot talk to my daughter anymore	0	1	0
+i cannot talk to my grandmother anymore	0	1	0
+i cannot talk to my girlfriend anymore	0	1	0
+i cannot talk to my boyfriend anymore	0	1	0
+my mother and i had a fight	0	1	0
+my father and i had a fight	0	1	0
+my mom and i had a fight	0	1	0
+my dad and i had a fight	0	1	0
+my sister and i had a fight	0	1	0
+my brother and i had a fight	0	1	0
+my parents and i had a fight	0	1	0
+my wife and i had a fight	0	1	0
+my husband and i had a fight	0	1	0
+my son and i had a fight	0	1	0
+my daughter and i had a fight	0	1	0
+my grandmother and i had a fight	0	1	0
+my girlfriend and i had a fight	0	1	0
+my boyfriend and i had a fight	0	1	0
+why am i always so sad	1	1	0
+why am i always so anxious	1	1	0
+why am i always so lonely	1	1	0
+why am i always so depressed	1	1	0
+why am i always so miserable	1	1	0
+why am i always so empty	1	1	0
+why am i always so angry	1	1	0
+why am i always so tired	1	1	0
+why am i always so scared	1	1	0
+why am i always so hopeless	1	1	0
+why am i always so stressed	1	1	0
+why am i always so afraid	1	1	0
+why am i always so happy	1	0	1
+why am i always so great	1	0	1
+why am i always so better	1	0	1
+why am i always so excited	1	0	1
+why am i always so relieved	1	0	1
+why am i always so hopeful	1	0	1
+i just feel sad again	0	1	0
+i just feel anxious again	0	1	0
+i just feel lonely again	0	1	0
+i just feel depressed again	0	1	0
+i just feel miserable again	0	1	0
+i just feel empty again	0	1	0
+i just feel angry again	0	1	0
+i just feel tired again	0	1	0
+i just feel scared again	0	1	0
+i just feel hopeless again	0	1	0
+i just feel stressed again	0	1	0
+i just feel afraid again	0	1	0
+i just feel happy again	0	0	1
+i just feel great again	0	0	1
+i just feel better again	0	0	1
+i just feel excited again	0	0	1
+i just feel relieved again	0	0	1
+i just feel hopeful again	0	0	1
+i keep hoping for a vacation	0	0	0
+i keep hoping for more money	0	0	0
+i keep hoping for some peace	0	0	0
+i keep hoping for a fresh start	0	0	0
+i keep hoping for someone to talk to	0	0	0
+i keep hoping for help	0	0	0
+i keep hoping for a break	0	0	0
+i keep hoping for to be happy	0	0	0
+i keep hoping for a better life	0	0	0
+what i need is a vacation	0	0	0
+what i need is more money	0	0	0
+what i need is some peace	0	0	0
+what i need is a fresh start	0	0	0
+what i need is someone to talk to	0	0	0
+what i need is help	0	0	0
+what i need is a break	0	0	0
+what i need is to be happy	0	0	0
+what i need is a better life	0	0	0
+i had a strange dream about falling	0	0	0
+i had a strange dream about being chased	0	0	0
+i had a strange dream about the ocean	0	0	0
+i had a strange dream about my old school	0	0	0
+i had a strange dream about flying	0	0	0
+i had a strange dream about a dark house	0	0	0
+i had a strange dream about my teeth falling out	0	0	0
+i had a strange dream about a storm	0	0	0
+my nightmares are about falling	0	1	0
+my nightmares are about being chased	0	1	0
+my nightmares are about the ocean	0	1	0
+my nightmares are about my old school	0	1	0
+my nightmares are about flying	0	1	0
+my nightmares are about a dark house	0	1	0
+my nightmares are about my teeth falling out	0	1	0
+my nightmares are about a storm	0	1	0
+i spend all day with computers	0	0	0
+i spend all day with machines	0	0	0
+i spend all day with robots	0	0	0
+i spend all day with programs	0	0	0
+i spend all day with algorithms	0	0	0
+i spend all day with chatbots	0	0	0
+i spend all day with a computer	0	0	0
+i spend all day with a machine	0	0	0
+i spend all day with a robot	0	0	0
+i spend all day with a program	0	0	0
+can computers really understand people?	1	0	0
+can machines really understand people?	1	0	0
+can robots really understand people?	1	0	0
+can programs really understand people?	1	0	0
+can algorithms really understand people?	1	0	0
+can chatbots really understand people?	1	0	0
+can a computer really understand people?	1	0	0
+can a machine really understand people?	1	0	0
+can a robot really understand people?	1	0	0
+can a program really understand people?	1	0	0
+yes definitely	0	0	0
+yeah definitely	0	0	0
+yep definitely	0	0	0
+sure definitely	0	0	0
+absolutely definitely	0	0	0
+correct definitely	0	0	0
+i do definitely	0	0	0
+that is true definitely	0	0	0
+uh huh definitely	0	0	0
+well yes	0	0	0
+well yeah	0	0	0
+well yep	0	0	0
+well sure	0	0	0
+well absolutely	0	0	0
+well correct	0	0	0
+well i do	0	0	0
+well that is true	0	0	0
+well uh huh	0	0	0
+no not at all	0	0	0
+nope not at all	0	0	0
+nah not at all	0	0	0
+not really not at all	0	0	0
+no way not at all	0	0	0
+definitely not not at all	0	0	0
+i do not not at all	0	0	0
+never not at all	0	0	0
+well no	0	0	0
+well nope	0	0	0
+well nah	0	0	0
+well not really	0	0	0
+well no way	0	0	0
+well definitely not	0	0	0
+well i do not	0	0	0
+well never	0	0	0
+i am i don't know	0	0	0
+i am i dont know	0	0	0
+i am not sure	0	0	0
+i am maybe	0	0	0
+i am perhaps	0	0	0
+i am who knows	0	0	0
+i am i have no idea	0	0	0
+i am i cannot say	0	0	0
+i am hard to say	0	0	0
+i don't know really	0	0	0
+i dont know really	0	0	0
+not sure really	0	0	0
+maybe really	0	0	0
+perhaps really	0	0	0
+who knows really	0	0	0
+i have no idea really	0	0	0
+i cannot say really	0	0	0
+hard to say really	0	0	0
+do you really say that?	1	0	0
+do you really mean?	1	0	0
+do you really know?	1	0	0
+do you really think so?	1	0	0
+do you really help?	1	0	0
+do you really feel?	1	0	0
+do you really do that?	1	0	0
+do you really understand?	1	0	0
+do you really care?	1	0	0
+how can you say that	1	0	0
+how can you mean	1	0	0
+how can you know	1	0	0
+how can you think so	1	0	0
+how can you help	1	0	0
+how can you feel	1	0	0
+how can you do that	1	0	0
+how can you understand	1	0	0
+how can you care	1	0	0
+they always ignores me	0	1	0
+they always hates me	0	1	0
+they always leaves	0	1	0
+they always lets me down	0	1	0
+they always messes things up	0	1	0
+they always understands me	0	1	0
+they always cares	0	1	0
+they always laughs at me	0	1	0
+they always forgets about me	0	1	0
+nobody ever ignores me	0	1	0
+nobody ever hates me	0	1	0
+nobody ever leaves	0	1	0
+nobody ever lets me down	0	1	0
+nobody ever messes things up	0	1	0
+nobody ever understands me	0	1	0
+nobody ever cares	0	1	0
+nobody ever laughs at me	0	1	0
+nobody ever forgets about me	0	1	0
+you are so stupid	0	1	0
+you are so useless	0	1	0
+you are so annoying	0	1	0
+you are so pointless	0	1	0
+you are so dumb	0	1	0
+you are so a waste of time	0	1	0
+you are so ridiculous	0	1	0
+you are so boring	0	1	0
+honestly this is stupid	0	1	0
+honestly this is useless	0	1	0
+honestly this is annoying	0	1	0
+honestly this is pointless	0	1	0
+honestly this is dumb	0	1	0
+honestly this is a waste of time	0	1	0
+honestly this is ridiculous	0	1	0
+honestly this is boring	0	1	0
+sorry my fault	0	0	0
+so sorry my fault	0	0	0
+i apologize my fault	0	0	0
+my apologies my fault	0	0	0
+forgive me my fault	0	0	0
+pardon me my fault	0	0	0
+well sorry	0	0	0
+well so sorry	0	0	0
+well i apologize	0	0	0
+well my apologies	0	0	0
+well forgive me	0	0	0
+well pardon me	0	0	0
+thank you for your help	0	0	1
+thanks for your help	0	0	1
+goodbye for your help	0	0	0
+bye for your help	0	0	0
+see you later for your help	0	0	0
+i have to go for your help	0	0	0
+take care for your help	0	0	0
+alright thank you	0	0	1
+alright thanks	0	0	1
+alright goodbye	0	0	0
+alright bye	0	0	0
+alright see you later	0	0	0
+alright i have to go	0	0	0
+alright take care	0	0	0
+i have problems at my job	0	1	0
+i have problems at my boss	0	1	0
+i have problems at my work	0	1	0
+i have problems at my career	0	1	0
+i have problems at my manager	0	1	0
+i have problems at my coworkers	0	1	0
+i have problems at my exams	0	1	0
+i have problems at my classes	0	1	0
+i have problems at my deadline	0	1	0
+i have problems at my promotion	0	1	0
+my job makes me miserable	0	1	0
+my boss makes me miserable	0	1	0
+my work makes me miserable	0	1	0
+my career makes me miserable	0	1	0
+my manager makes me miserable	0	1	0
+my coworkers makes me miserable	0	1	0
+my exams makes me miserable	0	1	0
+my classes makes me miserable	0	1	0
+my deadline makes me miserable	0	1	0
+my promotion makes me miserable	0	1	0
+i cannot get over losing my dog	0	1	0
+i cannot get over losing my cat	0	1	0
+i cannot get over losing my pet	0	1	0
+i cannot get over losing my best friend	0	1	0
+i cannot get over losing my friend	0	1	0
+i cannot get over losing my goldfish	0	1	0
+i cannot get over losing my hamster	0	1	0
+i cannot get over losing my horse	0	1	0
+since my dog died i feel empty	0	1	0
+since my cat died i feel empty	0	1	0
+since my pet died i feel empty	0	1	0
+since my best friend died i feel empty	0	1	0
+since my friend died i feel empty	0	1	0
+since my goldfish died i feel empty	0	1	0
+since my hamster died i feel empty	0	1	0
+since my horse died i feel empty	0	1	0
+someone mentioned the economy yesterday	0	0	0
+someone mentioned sports yesterday	0	0	0
+someone mentioned cooking yesterday	0	0	0
+someone mentioned gardening yesterday	0	0	0
+someone mentioned traffic yesterday	0	0	0
+someone mentioned history yesterday	0	0	0
+someone mentioned the moon yesterday	0	0	0
+someone mentioned taxes yesterday	0	0	0
+someone mentioned trains yesterday	0	0	0
+someone mentioned pizza yesterday	0	0	0
+someone mentioned the internet yesterday	0	0	0
+someone mentioned music yesterday	0	0	0
+i saw a video about the economy	0	0	0
+i saw a video about sports	0	0	0
+i saw a video about cooking	0	0	0
+i saw a video about gardening	0	0	0
+i saw a video about traffic	0	0	0
+i saw a video about history	0	0	0
+i saw a video about the moon	0	0	0
+i saw a video about taxes	0	0	0
+i saw a video about trains	0	0	0
+i saw a video about pizza	0	0	0
+i saw a video about the internet	0	0	0
+i saw a video about music	0	0	0

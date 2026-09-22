@@ -36,6 +36,23 @@ serve-site:
 eliza-export:
     ../sw-mlpl/target/release/mlpl-repl --source-dir . -f demos/eliza/export.mlpl
 
+# Featurize demo 01's oracle corpus for model 4 (Rust; writes tmp/model4/data.json).
+model4-featurize:
+    mkdir -p tmp/model4
+    cargo run --release -p eliza-sim --bin featurize -- demos/eliza/oracle/corpus.tsv demos/eliza/oracle/frame-nouls.tsv demos/eliza/probe-labels.tsv demos/eliza/probe-nouls.tsv fixtures/bundles/demo01-doctor.json tmp/model4/data.json
+
+# Train model 4 on the featurized corpus and rewrite its bundle (about 11 minutes).
+model4-train: model4-featurize
+    ../sw-mlpl/target/release/mlpl-repl --source-dir . -f demos/eliza/v4/export.mlpl
+
+# Score model 4 against the oracle: agreement, per rule, calibration, policy.
+model4-score:
+    cargo run --release -p eliza-sim --example oracle_score
+
+# Rewrite the Noul labels of the generated sentences (demos/eliza/oracle/frame-nouls.tsv).
+model4-frame-nouls:
+    ../sw-mlpl/target/release/mlpl-repl --source-dir . -f demos/eliza/v4/frame-nouls.mlpl
+
 # Train demo 01's Choice model and rewrite its weights (about 25 seconds).
 eliza-train:
     ./scripts/run-eliza-train

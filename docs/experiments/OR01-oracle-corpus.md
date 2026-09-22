@@ -31,40 +31,42 @@ unreachable).
 
 ## The corpus
 
-8,462 distinct inputs, none equal to one of the 96 frozen probes, split
-by a stable hash into 7,604 training and 858
-validation:
+8,464 distinct inputs, none equal to one of the 96 frozen probes, split
+by a stable hash into 7,595 training and 869
+validation. A sentence that ended in a question mark keeps it: the author's own
+punctuation is a free label for "is this a question?", which is what model 4's
+question Noul learns from.
 
 | Source | Inputs | What it is |
 |---|---|---|
-| novel dialogue | 6,999 | every quoted sentence of 3 to 18 words from ten public-domain novels on Project Gutenberg (Pride and Prejudice, Alice, Sherlock Holmes, Little Women, Great Expectations, Emma, Dorian Gray, Anne of Green Gables, Dracula, Frankenstein), capped at 700 per book |
+| novel dialogue | 7,000 | every quoted sentence of 3 to 18 words from ten public-domain novels on Project Gutenberg (Pride and Prejudice, Alice, Sherlock Holmes, Little Women, Great Expectations, Emma, Dorian Gray, Anne of Green Gables, Dracula, Frankenstein), capped at 700 per book |
 | everyday lines | 180 | slang, memes, workplace jargon and ordinary situations, written for this corpus |
-| generated frames | 1,283 | model 3's template sentences, relabelled by the oracle |
+| generated frames | 1,284 | model 3's template sentences, relabelled by the oracle |
 
 Movie quotes were left out: the repository is public and they are not.
 
 ## What ELIZA does with ordinary speech
 
-The oracle used 44 of its rules. The distribution is its own finding:
-**32% of inputs match no keyword at all**
+The oracle used 45 of its rules. The distribution is its own finding:
+**31% of inputs match no keyword at all**
 (`xnone`, "I'm not sure I understand you fully."), and the next most common is
 `i#11`, the generic "You say ...?". ELIZA was mostly deflecting.
 
 | Rule | Inputs | Share |
 |---|---|---|
-| `xnone#0` | 2,673 | 31.6% |
-| `i#11` | 1,067 | 12.6% |
-| `you#3` | 758 | 9.0% |
-| `my#2` | 757 | 8.9% |
-| `what#0` | 709 | 8.4% |
-| `if#0` | 291 | 3.4% |
-| `i#6` | 250 | 3.0% |
-| `i#10` | 186 | 2.2% |
-| `no#0` | 161 | 1.9% |
-| `your#0` | 159 | 1.9% |
-| `you#1` | 124 | 1.5% |
-| `always#0` | 115 | 1.4% |
-| ... 32 more | 1,212 | |
+| `xnone#0` | 2,635 | 31.1% |
+| `i#11` | 1,064 | 12.6% |
+| `my#2` | 775 | 9.2% |
+| `what#0` | 755 | 8.9% |
+| `you#3` | 753 | 8.9% |
+| `if#0` | 282 | 3.3% |
+| `i#6` | 226 | 2.7% |
+| `i#10` | 190 | 2.2% |
+| `your#0` | 162 | 1.9% |
+| `no#0` | 162 | 1.9% |
+| `you#1` | 123 | 1.5% |
+| `always#0` | 120 | 1.4% |
+| ... 33 more | 1,217 | |
 
 ## Found on the way
 

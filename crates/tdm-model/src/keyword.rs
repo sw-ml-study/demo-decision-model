@@ -31,6 +31,16 @@ pub struct KeywordScript {
     pub keys: Vec<Key>,
 }
 
+impl KeywordScript {
+    /// The decomposition pattern of a `key#i` rule, for display.
+    #[must_use]
+    pub fn pattern(&self, rule: &str) -> Option<&str> {
+        let (key, i) = rule.split_once('#')?;
+        let k = self.keys.iter().find(|k| k.key == key)?;
+        Some(k.decomps.get(i.parse::<usize>().ok()?)?.pattern.as_str())
+    }
+}
+
 #[derive(Clone, Debug, Deserialize)]
 pub struct Key {
     pub key: String,
@@ -51,12 +61,31 @@ pub struct Decomp {
     pub memory: bool,
 }
 
-/// What the engine said, and which rule said it.
-#[derive(Clone, Debug, PartialEq, Eq)]
+/// What the engine said, which rule said it, and the parts it was built from.
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct Answer {
     /// `key#i` for decomposition `i` of `key`, or `memory`.
     pub rule: String,
     pub text: String,
+    /// The reassembly as written in the script, with each `(n)` as `{n}`.
+    pub frame: String,
+    /// What each `{n}` was filled with: the input's own words, post-substituted.
+    pub slots: Vec<(String, String)>,
+    /// Whether the rule's own decomposition matched the input. False when a
+    /// rule chosen from outside did not fit and a fallback answered instead.
+    pub matched: bool,
+}
+
+impl Answer {
+    fn fixed(rule: &str, text: String) -> Self {
+        Self {
+            rule: rule.to_owned(),
+            frame: text.clone(),
+            text,
+            slots: Vec::new(),
+            matched: false,
+        }
+    }
 }
 
 /// The fallback keyword, used when nothing in the input matches.
@@ -125,8 +154,8 @@ impl<'a> KeywordEngine<'a> {
         }
         if let Some(text) = self.memory.pop_front() {
             return Answer {
-                rule: "memory".to_owned(),
-                text,
+                matched: true,
+                ..Answer::fixed("memory", text)
             };
         }
         self.fallback(&ws)
@@ -141,8 +170,8 @@ impl<'a> KeywordEngine<'a> {
         if rule == "memory" {
             if let Some(text) = self.memory.pop_front() {
                 return Answer {
-                    rule: rule.to_owned(),
-                    text,
+                    matched: true,
+                    ..Answer::fixed(rule, text)
                 };
             }
             return self.fallback(&ws);
@@ -161,10 +190,7 @@ impl<'a> KeywordEngine<'a> {
             .find(|r| !r.contains('(') && !r.starts_with("goto "))
             .cloned();
         if let Some(text) = fixed {
-            return Answer {
-                rule: rule.to_owned(),
-                text: capitalize(&text),
-            };
+            return Answer::fixed(rule, capitalize(&text));
         }
         self.try_key(ki, &ws, 0)
             .unwrap_or_else(|| self.fallback(&ws))
@@ -215,7 +241,8 @@ impl<'a> KeywordEngine<'a> {
             };
             if self.script.keys[ki].decomps[di].memory {
                 let frame = self.next_reply(ki, di);
-                self.memory.push_back(self.fill(&frame, &parts));
+                let (frame, slots) = self.fill(&frame, &parts);
+                self.memory.push_back(render(&frame, &slots));
                 continue;
             }
             if let Some(a) = self.reassemble(ki, di, &parts, ws, depth) {
@@ -239,9 +266,13 @@ impl<'a> KeywordEngine<'a> {
             return self.try_key(ti, ws, depth + 1);
         }
         let rule = format!("{}#{di}", self.script.keys[ki].key);
+        let (frame, slots) = self.fill(&frame, parts);
         Some(Answer {
             rule,
-            text: capitalize(&self.fill(&frame, parts)),
+            text: render(&frame, &slots),
+            frame,
+            slots,
+            matched: true,
         })
     }
 
@@ -249,10 +280,8 @@ impl<'a> KeywordEngine<'a> {
         let ki = self
             .key_index(NONE_KEY)
             .expect("a script has a fallback keyword");
-        self.try_key(ki, ws, 0).unwrap_or_else(|| Answer {
-            rule: format!("{NONE_KEY}#0"),
-            text: String::new(),
-        })
+        self.try_key(ki, ws, 0)
+            .unwrap_or_else(|| Answer::fixed(&format!("{NONE_KEY}#0"), String::new()))
     }
 
     fn next_reply(&mut self, ki: usize, di: usize) -> String {
@@ -263,10 +292,17 @@ impl<'a> KeywordEngine<'a> {
         r
     }
 
-    /// Splice post-substituted parts into a reassembly.
-    fn fill(&self, frame: &str, parts: &[Vec<String>]) -> String {
+    /// A reassembly as a frame with `{n}` slots, and the post-substituted
+    /// parts that fill them.
+    fn fill(&self, frame: &str, parts: &[Vec<String>]) -> (String, Vec<(String, String)>) {
         let mut out = frame.to_owned();
+        let mut slots = Vec::new();
         for (i, part) in parts.iter().enumerate().rev() {
+            let (paren, brace) = (format!("({})", i + 1), format!("{{{}}}", i + 1));
+            if !out.contains(&paren) {
+                continue;
+            }
+            out = out.replace(&paren, &brace);
             let text = part
                 .iter()
                 .map(|w| {
@@ -278,9 +314,9 @@ impl<'a> KeywordEngine<'a> {
                 })
                 .collect::<Vec<_>>()
                 .join(" ");
-            out = out.replace(&format!("({})", i + 1), &text);
+            slots.insert(0, ((i + 1).to_string(), text));
         }
-        out
+        (out, slots)
     }
 
     /// Match a pattern; the parts are the wildcard runs and synonym matches.
@@ -314,6 +350,23 @@ impl<'a> KeywordEngine<'a> {
         }
         (w == first).then(|| self.matches(rest, tail)).flatten()
     }
+}
+
+/// Fill a frame's `{n}` slots and capitalize: the only way an answer's text is
+/// made, so the text can always be rebuilt from its frame and slots.
+#[must_use]
+pub fn render(frame: &str, slots: &[(String, String)]) -> String {
+    let mut out = frame.to_owned();
+    for (name, value) in slots {
+        out = out.replace(&format!("{{{name}}}"), value);
+    }
+    // An empty capture leaves the gap it filled: "who else in your family ?".
+    let tidy: String = out.split_whitespace().collect::<Vec<_>>().join(" ");
+    let tidy = tidy
+        .replace(" ?", "?")
+        .replace(" .", ".")
+        .replace(" ,", ",");
+    capitalize(&tidy)
 }
 
 fn capitalize(s: &str) -> String {

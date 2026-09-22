@@ -175,7 +175,10 @@ impl Bundle {
             return Err(BundleError::Shape("labels"));
         }
         self.check_snapshots(k)?;
-        if self.responses.len() != k || self.keywords.len() != k {
+        // A bundle whose labels are another program's rules has no keyword
+        // yardstick of its own: no keywords, and no match order.
+        let no_matcher = self.keywords.is_empty() && self.match_order.is_empty();
+        if self.responses.len() != k || (self.keywords.len() != k && !no_matcher) {
             return Err(BundleError::Shape("per-label data"));
         }
         if self.match_order.iter().any(|&i| i >= k) || !self.labels.contains(&self.fallback) {
@@ -185,7 +188,7 @@ impl Bundle {
         let per_snapshot = self.parity.probs.iter().all(|p| p.len() == n * k);
         if self.parity.probs.len() != self.snapshot_count()
             || !per_snapshot
-            || self.parity.matcher.len() != n
+            || (self.parity.matcher.len() != n && !no_matcher)
         {
             return Err(BundleError::Shape("parity"));
         }

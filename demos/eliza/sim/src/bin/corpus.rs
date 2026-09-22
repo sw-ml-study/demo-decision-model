@@ -32,12 +32,26 @@ fn quotes(text: &str) -> Vec<String> {
     out
 }
 
+/// Sentences of 3 to 18 words. A sentence that ended in a question mark keeps
+/// it: the author's punctuation is a free, natural label for "is this a
+/// question?".
 fn sentences(span: &str) -> Vec<String> {
-    span.split(['.', '!', '?', ';'])
-        .map(|s| s.split_whitespace().collect::<Vec<_>>().join(" "))
-        .map(|s| s.trim_matches(|c: char| !c.is_alphanumeric()).to_owned())
-        .filter(|s| (3..=18).contains(&s.split_whitespace().count()))
-        .collect()
+    let mut out = Vec::new();
+    let mut start = 0;
+    for (i, c) in span.char_indices() {
+        if matches!(c, '.' | '!' | '?' | ';') {
+            let body = span[start..i]
+                .split_whitespace()
+                .collect::<Vec<_>>()
+                .join(" ");
+            let body = body.trim_matches(|c: char| !c.is_alphanumeric()).to_owned();
+            if (3..=18).contains(&body.split_whitespace().count()) {
+                out.push(if c == '?' { format!("{body}?") } else { body });
+            }
+            start = i + c.len_utf8();
+        }
+    }
+    out
 }
 
 fn norm(s: &str) -> String {

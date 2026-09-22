@@ -1163,6 +1163,34 @@ def u:cm_train_joint(ids, wmask, y, ny, steps, lr, eps) {
 }
 #+end_src
 
+*** ~u:cm_masked_joint_loss(ids, wmask, y, ny, nm, eps)~
+
+Model 4 learns from rows that answer only some of the typed questions: a sentence pulled out of a novel says whether it is a question -- its author's punctuation says so -- but nothing about whether it is negative or positive. A masked cell must not pull its head either way, so the binary cross-entropy is averaged over the labelled cells alone.
+
+#+begin_src mlpl :tangle ../../lib/choice_model.mlpl
+def u:cm_masked_joint_loss(ids, wmask, y, ny, nm, eps) {
+  "As u:cm_joint_loss, but each Noul label counts only where its mask nm [N, m] is 1: the mean binary cross-entropy is over the labelled cells alone, so rows that answer only some of the questions still train the ones they answer.";
+  p = sigmoid(u:cm_noul_logits(ids, wmask));
+  cells = reduce_add(nm);
+  bce = 0 - reduce_add(nm * (ny * log(p + 0.000000001) + (1 - ny) * log(1 - p + 0.000000001))) / (cells + eq(cells, 0));
+  u:cm_smooth_loss(ids, wmask, y, eps) + bce
+}
+#+end_src
+
+*** ~u:cm_train_masked(ids, wmask, y, ny, nm, steps, lr, eps)~
+
+Full batch stops being affordable at eight thousand rows: one step over them costs about 30 s in the interpreter, so a ten-minute budget buys twenty steps. Adam's moments are process-global and persist between calls, which turns that limitation into the fix -- call this once per minibatch and the result is one continuous optimization, 1,300 updates in the same ten minutes.
+
+#+begin_src mlpl :tangle ../../lib/choice_model.mlpl
+def u:cm_train_masked(ids, wmask, y, ny, nm, steps, lr, eps) {
+  "Adam on the masked joint loss over all five global params; returns the final plain Choice cross-entropy. Adam's moments persist between calls in one process, so calling this once per minibatch continues one optimization.";
+  train steps {
+    adam(u:cm_masked_joint_loss(ids, wmask, y, ny, nm, eps), [cm_E, cm_W, cm_b, cm_N, cm_nb], lr, 0.9, 0.999, 0.00000001)
+  };
+  cross_entropy(u:cm_logits(ids, wmask), y)
+}
+#+end_src
+
 *** ~u:cm_infer_nouls(weights, ids, wmask)~
 
 Noul probabilities [N, m] from a plain weights record carrying N and nb: the inference half of u:cm_noul_logits, with a sigmoid.

@@ -203,36 +203,36 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org556f770">1. How to read and run this document</a>
+<li><a href="#orgd10472e">1. How to read and run this document</a>
 <ul>
-<li><a href="#orgc58a5db">1.1. Evaluating blocks</a></li>
+<li><a href="#orgfd2f421">1.1. Evaluating blocks</a></li>
 </ul>
 </li>
-<li><a href="#org672c5d9">2. A primer in six blocks</a>
+<li><a href="#org5e92a18">2. A primer in six blocks</a>
 <ul>
-<li><a href="#org610c7df">2.1. A decision is a distribution</a></li>
-<li><a href="#orge368387">2.2. Confidence and margin are different doubts</a></li>
-<li><a href="#org2cfce9c">2.3. A Scale is a Choice whose labels are ordered</a></li>
-<li><a href="#org901c9a7">2.4. Why the model misread "I don't know"</a></li>
-<li><a href="#orgb8e4bd0">2.5. One forward pass, by hand</a></li>
-<li><a href="#orge4aa4bb">2.6. What training buys, and when it stops buying accuracy</a></li>
+<li><a href="#orgc3c5b35">2.1. A decision is a distribution</a></li>
+<li><a href="#orgc41fdc8">2.2. Confidence and margin are different doubts</a></li>
+<li><a href="#org53f4a97">2.3. A Scale is a Choice whose labels are ordered</a></li>
+<li><a href="#org3ff5ca1">2.4. Why the model misread "I don't know"</a></li>
+<li><a href="#orgd097ad1">2.5. One forward pass, by hand</a></li>
+<li><a href="#org61ba590">2.6. What training buys, and when it stops buying accuracy</a></li>
 </ul>
 </li>
-<li><a href="#org18bf71e">3. The sources, read in order</a>
+<li><a href="#orgb140ab6">3. The sources, read in order</a>
 <ul>
-<li><a href="#org8a44661">3.1. The decision contract: <code>lib/decision.mlpl</code></a></li>
-<li><a href="#org4b8c885">3.2. Text to model input: <code>lib/text.mlpl</code></a></li>
-<li><a href="#org68c9944">3.3. The Choice model: <code>lib/choice_model.mlpl</code></a></li>
-<li><a href="#org3bcfcb5">3.4. Demo 01's domain: <code>demos/eliza/eliza.mlpl</code></a></li>
-<li><a href="#org2f2d78b">3.5. Training demo 01: <code>demos/eliza/train.mlpl</code></a></li>
-<li><a href="#org45f85be">3.6. Exporting for the browser: <code>demos/eliza/export.mlpl</code></a></li>
+<li><a href="#org9379599">3.1. The decision contract: <code>lib/decision.mlpl</code></a></li>
+<li><a href="#org52b78dd">3.2. Text to model input: <code>lib/text.mlpl</code></a></li>
+<li><a href="#org04f0d97">3.3. The Choice model: <code>lib/choice_model.mlpl</code></a></li>
+<li><a href="#orgd430aba">3.4. Demo 01's domain: <code>demos/eliza/eliza.mlpl</code></a></li>
+<li><a href="#org8ff879d">3.5. Training demo 01: <code>demos/eliza/train.mlpl</code></a></li>
+<li><a href="#orgf446d8b">3.6. Exporting for the browser: <code>demos/eliza/export.mlpl</code></a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
-<div id="outline-container-org556f770" class="outline-2">
-<h2 id="org556f770"><span class="section-number-2">1.</span> How to read and run this document</h2>
+<div id="outline-container-orgd10472e" class="outline-2">
+<h2 id="orgd10472e"><span class="section-number-2">1.</span> How to read and run this document</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 The source of this page is <a href="https://github.com/sw-ml-study/demo-decision-model/blob/main/docs/literate/demo-decision-model.org">docs/literate/demo-decision-model.org</a> in the repository; GitHub renders it too, and Emacs can run it.
@@ -267,8 +267,8 @@ Measured numbers quoted below are rows of the
 the model's failures is <a href="https://github.com/sw-ml-study/demo-decision-model/blob/main/docs/experiments/SL01-dialog-probe.md">SL01-dialog-probe</a>.
 </p>
 </div>
-<div id="outline-container-orgc58a5db" class="outline-3">
-<h3 id="orgc58a5db"><span class="section-number-3">1.1.</span> Evaluating blocks</h3>
+<div id="outline-container-orgfd2f421" class="outline-3">
+<h3 id="orgfd2f421"><span class="section-number-3">1.1.</span> Evaluating blocks</h3>
 <div class="outline-text-3" id="text-1-1">
 <p>
 Nothing is evaluated on export (<code>:eval no-export</code> in the header), so <code>C-c C-e h o</code>
@@ -307,12 +307,12 @@ its printed lines, so the last line of every result is the number to look at.
 </div>
 </div>
 </div>
-<div id="outline-container-org672c5d9" class="outline-2">
-<h2 id="org672c5d9"><span class="section-number-2">2.</span> A primer in six blocks</h2>
+<div id="outline-container-org5e92a18" class="outline-2">
+<h2 id="org5e92a18"><span class="section-number-2">2.</span> A primer in six blocks</h2>
 <div class="outline-text-2" id="text-2">
 </div>
-<div id="outline-container-org610c7df" class="outline-3">
-<h3 id="org610c7df"><span class="section-number-3">2.1.</span> A decision is a distribution</h3>
+<div id="outline-container-orgc3c5b35" class="outline-3">
+<h3 id="orgc3c5b35"><span class="section-number-3">2.1.</span> A decision is a distribution</h3>
 <div class="outline-text-3" id="text-2-1">
 <p>
 A Choice turns a row of scores into a probability per offered option, then reads three numbers off it: which option won, how sure the model is of it (confidence), and by how much it beat the runner-up (margin). This is <code>u:choice</code> from the decision contract, written out with builtins.
@@ -348,8 +348,8 @@ Nothing here produces text. The program receives a distribution over options it 
 </p>
 </div>
 </div>
-<div id="outline-container-orge368387" class="outline-3">
-<h3 id="orge368387"><span class="section-number-3">2.2.</span> Confidence and margin are different doubts</h3>
+<div id="outline-container-orgc41fdc8" class="outline-3">
+<h3 id="orgc41fdc8"><span class="section-number-3">2.2.</span> Confidence and margin are different doubts</h3>
 <div class="outline-text-3" id="text-2-2">
 <p>
 Both numbers are reported everywhere because they fail differently. Two distributions can share a confidence and mean different things: one is an uncertain decision with a clear leader, the other a coin flip between two candidates. The thresholds are the program's, not the model's.
@@ -387,8 +387,8 @@ The contract's test suite pins exactly this pair of cases, so the distinction ca
 </p>
 </div>
 </div>
-<div id="outline-container-org2cfce9c" class="outline-3">
-<h3 id="org2cfce9c"><span class="section-number-3">2.3.</span> A Scale is a Choice whose labels are ordered</h3>
+<div id="outline-container-org53f4a97" class="outline-3">
+<h3 id="org53f4a97"><span class="section-number-3">2.3.</span> A Scale is a Choice whose labels are ordered</h3>
 <div class="outline-text-3" id="text-2-3">
 <p>
 Ordering is what makes an expectation meaningful. Two distributions can pick the same level with the same confidence and still read the state differently; the expectation is what separates them.
@@ -422,8 +422,8 @@ That difference is the only reason Scale is its own primitive rather than a thre
 </p>
 </div>
 </div>
-<div id="outline-container-org901c9a7" class="outline-3">
-<h3 id="org901c9a7"><span class="section-number-3">2.4.</span> Why the model misread "I don't know"</h3>
+<div id="outline-container-org3ff5ca1" class="outline-3">
+<h3 id="org3ff5ca1"><span class="section-number-3">2.4.</span> Why the model misread "I don't know"</h3>
 <div class="outline-text-3" id="text-2-4">
 <p>
 The model does not see words; it sees slots. Each word and adjacent word pair is hashed into one of 1,024 slots, and each slot has one learned vector. Two different features that land in the same slot are, to the model, the same feature.
@@ -465,8 +465,8 @@ mom_never  -&gt; slot 943
 </p>
 </div>
 </div>
-<div id="outline-container-orgb8e4bd0" class="outline-3">
-<h3 id="orgb8e4bd0"><span class="section-number-3">2.5.</span> One forward pass, by hand</h3>
+<div id="outline-container-orgd097ad1" class="outline-3">
+<h3 id="orgd097ad1"><span class="section-number-3">2.5.</span> One forward pass, by hand</h3>
 <div class="outline-text-3" id="text-2-5">
 <p>
 The whole model is three arrays. Look up the embedding row of each feature, average them (the pooling), multiply by the head, add the bias, and apply softmax. This block does it with a four-row table, two features, and three classes.
@@ -502,8 +502,8 @@ The trained model is the same arithmetic at 1,024 x 32 plus a 32 x 9 head and ni
 </p>
 </div>
 </div>
-<div id="outline-container-orge4aa4bb" class="outline-3">
-<h3 id="orge4aa4bb"><span class="section-number-3">2.6.</span> What training buys, and when it stops buying accuracy</h3>
+<div id="outline-container-org61ba590" class="outline-3">
+<h3 id="org61ba590"><span class="section-number-3">2.6.</span> What training buys, and when it stops buying accuracy</h3>
 <div class="outline-text-3" id="text-2-6">
 <p>
 Three examples, three classes, random starting weights, and Adam. Report accuracy and mean confidence as training goes on.
@@ -559,8 +559,8 @@ Accuracy is perfect by step 5; after that, training only makes the model more su
 </div>
 </div>
 </div>
-<div id="outline-container-org18bf71e" class="outline-2">
-<h2 id="org18bf71e"><span class="section-number-2">3.</span> The sources, read in order</h2>
+<div id="outline-container-orgb140ab6" class="outline-2">
+<h2 id="orgb140ab6"><span class="section-number-2">3.</span> The sources, read in order</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 The library knows about decisions and nothing about ELIZA; everything demo 01
@@ -568,8 +568,8 @@ says or knows lives under <code>demos/eliza/</code>. A repository script checks 
 boundary, because demo 02 has to run with <code>lib/</code> unchanged.
 </p>
 </div>
-<div id="outline-container-org8a44661" class="outline-3">
-<h3 id="org8a44661"><span class="section-number-3">3.1.</span> The decision contract: <code>lib/decision.mlpl</code></h3>
+<div id="outline-container-org9379599" class="outline-3">
+<h3 id="org9379599"><span class="section-number-3">3.1.</span> The decision contract: <code>lib/decision.mlpl</code></h3>
 <div class="outline-text-3" id="text-3-1">
 <p>
 Fixed once and pinned by tests, because a lesson that has already been measured must not have the shape shift underneath it. There is one constructor for the Decision record, three primitives built on it, and a validator. There is no generation primitive, and a test asserts it.
@@ -584,8 +584,8 @@ The module comment says what the file is for.
 </pre>
 </div>
 </div>
-<div id="outline-container-org41fc659" class="outline-4">
-<h4 id="org41fc659"><span class="section-number-4">3.1.1.</span> <code>u:decision_kinds()</code></h4>
+<div id="outline-container-org034095d" class="outline-4">
+<h4 id="org034095d"><span class="section-number-4">3.1.1.</span> <code>u:decision_kinds()</code></h4>
 <div class="outline-text-4" id="text-3-1-1">
 <p>
 The three legal decision kinds, in the order the documentation introduces them.
@@ -600,8 +600,8 @@ The three legal decision kinds, in the order the documentation introduces them.
 </div>
 </div>
 </div>
-<div id="outline-container-orgc324f95" class="outline-4">
-<h4 id="orgc324f95"><span class="section-number-4">3.1.2.</span> <code>u:decision_size(v)</code></h4>
+<div id="outline-container-org5938adc" class="outline-4">
+<h4 id="org5938adc"><span class="section-number-4">3.1.2.</span> <code>u:decision_size(v)</code></h4>
 <div class="outline-text-4" id="text-3-1-2">
 <p>
 Element count of a rank-1 array.
@@ -616,8 +616,8 @@ Element count of a rank-1 array.
 </div>
 </div>
 </div>
-<div id="outline-container-org6b301c1" class="outline-4">
-<h4 id="org6b301c1"><span class="section-number-4">3.1.3.</span> <code>u:decision_probs(logits)</code></h4>
+<div id="outline-container-orgaa9954a" class="outline-4">
+<h4 id="orgaa9954a"><span class="section-number-4">3.1.3.</span> <code>u:decision_probs(logits)</code></h4>
 <div class="outline-text-4" id="text-3-1-3">
 <p>
 Probabilities from a rank-1 logit vector.
@@ -632,8 +632,8 @@ Probabilities from a rank-1 logit vector.
 </div>
 </div>
 </div>
-<div id="outline-container-orgdea9880" class="outline-4">
-<h4 id="orgdea9880"><span class="section-number-4">3.1.4.</span> <code>u:decision_temper(logits, t)</code></h4>
+<div id="outline-container-orgbf0b6de" class="outline-4">
+<h4 id="orgbf0b6de"><span class="section-number-4">3.1.4.</span> <code>u:decision_temper(logits, t)</code></h4>
 <div class="outline-text-4" id="text-3-1-4">
 <p>
 Temperature-scaled logits: t above 1 softens the distribution, t below 1 sharpens it, t of 1 is the identity. The cheapest calibration map there is, and the baseline every other one must beat.
@@ -648,8 +648,8 @@ Temperature-scaled logits: t above 1 softens the distribution, t below 1 sharpen
 </div>
 </div>
 </div>
-<div id="outline-container-org559847a" class="outline-4">
-<h4 id="org559847a"><span class="section-number-4">3.1.5.</span> <code>u:decision_selected(probs)</code></h4>
+<div id="outline-container-org57bb4fa" class="outline-4">
+<h4 id="org57bb4fa"><span class="section-number-4">3.1.5.</span> <code>u:decision_selected(probs)</code></h4>
 <div class="outline-text-4" id="text-3-1-5">
 <p>
 Index of the most probable label; ties go to the first.
@@ -664,8 +664,8 @@ Index of the most probable label; ties go to the first.
 </div>
 </div>
 </div>
-<div id="outline-container-org22bff2f" class="outline-4">
-<h4 id="org22bff2f"><span class="section-number-4">3.1.6.</span> <code>u:decision_confidence(probs)</code></h4>
+<div id="outline-container-org2d91bed" class="outline-4">
+<h4 id="org2d91bed"><span class="section-number-4">3.1.6.</span> <code>u:decision_confidence(probs)</code></h4>
 <div class="outline-text-4" id="text-3-1-6">
 <p>
 Probability of the selected label.
@@ -680,8 +680,8 @@ Probability of the selected label.
 </div>
 </div>
 </div>
-<div id="outline-container-orgb4b3b26" class="outline-4">
-<h4 id="orgb4b3b26"><span class="section-number-4">3.1.7.</span> <code>u:decision_margin(probs)</code></h4>
+<div id="outline-container-org9c476af" class="outline-4">
+<h4 id="org9c476af"><span class="section-number-4">3.1.7.</span> <code>u:decision_margin(probs)</code></h4>
 <div class="outline-text-4" id="text-3-1-7">
 <p>
 Gap between the two most probable labels, or 1 for a single-label set. Reported beside confidence everywhere because the two fail differently: .48 confidence with .21 margin is an uncertain decision, while .48 with .01 is a coin flip between two candidates, and a policy may reasonably treat those differently.
@@ -702,8 +702,8 @@ Gap between the two most probable labels, or 1 for a single-label set. Reported 
 </div>
 </div>
 </div>
-<div id="outline-container-org651e678" class="outline-4">
-<h4 id="org651e678"><span class="section-number-4">3.1.8.</span> <code>u:decision_expectation(probs)</code></h4>
+<div id="outline-container-org59c09f1" class="outline-4">
+<h4 id="org59c09f1"><span class="section-number-4">3.1.8.</span> <code>u:decision_expectation(probs)</code></h4>
 <div class="outline-text-4" id="text-3-1-8">
 <p>
 Expected level index of a distribution over ordered levels: the sum of i times p_i. Meaningful only when the labels are ordered, which is why only a Scale carries it.
@@ -718,8 +718,8 @@ Expected level index of a distribution over ordered levels: the sum of i times p
 </div>
 </div>
 </div>
-<div id="outline-container-org8eb52b1" class="outline-4">
-<h4 id="org8eb52b1"><span class="section-number-4">3.1.9.</span> <code>u:decision_uncalibrated()</code></h4>
+<div id="outline-container-orgf9b7dd7" class="outline-4">
+<h4 id="orgf9b7dd7"><span class="section-number-4">3.1.9.</span> <code>u:decision_uncalibrated()</code></h4>
 <div class="outline-text-4" id="text-3-1-9">
 <p>
 The calibration record of a raw model output: no map has been applied.
@@ -734,8 +734,8 @@ The calibration record of a raw model output: no map has been applied.
 </div>
 </div>
 </div>
-<div id="outline-container-org2de5356" class="outline-4">
-<h4 id="org2de5356"><span class="section-number-4">3.1.10.</span> <code>u:decision_temperature_map(t)</code></h4>
+<div id="outline-container-orga2bbbe8" class="outline-4">
+<h4 id="orga2bbbe8"><span class="section-number-4">3.1.10.</span> <code>u:decision_temperature_map(t)</code></h4>
 <div class="outline-text-4" id="text-3-1-10">
 <p>
 The calibration record of a temperature-scaled output, naming the fitted scalar so a trace can be read back.
@@ -750,8 +750,8 @@ The calibration record of a temperature-scaled output, naming the fitted scalar 
 </div>
 </div>
 </div>
-<div id="outline-container-orgac62edf" class="outline-4">
-<h4 id="orgac62edf"><span class="section-number-4">3.1.11.</span> <code>u:decision_build(kind, question, labels, probs, calibration)</code></h4>
+<div id="outline-container-org51ab9e0" class="outline-4">
+<h4 id="org51ab9e0"><span class="section-number-4">3.1.11.</span> <code>u:decision_build(kind, question, labels, probs, calibration)</code></h4>
 <div class="outline-text-4" id="text-3-1-11">
 <p>
 The one Decision constructor. Every field every consumer may rely on is set here, so no lesson invents its own shape: kind, question, labels, probs, selected, confidence, margin, and the calibration provenance.
@@ -766,8 +766,8 @@ The one Decision constructor. Every field every consumer may rely on is set here
 </div>
 </div>
 </div>
-<div id="outline-container-org05975a5" class="outline-4">
-<h4 id="org05975a5"><span class="section-number-4">3.1.12.</span> <code>u:choice_from_probs(question, labels, probs, calibration)</code></h4>
+<div id="outline-container-org3c07fda" class="outline-4">
+<h4 id="org3c07fda"><span class="section-number-4">3.1.12.</span> <code>u:choice_from_probs(question, labels, probs, calibration)</code></h4>
 <div class="outline-text-4" id="text-3-1-12">
 <p>
 A Choice decision from a distribution that is already normalized, for replaying a recorded trace.
@@ -782,8 +782,8 @@ A Choice decision from a distribution that is already normalized, for replaying 
 </div>
 </div>
 </div>
-<div id="outline-container-org1357997" class="outline-4">
-<h4 id="org1357997"><span class="section-number-4">3.1.13.</span> <code>u:choice(question, labels, logits)</code></h4>
+<div id="outline-container-orgd0a120c" class="outline-4">
+<h4 id="orgd0a120c"><span class="section-number-4">3.1.13.</span> <code>u:choice(question, labels, logits)</code></h4>
 <div class="outline-text-4" id="text-3-1-13">
 <p>
 A Choice decision over a labelled set: which one, with what probability. The choices are an input rather than a fixed output layer, so a caller may offer a set that did not exist during training.
@@ -798,8 +798,8 @@ A Choice decision over a labelled set: which one, with what probability. The cho
 </div>
 </div>
 </div>
-<div id="outline-container-orgbfdadbf" class="outline-4">
-<h4 id="orgbfdadbf"><span class="section-number-4">3.1.14.</span> <code>u:choice_tempered(question, labels, logits, t)</code></h4>
+<div id="outline-container-org14ea634" class="outline-4">
+<h4 id="org14ea634"><span class="section-number-4">3.1.14.</span> <code>u:choice_tempered(question, labels, logits, t)</code></h4>
 <div class="outline-text-4" id="text-3-1-14">
 <p>
 A Choice decision with temperature scaling applied, recording the scalar it used.
@@ -814,8 +814,8 @@ A Choice decision with temperature scaling applied, recording the scalar it used
 </div>
 </div>
 </div>
-<div id="outline-container-org5e039b0" class="outline-4">
-<h4 id="org5e039b0"><span class="section-number-4">3.1.15.</span> <code>u:noul_from_p(proposition, p, calibration)</code></h4>
+<div id="outline-container-orgef470af" class="outline-4">
+<h4 id="orgef470af"><span class="section-number-4">3.1.15.</span> <code>u:noul_from_p(proposition, p, calibration)</code></h4>
 <div class="outline-text-4" id="text-3-1-15">
 <p>
 A Noul decision from a probability that is already calibrated or replayed. Carried as a two-label distribution so that one validator, one trace schema, and one renderer serve all three kinds; p remains readable as its own field.
@@ -831,8 +831,8 @@ A Noul decision from a probability that is already calibrated or replayed. Carri
 </div>
 </div>
 </div>
-<div id="outline-container-org688ada4" class="outline-4">
-<h4 id="org688ada4"><span class="section-number-4">3.1.16.</span> <code>u:noul(proposition, logit)</code></h4>
+<div id="outline-container-orgd1a21c7" class="outline-4">
+<h4 id="orgd1a21c7"><span class="section-number-4">3.1.16.</span> <code>u:noul(proposition, logit)</code></h4>
 <div class="outline-text-4" id="text-3-1-16">
 <p>
 A Noul decision: one probability that a proposition holds of the state.
@@ -847,8 +847,8 @@ A Noul decision: one probability that a proposition holds of the state.
 </div>
 </div>
 </div>
-<div id="outline-container-org013e6da" class="outline-4">
-<h4 id="org013e6da"><span class="section-number-4">3.1.17.</span> <code>u:noul_tempered(proposition, logit, t)</code></h4>
+<div id="outline-container-orgf16c4ed" class="outline-4">
+<h4 id="orgf16c4ed"><span class="section-number-4">3.1.17.</span> <code>u:noul_tempered(proposition, logit, t)</code></h4>
 <div class="outline-text-4" id="text-3-1-17">
 <p>
 A Noul decision with temperature scaling applied, recording the scalar it used.
@@ -863,8 +863,8 @@ A Noul decision with temperature scaling applied, recording the scalar it used.
 </div>
 </div>
 </div>
-<div id="outline-container-org1e7c910" class="outline-4">
-<h4 id="org1e7c910"><span class="section-number-4">3.1.18.</span> <code>u:scale_from_probs(question, levels, probs, calibration)</code></h4>
+<div id="outline-container-orgc79cc24" class="outline-4">
+<h4 id="orgc79cc24"><span class="section-number-4">3.1.18.</span> <code>u:scale_from_probs(question, levels, probs, calibration)</code></h4>
 <div class="outline-text-4" id="text-3-1-18">
 <p>
 A Scale decision from a distribution that is already normalized, for replaying a recorded trace.
@@ -880,8 +880,8 @@ A Scale decision from a distribution that is already normalized, for replaying a
 </div>
 </div>
 </div>
-<div id="outline-container-org4f6d8d2" class="outline-4">
-<h4 id="org4f6d8d2"><span class="section-number-4">3.1.19.</span> <code>u:scale(question, levels, logits)</code></h4>
+<div id="outline-container-org70f5616" class="outline-4">
+<h4 id="org70f5616"><span class="section-number-4">3.1.19.</span> <code>u:scale(question, levels, logits)</code></h4>
 <div class="outline-text-4" id="text-3-1-19">
 <p>
 A Scale decision over ordered levels: the distribution and its expectation. A Scale differs from a Choice only in that its labels are ordered, which is what makes the expectation meaningful and makes an adjacent error cheaper than a distant one.
@@ -896,8 +896,8 @@ A Scale decision over ordered levels: the distribution and its expectation. A Sc
 </div>
 </div>
 </div>
-<div id="outline-container-orgbd75856" class="outline-4">
-<h4 id="orgbd75856"><span class="section-number-4">3.1.20.</span> <code>u:scale_tempered(question, levels, logits, t)</code></h4>
+<div id="outline-container-orge6ddfb3" class="outline-4">
+<h4 id="orge6ddfb3"><span class="section-number-4">3.1.20.</span> <code>u:scale_tempered(question, levels, logits, t)</code></h4>
 <div class="outline-text-4" id="text-3-1-20">
 <p>
 A Scale decision with temperature scaling applied, recording the scalar it used.
@@ -912,8 +912,8 @@ A Scale decision with temperature scaling applied, recording the scalar it used.
 </div>
 </div>
 </div>
-<div id="outline-container-orgcda0f41" class="outline-4">
-<h4 id="orgcda0f41"><span class="section-number-4">3.1.21.</span> <code>u:decision_label(d)</code></h4>
+<div id="outline-container-org5239278" class="outline-4">
+<h4 id="org5239278"><span class="section-number-4">3.1.21.</span> <code>u:decision_label(d)</code></h4>
 <div class="outline-text-4" id="text-3-1-21">
 <p>
 The selected label as text.
@@ -928,8 +928,8 @@ The selected label as text.
 </div>
 </div>
 </div>
-<div id="outline-container-orgd959bbf" class="outline-4">
-<h4 id="orgd959bbf"><span class="section-number-4">3.1.22.</span> <code>u:decision_prob(d, i)</code></h4>
+<div id="outline-container-orge16b2c8" class="outline-4">
+<h4 id="orge16b2c8"><span class="section-number-4">3.1.22.</span> <code>u:decision_prob(d, i)</code></h4>
 <div class="outline-text-4" id="text-3-1-22">
 <p>
 Probability of the label at index i.
@@ -944,8 +944,8 @@ Probability of the label at index i.
 </div>
 </div>
 </div>
-<div id="outline-container-org8dbd8df" class="outline-4">
-<h4 id="org8dbd8df"><span class="section-number-4">3.1.23.</span> <code>u:decision_index_of(d, name)</code></h4>
+<div id="outline-container-org9cdf249" class="outline-4">
+<h4 id="org9cdf249"><span class="section-number-4">3.1.23.</span> <code>u:decision_index_of(d, name)</code></h4>
 <div class="outline-text-4" id="text-3-1-23">
 <p>
 Index of a named label, or -1 when the decision does not offer it.
@@ -971,8 +971,8 @@ Index of a named label, or -1 when the decision does not offer it.
 </div>
 </div>
 </div>
-<div id="outline-container-org1062dcd" class="outline-4">
-<h4 id="org1062dcd"><span class="section-number-4">3.1.24.</span> <code>u:decision_prob_of(d, name)</code></h4>
+<div id="outline-container-org97b39ea" class="outline-4">
+<h4 id="org97b39ea"><span class="section-number-4">3.1.24.</span> <code>u:decision_prob_of(d, name)</code></h4>
 <div class="outline-text-4" id="text-3-1-24">
 <p>
 Probability of a named label, or 0 when the decision does not offer it. This is how policy reads a distribution: by name, never by a position a later saga might renumber.
@@ -992,8 +992,8 @@ Probability of a named label, or 0 when the decision does not offer it. This is 
 </div>
 </div>
 </div>
-<div id="outline-container-org0cda14e" class="outline-4">
-<h4 id="org0cda14e"><span class="section-number-4">3.1.25.</span> <code>u:decision_acts(d, min_confidence, min_margin)</code></h4>
+<div id="outline-container-org922bbb1" class="outline-4">
+<h4 id="org922bbb1"><span class="section-number-4">3.1.25.</span> <code>u:decision_acts(d, min_confidence, min_margin)</code></h4>
 <div class="outline-text-4" id="text-3-1-25">
 <p>
 Whether application policy may act on this decision. Both thresholds belong to the caller: the model reports belief, and the program decides what belief is enough. Abstention is the complement.
@@ -1008,8 +1008,8 @@ Whether application policy may act on this decision. Both thresholds belong to t
 </div>
 </div>
 </div>
-<div id="outline-container-org080e699" class="outline-4">
-<h4 id="org080e699"><span class="section-number-4">3.1.26.</span> <code>u:decision_abstains(d, min_confidence, min_margin)</code></h4>
+<div id="outline-container-orgaed0db2" class="outline-4">
+<h4 id="orgaed0db2"><span class="section-number-4">3.1.26.</span> <code>u:decision_abstains(d, min_confidence, min_margin)</code></h4>
 <div class="outline-text-4" id="text-3-1-26">
 <p>
 Whether application policy must fall back rather than act.
@@ -1024,8 +1024,8 @@ Whether application policy must fall back rather than act.
 </div>
 </div>
 </div>
-<div id="outline-container-org5b681a3" class="outline-4">
-<h4 id="org5b681a3"><span class="section-number-4">3.1.27.</span> <code>u:decision_kind_known(kind)</code></h4>
+<div id="outline-container-org1dbb084" class="outline-4">
+<h4 id="org1dbb084"><span class="section-number-4">3.1.27.</span> <code>u:decision_kind_known(kind)</code></h4>
 <div class="outline-text-4" id="text-3-1-27">
 <p>
 Whether a kind string is one of the three legal kinds.
@@ -1048,8 +1048,8 @@ Whether a kind string is one of the three legal kinds.
 </div>
 </div>
 </div>
-<div id="outline-container-orgdd9f1d7" class="outline-4">
-<h4 id="orgdd9f1d7"><span class="section-number-4">3.1.28.</span> <code>u:decision_valid(d)</code></h4>
+<div id="outline-container-org2a83213" class="outline-4">
+<h4 id="org2a83213"><span class="section-number-4">3.1.28.</span> <code>u:decision_valid(d)</code></h4>
 <div class="outline-text-4" id="text-3-1-28">
 <p>
 Whether a Decision is well formed: a known kind, one probability per label, at least one label, no negative probability, a distribution summing to one within 1e-9, a selected index in range, and the expectation present exactly when the kind is scale. Cheap enough to assert on every decision a lesson records.
@@ -1066,8 +1066,8 @@ Whether a Decision is well formed: a known kind, one probability per label, at l
 </div>
 </div>
 </div>
-<div id="outline-container-org4b8c885" class="outline-3">
-<h3 id="org4b8c885"><span class="section-number-3">3.2.</span> Text to model input: <code>lib/text.mlpl</code></h3>
+<div id="outline-container-org52b78dd" class="outline-3">
+<h3 id="org52b78dd"><span class="section-number-3">3.2.</span> Text to model input: <code>lib/text.mlpl</code></h3>
 <div class="outline-text-3" id="text-3-2">
 <p>
 Normalization, words, and two ways to turn features into rows: hashed slots, which model 1 used and where primer block 4's collisions come from, and an exact vocabulary, which model 2 uses so an unknown word contributes nothing instead of someone else's meaning.
@@ -1082,8 +1082,8 @@ The module comment says what the file is for.
 </pre>
 </div>
 </div>
-<div id="outline-container-org9c62ced" class="outline-4">
-<h4 id="org9c62ced"><span class="section-number-4">3.2.1.</span> <code>u:text_lg(l, i)</code></h4>
+<div id="outline-container-org443b603" class="outline-4">
+<h4 id="org443b603"><span class="section-number-4">3.2.1.</span> <code>u:text_lg(l, i)</code></h4>
 <div class="outline-text-4" id="text-3-2-1">
 <p>
 Element i of a string list.
@@ -1098,8 +1098,8 @@ Element i of a string list.
 </div>
 </div>
 </div>
-<div id="outline-container-orgb548788" class="outline-4">
-<h4 id="orgb548788"><span class="section-number-4">3.2.2.</span> <code>u:text_clean(s)</code></h4>
+<div id="outline-container-orgc8e7585" class="outline-4">
+<h4 id="orgc8e7585"><span class="section-number-4">3.2.2.</span> <code>u:text_clean(s)</code></h4>
 <div class="outline-text-4" id="text-3-2-2">
 <p>
 Lowercase ASCII letters, keep letters, digits, and spaces, delete apostrophes &#x2013; straight or curly, since phones and novels type the curly one &#x2013; so don't becomes dont, and turn every other character into a space.
@@ -1139,8 +1139,8 @@ Lowercase ASCII letters, keep letters, digits, and spaces, delete apostrophes &#
 </div>
 </div>
 </div>
-<div id="outline-container-org330f36e" class="outline-4">
-<h4 id="org330f36e"><span class="section-number-4">3.2.3.</span> <code>u:text_words(s)</code></h4>
+<div id="outline-container-orge18bb67" class="outline-4">
+<h4 id="orge18bb67"><span class="section-number-4">3.2.3.</span> <code>u:text_words(s)</code></h4>
 <div class="outline-text-4" id="text-3-2-3">
 <p>
 The non-empty words of a cleaned string, joined by single spaces (an empty string when there are none).
@@ -1172,8 +1172,8 @@ The non-empty words of a cleaned string, joined by single spaces (an empty strin
 </div>
 </div>
 </div>
-<div id="outline-container-org0a185f7" class="outline-4">
-<h4 id="org0a185f7"><span class="section-number-4">3.2.4.</span> <code>u:text_hash(s)</code></h4>
+<div id="outline-container-org0442f54" class="outline-4">
+<h4 id="org0442f54"><span class="section-number-4">3.2.4.</span> <code>u:text_hash(s)</code></h4>
 <div class="outline-text-4" id="text-3-2-4">
 <p>
 Base-31 rolling checksum of a string's bytes modulo 2147483647.
@@ -1196,8 +1196,8 @@ Base-31 rolling checksum of a string's bytes modulo 2147483647.
 </div>
 </div>
 </div>
-<div id="outline-container-org04bf314" class="outline-4">
-<h4 id="org04bf314"><span class="section-number-4">3.2.5.</span> <code>u:text_features(s, slots, f)</code></h4>
+<div id="outline-container-org8ef2a87" class="outline-4">
+<h4 id="org8ef2a87"><span class="section-number-4">3.2.5.</span> <code>u:text_features(s, slots, f)</code></h4>
 <div class="outline-text-4" id="text-3-2-5">
 <p>
 Feature record for one input: padded slot ids [f], a mask [f], the feature count, and the feature tokens as a |-joined string for display. Words come first, then adjacent bigrams joined by an underscore; features beyond f are dropped.
@@ -1249,8 +1249,8 @@ Feature record for one input: padded slot ids [f], a mask [f], the feature count
 </div>
 </div>
 </div>
-<div id="outline-container-org94bb9db" class="outline-4">
-<h4 id="org94bb9db"><span class="section-number-4">3.2.6.</span> <code>u:text_vocab(texts, f)</code></h4>
+<div id="outline-container-org4ba9df2" class="outline-4">
+<h4 id="org4ba9df2"><span class="section-number-4">3.2.6.</span> <code>u:text_vocab(texts, f)</code></h4>
 <div class="outline-text-4" id="text-3-2-6">
 <p>
 An exact vocabulary over the features of a string list: the distinct tokens, |-joined in first-seen order, and a record mapping each token to its row (1-based; row 0 is reserved for unknown). Replaces hashing, under which an unseen word lands on a slot some trained word owns and silently inherits its meaning.
@@ -1307,8 +1307,8 @@ An exact vocabulary over the features of a string list: the distinct tokens, |-j
 </div>
 </div>
 </div>
-<div id="outline-container-orgaa0cda6" class="outline-4">
-<h4 id="orgaa0cda6"><span class="section-number-4">3.2.7.</span> <code>u:text_vocab_features(s, vocab, f)</code></h4>
+<div id="outline-container-org9613518" class="outline-4">
+<h4 id="org9613518"><span class="section-number-4">3.2.7.</span> <code>u:text_vocab_features(s, vocab, f)</code></h4>
 <div class="outline-text-4" id="text-3-2-7">
 <p>
 Feature record for one input against an exact vocabulary: row ids [f], a mask [f] marking only the tokens the vocabulary knows, the count of known features, and all feature tokens for display. An unknown token contributes nothing, rather than someone else's meaning.
@@ -1347,8 +1347,8 @@ Feature record for one input against an exact vocabulary: row ids [f], a mask [f
 </div>
 </div>
 </div>
-<div id="outline-container-org68c9944" class="outline-3">
-<h3 id="org68c9944"><span class="section-number-3">3.3.</span> The Choice model: <code>lib/choice_model.mlpl</code></h3>
+<div id="outline-container-org04f0d97" class="outline-3">
+<h3 id="org04f0d97"><span class="section-number-3">3.3.</span> The Choice model: <code>lib/choice_model.mlpl</code></h3>
 <div class="outline-text-3" id="text-3-3">
 <p>
 A learned vector per slot, a masked mean pool, and heads over that one pooled state: the Choice, and in model 3 three Noul heads trained jointly with it. Training runs over global params because params cannot be passed into <code>grad</code> as arguments; inference runs over a plain weights record, so a trained model is just arrays. A test asserts that the two forward passes agree exactly.
@@ -1365,8 +1365,8 @@ include "decision.mlpl";
 </pre>
 </div>
 </div>
-<div id="outline-container-org8e1841c" class="outline-4">
-<h4 id="org8e1841c"><span class="section-number-4">3.3.1.</span> <code>u:cm_featurize(texts, slots, f)</code></h4>
+<div id="outline-container-orgf36bdb4" class="outline-4">
+<h4 id="orgf36bdb4"><span class="section-number-4">3.3.1.</span> <code>u:cm_featurize(texts, slots, f)</code></h4>
 <div class="outline-text-4" id="text-3-3-1">
 <p>
 Feature matrices for a string list: slot ids [N, f], the pooling weights [N, f, 1] (mask divided by the row's feature count, so the pool is a mean), and the counts [N]. Computed once, outside grad.
@@ -1398,8 +1398,8 @@ Feature matrices for a string list: slot ids [N, f], the pooling weights [N, f, 
 </div>
 </div>
 </div>
-<div id="outline-container-orgdb91e0c" class="outline-4">
-<h4 id="orgdb91e0c"><span class="section-number-4">3.3.2.</span> <code>u:cm_logits(ids, wmask)</code></h4>
+<div id="outline-container-org99fc22d" class="outline-4">
+<h4 id="org99fc22d"><span class="section-number-4">3.3.2.</span> <code>u:cm_logits(ids, wmask)</code></h4>
 <div class="outline-text-4" id="text-3-3-2">
 <p>
 Training forward pass over the caller's global params: gather each slot's embedding, mean-pool with the precomputed weights, apply the head. Returns [N, k].
@@ -1414,8 +1414,8 @@ Training forward pass over the caller's global params: gather each slot's embedd
 </div>
 </div>
 </div>
-<div id="outline-container-org543bfe7" class="outline-4">
-<h4 id="org543bfe7"><span class="section-number-4">3.3.3.</span> <code>u:cm_train(ids, wmask, y, steps, lr)</code></h4>
+<div id="outline-container-orgc12d954" class="outline-4">
+<h4 id="orgc12d954"><span class="section-number-4">3.3.3.</span> <code>u:cm_train(ids, wmask, y, steps, lr)</code></h4>
 <div class="outline-text-4" id="text-3-3-3">
 <p>
 Full-batch Adam over the caller's global params for a fixed number of steps; returns the final training loss. The block holds only the adam call because adam returns the loss it stepped from, so the forward pass runs once per step rather than twice.
@@ -1433,8 +1433,8 @@ Full-batch Adam over the caller's global params for a fixed number of steps; ret
 </div>
 </div>
 </div>
-<div id="outline-container-org5d6949b" class="outline-4">
-<h4 id="org5d6949b"><span class="section-number-4">3.3.4.</span> <code>u:cm_infer(weights, ids, wmask)</code></h4>
+<div id="outline-container-org6ebf223" class="outline-4">
+<h4 id="org6ebf223"><span class="section-number-4">3.3.4.</span> <code>u:cm_infer(weights, ids, wmask)</code></h4>
 <div class="outline-text-4" id="text-3-3-4">
 <p>
 Inference forward pass over a plain weights record {E, W, b}. Same arithmetic as cm_logits, no tape, no globals.
@@ -1449,8 +1449,8 @@ Inference forward pass over a plain weights record {E, W, b}. Same arithmetic as
 </div>
 </div>
 </div>
-<div id="outline-container-org2c3ea6e" class="outline-4">
-<h4 id="org2c3ea6e"><span class="section-number-4">3.3.5.</span> <code>u:cm_param_count(weights)</code></h4>
+<div id="outline-container-org3c00ee9" class="outline-4">
+<h4 id="org3c00ee9"><span class="section-number-4">3.3.5.</span> <code>u:cm_param_count(weights)</code></h4>
 <div class="outline-text-4" id="text-3-3-5">
 <p>
 Trainable parameters in a weights record.
@@ -1465,8 +1465,8 @@ Trainable parameters in a weights record.
 </div>
 </div>
 </div>
-<div id="outline-container-org42f87a9" class="outline-4">
-<h4 id="org42f87a9"><span class="section-number-4">3.3.6.</span> <code>u:cm_save(path, weights)</code></h4>
+<div id="outline-container-orgf07bac6" class="outline-4">
+<h4 id="orgf07bac6"><span class="section-number-4">3.3.6.</span> <code>u:cm_save(path, weights)</code></h4>
 <div class="outline-text-4" id="text-3-3-6">
 <p>
 Write a weights record (plus whatever metadata fields it carries) to a native binary file.
@@ -1481,8 +1481,8 @@ Write a weights record (plus whatever metadata fields it carries) to a native bi
 </div>
 </div>
 </div>
-<div id="outline-container-org391bb72" class="outline-4">
-<h4 id="org391bb72"><span class="section-number-4">3.3.7.</span> <code>u:cm_load(path)</code></h4>
+<div id="outline-container-org58ea326" class="outline-4">
+<h4 id="org58ea326"><span class="section-number-4">3.3.7.</span> <code>u:cm_load(path)</code></h4>
 <div class="outline-text-4" id="text-3-3-7">
 <p>
 Read a weights record written by cm_save.
@@ -1497,8 +1497,8 @@ Read a weights record written by cm_save.
 </div>
 </div>
 </div>
-<div id="outline-container-org2f4785c" class="outline-4">
-<h4 id="org2f4785c"><span class="section-number-4">3.3.8.</span> <code>u:cm_decide(weights, text, question)</code></h4>
+<div id="outline-container-org0fec990" class="outline-4">
+<h4 id="org0fec990"><span class="section-number-4">3.3.8.</span> <code>u:cm_decide(weights, text, question)</code></h4>
 <div class="outline-text-4" id="text-3-3-8">
 <p>
 One Choice decision over one input, using the label set, slot count, and feature width stored with the weights. Returns the Decision plus the features the model actually saw, so a caller can show them.
@@ -1522,8 +1522,8 @@ One Choice decision over one input, using the label set, slot count, and feature
 </div>
 </div>
 </div>
-<div id="outline-container-org9020c68" class="outline-4">
-<h4 id="org9020c68"><span class="section-number-4">3.3.9.</span> <code>u:cm_accuracy_by_label(pred, y, k)</code></h4>
+<div id="outline-container-org3427cb1" class="outline-4">
+<h4 id="org3427cb1"><span class="section-number-4">3.3.9.</span> <code>u:cm_accuracy_by_label(pred, y, k)</code></h4>
 <div class="outline-text-4" id="text-3-3-9">
 <p>
 Per-label accuracy [k] and per-label counts [k] over parallel prediction and truth vectors; a label with no examples scores 0.
@@ -1553,8 +1553,8 @@ Per-label accuracy [k] and per-label counts [k] over parallel prediction and tru
 </div>
 </div>
 </div>
-<div id="outline-container-org98cdad8" class="outline-4">
-<h4 id="org98cdad8"><span class="section-number-4">3.3.10.</span> <code>u:cm_featurize_vocab(texts, vocab, f)</code></h4>
+<div id="outline-container-org9093167" class="outline-4">
+<h4 id="org9093167"><span class="section-number-4">3.3.10.</span> <code>u:cm_featurize_vocab(texts, vocab, f)</code></h4>
 <div class="outline-text-4" id="text-3-3-10">
 <p>
 Feature matrices against an exact vocabulary: row ids [N, f], the known-feature mask [N, f], pooling weights [N, f, 1] averaging only known features, and known counts [N]. An input with no known feature pools to zero, so its logits are the bias alone.
@@ -1582,8 +1582,8 @@ Feature matrices against an exact vocabulary: row ids [N, f], the known-feature 
 </div>
 </div>
 </div>
-<div id="outline-container-org93e499f" class="outline-4">
-<h4 id="org93e499f"><span class="section-number-4">3.3.11.</span> <code>u:cm_pool_weights(mask)</code></h4>
+<div id="outline-container-org6f4fd4a" class="outline-4">
+<h4 id="org6f4fd4a"><span class="section-number-4">3.3.11.</span> <code>u:cm_pool_weights(mask)</code></h4>
 <div class="outline-text-4" id="text-3-3-11">
 <p>
 Mean-pool weights [N, F, 1] from a feature mask [N, F]: each kept feature gets one over its row's count; a row with none kept gets zeros.
@@ -1603,8 +1603,8 @@ Mean-pool weights [N, F, 1] from a feature mask [N, F]: each kept feature gets o
 </div>
 </div>
 </div>
-<div id="outline-container-org5032817" class="outline-4">
-<h4 id="org5032817"><span class="section-number-4">3.3.12.</span> <code>u:cm_dropout(fz, p, seed)</code></h4>
+<div id="outline-container-orgf5b1bc1" class="outline-4">
+<h4 id="orgf5b1bc1"><span class="section-number-4">3.3.12.</span> <code>u:cm_dropout(fz, p, seed)</code></h4>
 <div class="outline-text-4" id="text-3-3-12">
 <p>
 A copy of a featurized batch with each known feature independently dropped with probability p. Trained on alongside the original, it teaches the model that thin evidence is not grounds for certainty.
@@ -1621,8 +1621,8 @@ A copy of a featurized batch with each known feature independently dropped with 
 </div>
 </div>
 </div>
-<div id="outline-container-orgd53bfd4" class="outline-4">
-<h4 id="orgd53bfd4"><span class="section-number-4">3.3.13.</span> <code>u:cm_smooth_loss(ids, wmask, y, eps)</code></h4>
+<div id="outline-container-org7f5a787" class="outline-4">
+<h4 id="org7f5a787"><span class="section-number-4">3.3.13.</span> <code>u:cm_smooth_loss(ids, wmask, y, eps)</code></h4>
 <div class="outline-text-4" id="text-3-3-13">
 <p>
 Label-smoothed cross-entropy over the caller's global params: (1 - eps) times the loss on the true label plus eps times the mean loss over all labels, so no answer is ever worth pushing to probability one.
@@ -1638,8 +1638,8 @@ Label-smoothed cross-entropy over the caller's global params: (1 - eps) times th
 </div>
 </div>
 </div>
-<div id="outline-container-org07f14d1" class="outline-4">
-<h4 id="org07f14d1"><span class="section-number-4">3.3.14.</span> <code>u:cm_train_smooth(ids, wmask, y, steps, lr, eps)</code></h4>
+<div id="outline-container-org96527f6" class="outline-4">
+<h4 id="org96527f6"><span class="section-number-4">3.3.14.</span> <code>u:cm_train_smooth(ids, wmask, y, steps, lr, eps)</code></h4>
 <div class="outline-text-4" id="text-3-3-14">
 <p>
 Full-batch Adam on the label-smoothed loss for a fixed number of steps; returns the final plain cross-entropy.
@@ -1657,8 +1657,8 @@ Full-batch Adam on the label-smoothed loss for a fixed number of steps; returns 
 </div>
 </div>
 </div>
-<div id="outline-container-orga540eef" class="outline-4">
-<h4 id="orga540eef"><span class="section-number-4">3.3.15.</span> <code>u:cm_stack(a, b)</code></h4>
+<div id="outline-container-orgba0b23d" class="outline-4">
+<h4 id="orgba0b23d"><span class="section-number-4">3.3.15.</span> <code>u:cm_stack(a, b)</code></h4>
 <div class="outline-text-4" id="text-3-3-15">
 <p>
 Stack two arrays of any equal trailing shape along their first axis (concat joins only rank-1 arrays).
@@ -1675,8 +1675,8 @@ Stack two arrays of any equal trailing shape along their first axis (concat join
 </div>
 </div>
 </div>
-<div id="outline-container-org907bf9c" class="outline-4">
-<h4 id="org907bf9c"><span class="section-number-4">3.3.16.</span> <code>u:cm_stack_batches(a, b)</code></h4>
+<div id="outline-container-org9a18c1d" class="outline-4">
+<h4 id="org9a18c1d"><span class="section-number-4">3.3.16.</span> <code>u:cm_stack_batches(a, b)</code></h4>
 <div class="outline-text-4" id="text-3-3-16">
 <p>
 Stack two featurized batches row-wise, keeping ids and pooling weights aligned.
@@ -1691,8 +1691,8 @@ Stack two featurized batches row-wise, keeping ids and pooling weights aligned.
 </div>
 </div>
 </div>
-<div id="outline-container-org09556e4" class="outline-4">
-<h4 id="org09556e4"><span class="section-number-4">3.3.17.</span> <code>u:cm_pooled(ids, wmask)</code></h4>
+<div id="outline-container-orgeaf020b" class="outline-4">
+<h4 id="orgeaf020b"><span class="section-number-4">3.3.17.</span> <code>u:cm_pooled(ids, wmask)</code></h4>
 <div class="outline-text-4" id="text-3-3-17">
 <p>
 The shared state representation over the caller's global embedding: the mean of the rows the known features address. Every decision head reads this one vector, which is what makes several typed questions cost one pass.
@@ -1707,8 +1707,8 @@ The shared state representation over the caller's global embedding: the mean of 
 </div>
 </div>
 </div>
-<div id="outline-container-orgc0b211b" class="outline-4">
-<h4 id="orgc0b211b"><span class="section-number-4">3.3.18.</span> <code>u:cm_noul_logits(ids, wmask)</code></h4>
+<div id="outline-container-org30075bb" class="outline-4">
+<h4 id="org30075bb"><span class="section-number-4">3.3.18.</span> <code>u:cm_noul_logits(ids, wmask)</code></h4>
 <div class="outline-text-4" id="text-3-3-18">
 <p>
 Logits [N, m] of the caller's global Noul heads cm_N [d, m] and cm_nb [m]: one independent yes-or-no question per column, over the same pooled state as the Choice.
@@ -1723,8 +1723,8 @@ Logits [N, m] of the caller's global Noul heads cm_N [d, m] and cm_nb [m]: one i
 </div>
 </div>
 </div>
-<div id="outline-container-orge78d26d" class="outline-4">
-<h4 id="orge78d26d"><span class="section-number-4">3.3.19.</span> <code>u:cm_joint_loss(ids, wmask, y, ny, eps)</code></h4>
+<div id="outline-container-orgf97738d" class="outline-4">
+<h4 id="orgf97738d"><span class="section-number-4">3.3.19.</span> <code>u:cm_joint_loss(ids, wmask, y, ny, eps)</code></h4>
 <div class="outline-text-4" id="text-3-3-19">
 <p>
 Label-smoothed Choice cross-entropy plus the mean binary cross-entropy of every Noul column against its 0-or-1 labels ny [N, m]. Composed from log and sigmoid because there is no binary cross-entropy builtin; the small constant keeps the log finite.
@@ -1741,8 +1741,8 @@ Label-smoothed Choice cross-entropy plus the mean binary cross-entropy of every 
 </div>
 </div>
 </div>
-<div id="outline-container-org8be9e49" class="outline-4">
-<h4 id="org8be9e49"><span class="section-number-4">3.3.20.</span> <code>u:cm_train_joint(ids, wmask, y, ny, steps, lr, eps)</code></h4>
+<div id="outline-container-org9779965" class="outline-4">
+<h4 id="org9779965"><span class="section-number-4">3.3.20.</span> <code>u:cm_train_joint(ids, wmask, y, ny, steps, lr, eps)</code></h4>
 <div class="outline-text-4" id="text-3-3-20">
 <p>
 Full-batch Adam on the joint Choice-and-Noul loss over all five global params; returns the final plain Choice cross-entropy.
@@ -1760,9 +1760,47 @@ Full-batch Adam on the joint Choice-and-Noul loss over all five global params; r
 </div>
 </div>
 </div>
-<div id="outline-container-orgbd6c6f9" class="outline-4">
-<h4 id="orgbd6c6f9"><span class="section-number-4">3.3.21.</span> <code>u:cm_infer_nouls(weights, ids, wmask)</code></h4>
+<div id="outline-container-orgf192053" class="outline-4">
+<h4 id="orgf192053"><span class="section-number-4">3.3.21.</span> <code>u:cm_masked_joint_loss(ids, wmask, y, ny, nm, eps)</code></h4>
 <div class="outline-text-4" id="text-3-3-21">
+<p>
+Model 4 learns from rows that answer only some of the typed questions: a sentence pulled out of a novel says whether it is a question &#x2013; its author's punctuation says so &#x2013; but nothing about whether it is negative or positive. A masked cell must not pull its head either way, so the binary cross-entropy is averaged over the labelled cells alone.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-mlpl">def u:cm_masked_joint_loss(ids, wmask, y, ny, nm, eps) {
+  "As u:cm_joint_loss, but each Noul label counts only where its mask nm [N, m] is 1: the mean binary cross-entropy is over the labelled cells alone, so rows that answer only some of the questions still train the ones they answer.";
+  p = sigmoid(u:cm_noul_logits(ids, wmask));
+  cells = reduce_add(nm);
+  bce = 0 - reduce_add(nm * (ny * log(p + 0.000000001) + (1 - ny) * log(1 - p + 0.000000001))) / (cells + eq(cells, 0));
+  u:cm_smooth_loss(ids, wmask, y, eps) + bce
+}
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org38faf1b" class="outline-4">
+<h4 id="org38faf1b"><span class="section-number-4">3.3.22.</span> <code>u:cm_train_masked(ids, wmask, y, ny, nm, steps, lr, eps)</code></h4>
+<div class="outline-text-4" id="text-3-3-22">
+<p>
+Full batch stops being affordable at eight thousand rows: one step over them costs about 30 s in the interpreter, so a ten-minute budget buys twenty steps. Adam's moments are process-global and persist between calls, which turns that limitation into the fix &#x2013; call this once per minibatch and the result is one continuous optimization, 1,300 updates in the same ten minutes.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-mlpl">def u:cm_train_masked(ids, wmask, y, ny, nm, steps, lr, eps) {
+  "Adam on the masked joint loss over all five global params; returns the final plain Choice cross-entropy. Adam's moments persist between calls in one process, so calling this once per minibatch continues one optimization.";
+  train steps {
+    adam(u:cm_masked_joint_loss(ids, wmask, y, ny, nm, eps), [cm_E, cm_W, cm_b, cm_N, cm_nb], lr, 0.9, 0.999, 0.00000001)
+  };
+  cross_entropy(u:cm_logits(ids, wmask), y)
+}
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org23eb971" class="outline-4">
+<h4 id="org23eb971"><span class="section-number-4">3.3.23.</span> <code>u:cm_infer_nouls(weights, ids, wmask)</code></h4>
+<div class="outline-text-4" id="text-3-3-23">
 <p>
 Noul probabilities [N, m] from a plain weights record carrying N and nb: the inference half of u:cm_noul_logits, with a sigmoid.
 </p>
@@ -1777,8 +1815,8 @@ Noul probabilities [N, m] from a plain weights record carrying N and nb: the inf
 </div>
 </div>
 </div>
-<div id="outline-container-org3bcfcb5" class="outline-3">
-<h3 id="org3bcfcb5"><span class="section-number-3">3.4.</span> Demo 01's domain: <code>demos/eliza/eliza.mlpl</code></h3>
+<div id="outline-container-orgd430aba" class="outline-3">
+<h3 id="orgd430aba"><span class="section-number-3">3.4.</span> Demo 01's domain: <code>demos/eliza/eliza.mlpl</code></h3>
 <div class="outline-text-3" id="text-3-4">
 <p>
 The nine response classes, their canned replies, the keyword matcher that serves as the yardstick, and the sentence frames the training corpus is generated from. One person wrote both the frames and the keyword list, which flatters the model's margin over the matcher; the planned ELIZA-oracle corpus is how that gets tested honestly.
@@ -1794,8 +1832,8 @@ include "../../lib/text.mlpl";
 </pre>
 </div>
 </div>
-<div id="outline-container-org962c959" class="outline-4">
-<h4 id="org962c959"><span class="section-number-4">3.4.1.</span> <code>u:ez_labels()</code></h4>
+<div id="outline-container-orgefd74d8" class="outline-4">
+<h4 id="orgefd74d8"><span class="section-number-4">3.4.1.</span> <code>u:ez_labels()</code></h4>
 <div class="outline-text-4" id="text-3-4-1">
 <p>
 The response classes, in label order. FALLBACK is a trained class with its own examples, not a leftover bucket.
@@ -1810,8 +1848,8 @@ The response classes, in label order. FALLBACK is a trained class with its own e
 </div>
 </div>
 </div>
-<div id="outline-container-org139f0f0" class="outline-4">
-<h4 id="org139f0f0"><span class="section-number-4">3.4.2.</span> <code>u:ez_label_count()</code></h4>
+<div id="outline-container-orgbe2745a" class="outline-4">
+<h4 id="orgbe2745a"><span class="section-number-4">3.4.2.</span> <code>u:ez_label_count()</code></h4>
 <div class="outline-text-4" id="text-3-4-2">
 <p>
 How many response classes there are.
@@ -1826,8 +1864,8 @@ How many response classes there are.
 </div>
 </div>
 </div>
-<div id="outline-container-orgfebd464" class="outline-4">
-<h4 id="orgfebd464"><span class="section-number-4">3.4.3.</span> <code>u:ez_label(i)</code></h4>
+<div id="outline-container-org2289b04" class="outline-4">
+<h4 id="org2289b04"><span class="section-number-4">3.4.3.</span> <code>u:ez_label(i)</code></h4>
 <div class="outline-text-4" id="text-3-4-3">
 <p>
 The i-th class name.
@@ -1842,8 +1880,8 @@ The i-th class name.
 </div>
 </div>
 </div>
-<div id="outline-container-org8ed2330" class="outline-4">
-<h4 id="org8ed2330"><span class="section-number-4">3.4.4.</span> <code>u:ez_label_index(name)</code></h4>
+<div id="outline-container-orga2944b0" class="outline-4">
+<h4 id="orga2944b0"><span class="section-number-4">3.4.4.</span> <code>u:ez_label_index(name)</code></h4>
 <div class="outline-text-4" id="text-3-4-4">
 <p>
 Index of a class by name, or -1.
@@ -1870,8 +1908,8 @@ Index of a class by name, or -1.
 </div>
 </div>
 </div>
-<div id="outline-container-org0518d17" class="outline-4">
-<h4 id="org0518d17"><span class="section-number-4">3.4.5.</span> <code>u:ez_responses(i)</code></h4>
+<div id="outline-container-org1ee652a" class="outline-4">
+<h4 id="org1ee652a"><span class="section-number-4">3.4.5.</span> <code>u:ez_responses(i)</code></h4>
 <div class="outline-text-4" id="text-3-4-5">
 <p>
 The canned replies for class i, |-joined. These are the only strings the demo can ever say.
@@ -1887,8 +1925,8 @@ The canned replies for class i, |-joined. These are the only strings the demo ca
 </div>
 </div>
 </div>
-<div id="outline-container-org1dcd85a" class="outline-4">
-<h4 id="org1dcd85a"><span class="section-number-4">3.4.6.</span> <code>u:ez_response(i, turn)</code></h4>
+<div id="outline-container-orga60e76c" class="outline-4">
+<h4 id="orga60e76c"><span class="section-number-4">3.4.6.</span> <code>u:ez_response(i, turn)</code></h4>
 <div class="outline-text-4" id="text-3-4-6">
 <p>
 One reply for class i, chosen deterministically by turn number. Returns the table name, the index within it, and the text; nothing here composes a string.
@@ -1905,8 +1943,8 @@ One reply for class i, chosen deterministically by turn number. Returns the tabl
 </div>
 </div>
 </div>
-<div id="outline-container-orgb294453" class="outline-4">
-<h4 id="orgb294453"><span class="section-number-4">3.4.7.</span> <code>u:ez_keywords(i)</code></h4>
+<div id="outline-container-org7c84e53" class="outline-4">
+<h4 id="org7c84e53"><span class="section-number-4">3.4.7.</span> <code>u:ez_keywords(i)</code></h4>
 <div class="outline-text-4" id="text-3-4-7">
 <p>
 The keyword list for class i, exactly as a 1966 author would have hand-written it: space separated, no morphology, no synonyms it did not think of.
@@ -1926,8 +1964,8 @@ The keyword list for class i, exactly as a 1966 author would have hand-written i
 </div>
 </div>
 </div>
-<div id="outline-container-org0fe9f18" class="outline-4">
-<h4 id="org0fe9f18"><span class="section-number-4">3.4.8.</span> <code>u:ez_match_order()</code></h4>
+<div id="outline-container-org9c94dfa" class="outline-4">
+<h4 id="org9c94dfa"><span class="section-number-4">3.4.8.</span> <code>u:ez_match_order()</code></h4>
 <div class="outline-text-4" id="text-3-4-8">
 <p>
 Class indices in keyword-priority order, so a sentence hitting two lists resolves the way ELIZA's ranks did: a dream outranks who appears in it.
@@ -1942,8 +1980,8 @@ Class indices in keyword-priority order, so a sentence hitting two lists resolve
 </div>
 </div>
 </div>
-<div id="outline-container-org703861b" class="outline-4">
-<h4 id="org703861b"><span class="section-number-4">3.4.9.</span> <code>u:ez_matcher(text)</code></h4>
+<div id="outline-container-orgdb93d5e" class="outline-4">
+<h4 id="orgdb93d5e"><span class="section-number-4">3.4.9.</span> <code>u:ez_matcher(text)</code></h4>
 <div class="outline-text-4" id="text-3-4-9">
 <p>
 The yardstick: first class in priority order with a whole-word keyword hit, else FALLBACK. This is what the learned model has to beat.
@@ -1984,8 +2022,8 @@ The yardstick: first class in priority order with a whole-word keyword hit, else
 </div>
 </div>
 </div>
-<div id="outline-container-org922c75d" class="outline-4">
-<h4 id="org922c75d"><span class="section-number-4">3.4.10.</span> <code>u:ez_templates(i)</code></h4>
+<div id="outline-container-org6908a91" class="outline-4">
+<h4 id="org6908a91"><span class="section-number-4">3.4.10.</span> <code>u:ez_templates(i)</code></h4>
 <div class="outline-text-4" id="text-3-4-10">
 <p>
 Sentence frames for class i, |-joined, each with one {} slot. The last frame of every class is held out of training and used as the validation split, so validation measures a phrasing the model never saw.
@@ -2001,8 +2039,8 @@ Sentence frames for class i, |-joined, each with one {} slot. The last frame of 
 </div>
 </div>
 </div>
-<div id="outline-container-orgad33e6f" class="outline-4">
-<h4 id="orgad33e6f"><span class="section-number-4">3.4.11.</span> <code>u:ez_fillers(i)</code></h4>
+<div id="outline-container-org86273a3" class="outline-4">
+<h4 id="org86273a3"><span class="section-number-4">3.4.11.</span> <code>u:ez_fillers(i)</code></h4>
 <div class="outline-text-4" id="text-3-4-11">
 <p>
 Slot fillers for class i, |-joined. Several are words the keyword list above does not contain (mom, dad, parents, anxious, robots, yeah, nope): that gap is the experiment.
@@ -2018,8 +2056,8 @@ Slot fillers for class i, |-joined. Several are words the keyword list above doe
 </div>
 </div>
 </div>
-<div id="outline-container-org0eb479d" class="outline-4">
-<h4 id="org0eb479d"><span class="section-number-4">3.4.12.</span> <code>u:ez_render(template, filler)</code></h4>
+<div id="outline-container-orga0db071" class="outline-4">
+<h4 id="orga0db071"><span class="section-number-4">3.4.12.</span> <code>u:ez_render(template, filler)</code></h4>
 <div class="outline-text-4" id="text-3-4-12">
 <p>
 Fill a frame's single {} slot.
@@ -2034,8 +2072,8 @@ Fill a frame's single {} slot.
 </div>
 </div>
 </div>
-<div id="outline-container-org78fb9f2" class="outline-4">
-<h4 id="org78fb9f2"><span class="section-number-4">3.4.13.</span> <code>u:ez_corpus(first, last)</code></h4>
+<div id="outline-container-orgd427110" class="outline-4">
+<h4 id="orgd427110"><span class="section-number-4">3.4.13.</span> <code>u:ez_corpus(first, last)</code></h4>
 <div class="outline-text-4" id="text-3-4-13">
 <p>
 Every sentence generated from frames [first, last) of every class. Returns the sentences as a newline-joined string and their labels as an array, in the same order.
@@ -2075,8 +2113,8 @@ Every sentence generated from frames [first, last) of every class. Returns the s
 </div>
 </div>
 </div>
-<div id="outline-container-orgaa458da" class="outline-4">
-<h4 id="orgaa458da"><span class="section-number-4">3.4.14.</span> <code>u:ez_wild()</code></h4>
+<div id="outline-container-orgbdeb222" class="outline-4">
+<h4 id="orgbdeb222"><span class="section-number-4">3.4.14.</span> <code>u:ez_wild()</code></h4>
 <div class="outline-text-4" id="text-3-4-14">
 <p>
 Hand-written sentences that came from no frame at all, with their intended class. Small and noisy on purpose: it is the only honest out-of-distribution read in this slice, so it is reported as counts, never as a headline percentage.
@@ -2108,8 +2146,8 @@ Hand-written sentences that came from no frame at all, with their intended class
 </div>
 </div>
 </div>
-<div id="outline-container-org2f2d78b" class="outline-3">
-<h3 id="org2f2d78b"><span class="section-number-3">3.5.</span> Training demo 01: <code>demos/eliza/train.mlpl</code></h3>
+<div id="outline-container-org8ff879d" class="outline-3">
+<h3 id="org8ff879d"><span class="section-number-3">3.5.</span> Training demo 01: <code>demos/eliza/train.mlpl</code></h3>
 <div class="outline-text-3" id="text-3-5">
 <p>
 Two hundred full-batch Adam steps from seeded random initialization over the 232 generated sentences, reported against the keyword matcher on the same splits, per class. This is the model behind the command-line chat and the SL01 results row.
@@ -2154,8 +2192,8 @@ cm_b = fill([9], 0);
 </pre>
 </div>
 </div>
-<div id="outline-container-orgba79473" class="outline-4">
-<h4 id="orgba79473"><span class="section-number-4">3.5.1.</span> <code>u:ez_matcher_preds(texts)</code></h4>
+<div id="outline-container-orga7d1341" class="outline-4">
+<h4 id="orga7d1341"><span class="section-number-4">3.5.1.</span> <code>u:ez_matcher_preds(texts)</code></h4>
 <div class="outline-text-4" id="text-3-5-1">
 <p>
 The keyword matcher's prediction for every sentence in a list.
@@ -2177,8 +2215,8 @@ The keyword matcher's prediction for every sentence in a list.
 </div>
 </div>
 </div>
-<div id="outline-container-org5e92e0a" class="outline-4">
-<h4 id="org5e92e0a"><span class="section-number-4">3.5.2.</span> <code>u:ez_report(name, texts, y, weights)</code></h4>
+<div id="outline-container-org5cca819" class="outline-4">
+<h4 id="org5cca819"><span class="section-number-4">3.5.2.</span> <code>u:ez_report(name, texts, y, weights)</code></h4>
 <div class="outline-text-4" id="text-3-5-2">
 <p>
 Print one split: the model's accuracy, the matcher's accuracy on the same rows, and the margin between them.
@@ -2200,8 +2238,8 @@ Print one split: the model's accuracy, the matcher's accuracy on the same rows, 
 </div>
 </div>
 </div>
-<div id="outline-container-org9cad701" class="outline-4">
-<h4 id="org9cad701"><span class="section-number-4">3.5.3.</span> <code>u:ez_per_label(pred, mpred, y)</code></h4>
+<div id="outline-container-org85b9cb2" class="outline-4">
+<h4 id="org85b9cb2"><span class="section-number-4">3.5.3.</span> <code>u:ez_per_label(pred, mpred, y)</code></h4>
 <div class="outline-text-4" id="text-3-5-3">
 <p>
 Print per-class accuracy for the model and the matcher side by side, because an overall number hides which classes the keyword list simply never had words for.
@@ -2279,8 +2317,8 @@ print("")
 </div>
 </div>
 </div>
-<div id="outline-container-org45f85be" class="outline-3">
-<h3 id="org45f85be"><span class="section-number-3">3.6.</span> Exporting for the browser: <code>demos/eliza/export.mlpl</code></h3>
+<div id="outline-container-orgf446d8b" class="outline-3">
+<h3 id="orgf446d8b"><span class="section-number-3">3.6.</span> Exporting for the browser: <code>demos/eliza/export.mlpl</code></h3>
 <div class="outline-text-3" id="text-3-6">
 <p>
 One training run, snapshotted after 0, 11, 22, 55 and 110 steps &#x2013; what 0, 1, 2, 5 and 10 seconds of training bought &#x2013; each snapshot evaluated identically and written, with a parity set, into the bundle the live page embeds. The Rust port proves itself against that parity set.
@@ -2297,8 +2335,8 @@ include "eliza.mlpl";
 </pre>
 </div>
 </div>
-<div id="outline-container-org018055e" class="outline-4">
-<h4 id="org018055e"><span class="section-number-4">3.6.1.</span> <code>u:ex_round(a)</code></h4>
+<div id="outline-container-orgd012797" class="outline-4">
+<h4 id="orgd012797"><span class="section-number-4">3.6.1.</span> <code>u:ex_round(a)</code></h4>
 <div class="outline-text-4" id="text-3-6-1">
 <p>
 Round to four decimal places so five snapshots fit in one page. Parity is computed from the rounded weights, and the effect of rounding on every parity probability is measured and printed.
@@ -2313,8 +2351,8 @@ Round to four decimal places so five snapshots fit in one page. Parity is comput
 </div>
 </div>
 </div>
-<div id="outline-container-org6a361b5" class="outline-4">
-<h4 id="org6a361b5"><span class="section-number-4">3.6.2.</span> <code>u:ex_acc(w, fz, y)</code></h4>
+<div id="outline-container-orgd6f06cb" class="outline-4">
+<h4 id="orgd6f06cb"><span class="section-number-4">3.6.2.</span> <code>u:ex_acc(w, fz, y)</code></h4>
 <div class="outline-text-4" id="text-3-6-2">
 <p>
 Accuracy of a weights record on a featurized, labelled split.
@@ -2329,8 +2367,8 @@ Accuracy of a weights record on a featurized, labelled split.
 </div>
 </div>
 </div>
-<div id="outline-container-org444fcce" class="outline-4">
-<h4 id="org444fcce"><span class="section-number-4">3.6.3.</span> <code>u:ex_conf(w, fz)</code></h4>
+<div id="outline-container-org02864c4" class="outline-4">
+<h4 id="org02864c4"><span class="section-number-4">3.6.3.</span> <code>u:ex_conf(w, fz)</code></h4>
 <div class="outline-text-4" id="text-3-6-3">
 <p>
 Mean top probability over a featurized set: how sure the model is, whether or not it is right.
@@ -2345,8 +2383,8 @@ Mean top probability over a featurized set: how sure the model is, whether or no
 </div>
 </div>
 </div>
-<div id="outline-container-org5debe7c" class="outline-4">
-<h4 id="org5debe7c"><span class="section-number-4">3.6.4.</span> <code>u:text_words_lines(text)</code></h4>
+<div id="outline-container-orgba167db" class="outline-4">
+<h4 id="orgba167db"><span class="section-number-4">3.6.4.</span> <code>u:text_words_lines(text)</code></h4>
 <div class="outline-text-4" id="text-3-6-4">
 <p>
 The non-empty lines of a text, newline-joined, so a trailing newline does not become an empty example.
@@ -2378,8 +2416,8 @@ The non-empty lines of a text, newline-joined, so a trailing newline does not be
 </div>
 </div>
 </div>
-<div id="outline-container-org7485dff" class="outline-4">
-<h4 id="org7485dff"><span class="section-number-4">3.6.5.</span> <code>u:ex_join_lines(texts)</code></h4>
+<div id="outline-container-orgf3ab1dc" class="outline-4">
+<h4 id="orgf3ab1dc"><span class="section-number-4">3.6.5.</span> <code>u:ex_join_lines(texts)</code></h4>
 <div class="outline-text-4" id="text-3-6-5">
 <p>
 A string list as one newline-joined string.
@@ -2394,8 +2432,8 @@ A string list as one newline-joined string.
 </div>
 </div>
 </div>
-<div id="outline-container-orgd5f7f03" class="outline-4">
-<h4 id="orgd5f7f03"><span class="section-number-4">3.6.6.</span> <code>u:ex_per_label(fn_name)</code></h4>
+<div id="outline-container-org29fe8ef" class="outline-4">
+<h4 id="org29fe8ef"><span class="section-number-4">3.6.6.</span> <code>u:ex_per_label(fn_name)</code></h4>
 <div class="outline-text-4" id="text-3-6-6">
 <p>
 The per-class response or keyword strings as a string list, in label order.

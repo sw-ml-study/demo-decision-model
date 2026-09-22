@@ -14,6 +14,7 @@ use serde::Deserialize;
 
 use crate::bundle::Bundle;
 use crate::features::words;
+use crate::keyword::{KeywordEngine, KeywordScript};
 use crate::responder::{Outcome, Turn, respond_at};
 
 /// A conversation script: stop words, pronoun reflections, recall and memory
@@ -107,6 +108,14 @@ pub enum Move {
     Deflect { noul: String, p: f64 },
     /// Nothing fit the label, so the input is reflected with its sentiment.
     Sentiment { noul: String, p: f64 },
+    /// The model chose a keyword-script rule and the script answered. `used`
+    /// is the rule whose reassembly was spoken; `matched` says whether the
+    /// chosen rule's own pattern fit the input.
+    ScriptRule {
+        chosen: String,
+        used: String,
+        matched: bool,
+    },
 }
 
 /// A reply as the parts it was built from.
@@ -123,11 +132,7 @@ impl Reply {
     /// equal this was not built from the script, and a test checks every one.
     #[must_use]
     pub fn render(frame: &str, slots: &[(String, String)]) -> String {
-        let mut out = frame.to_owned();
-        for (name, value) in slots {
-            out = out.replace(&format!("{{{name}}}"), value);
-        }
-        capitalize(&out)
+        crate::keyword::render(frame, slots)
     }
 }
 
@@ -161,6 +166,9 @@ pub struct Conversation<'a> {
     /// Memory turn -> the turn at which the memory rule brought it back.
     remembered: HashMap<usize, usize>,
     counters: HashMap<String, usize>,
+    /// When the model's labels are a keyword script's rules, the script that
+    /// answers them.
+    engine: Option<KeywordEngine<'a>>,
 }
 
 impl<'a> Conversation<'a> {
@@ -174,6 +182,22 @@ impl<'a> Conversation<'a> {
             recalled: HashSet::new(),
             remembered: HashMap::new(),
             counters: HashMap::new(),
+            engine: None,
+        }
+    }
+
+    /// A conversation whose model chooses among a keyword script's rules: the
+    /// chosen rule's reassembly answers, in place of the label rules.
+    #[must_use]
+    pub fn with_keywords(
+        bundle: &'a Bundle,
+        script: &'a Script,
+        keywords: &'a KeywordScript,
+        snapshot: usize,
+    ) -> Self {
+        Self {
+            engine: Some(KeywordEngine::new(keywords)),
+            ..Self::new(bundle, script, snapshot)
         }
     }
 
@@ -225,6 +249,9 @@ impl<'a> Conversation<'a> {
         if let Some(r) = self.recall(keywords, index) {
             return r;
         }
+        if self.engine.is_some() {
+            return self.scripted(turn, acted, &label, ws, index);
+        }
         if acted {
             if let Some(r) = self.apply_rules(&label, ws) {
                 return r;
@@ -261,6 +288,45 @@ impl<'a> Conversation<'a> {
             slots: Vec::new(),
             text: turn.reply.text.clone(),
             by: Move::Canned,
+        }
+    }
+
+    /// Answer through the keyword script. When the model acts, its chosen
+    /// rule's reassembly is spoken. When it does not, the program falls back
+    /// as the 1966 program did when no keyword fit: a remembered statement,
+    /// else the input reflected with its sentiment, else the script's
+    /// no-keyword reply.
+    fn scripted(
+        &mut self,
+        turn: &Turn,
+        acted: bool,
+        label: &str,
+        ws: &[String],
+        index: usize,
+    ) -> Reply {
+        let fallback = self.bundle.fallback.clone();
+        if !acted || label == fallback {
+            if let Some(r) = self.memory_rule(index) {
+                return r;
+            }
+            if ws.len() >= self.script.reflect.min_gap {
+                if let Some(r) = self.sentiment(turn, ws) {
+                    return r;
+                }
+            }
+        }
+        let chosen = if acted { label } else { fallback.as_str() };
+        let engine = self.engine.as_mut().expect("scripted needs an engine");
+        let a = engine.respond_with(chosen, &turn.input);
+        Reply {
+            frame: a.frame,
+            slots: a.slots,
+            text: a.text,
+            by: Move::ScriptRule {
+                matched: a.matched && a.rule == chosen,
+                chosen: chosen.to_owned(),
+                used: a.rule,
+            },
         }
     }
 
@@ -498,11 +564,4 @@ fn decompose(pattern: &[&str], ws: &[String]) -> Option<Vec<Vec<String>>> {
             (first == lit).then(|| decompose(rest, tail)).flatten()
         }
     }
-}
-
-fn capitalize(s: &str) -> String {
-    let mut c = s.chars();
-    c.next().map_or_else(String::new, |f| {
-        f.to_uppercase().collect::<String>() + c.as_str()
-    })
 }

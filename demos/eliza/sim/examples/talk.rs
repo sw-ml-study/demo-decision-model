@@ -1,15 +1,16 @@
-//! Replay a conversation, one line per turn, through model 3 and the demo 01
-//! script, printing each reply with the Noul answers and the mechanism that
+//! Replay a conversation, one line per turn, through model 4, the DOCTOR script
+//! it chooses rules from, and the demo 01 conversation script, printing each reply with the Noul answers and the mechanism that
 //! produced it.
 //!
 //! usage: cargo run -p eliza-sim --example talk [SNAPSHOT] < conversation.txt
 
 use std::io::Read;
 
-use tdm_model::{Bundle, Conversation, Script};
+use tdm_model::{Bundle, Conversation, KeywordScript, Script};
 
-const BUNDLE: &str = include_str!("../../../../fixtures/bundles/demo01-model3.json");
+const BUNDLE: &str = include_str!("../../../../fixtures/bundles/demo01-model4.json");
 const SCRIPT: &str = include_str!("../../../../fixtures/bundles/demo01-script.json");
+const DOCTOR: &str = include_str!("../../../../fixtures/bundles/demo01-doctor.json");
 
 #[expect(
     clippy::many_single_char_names,
@@ -21,7 +22,8 @@ fn main() {
     let snap = std::env::args()
         .nth(1)
         .map_or(b.default_snapshot, |a| a.parse().expect("snapshot"));
-    let mut c = Conversation::new(&b, &s, snap);
+    let doctor: KeywordScript = serde_json::from_str(DOCTOR).expect("keyword script");
+    let mut c = Conversation::with_keywords(&b, &s, &doctor, snap);
     let mut input = String::new();
     std::io::stdin().read_to_string(&mut input).expect("stdin");
     println!("ELIZA  {}", b.opening.clone().unwrap_or_default());

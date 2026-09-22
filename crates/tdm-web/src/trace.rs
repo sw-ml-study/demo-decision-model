@@ -5,7 +5,7 @@
 use tdm_model::{Bundle, Move, Outcome};
 use yew::prelude::*;
 
-use crate::app::{Shared, Timed};
+use crate::app::{Shared, Timed, keywords};
 
 #[derive(Properties, PartialEq)]
 pub struct TraceProps {
@@ -14,13 +14,18 @@ pub struct TraceProps {
     pub snapshot: usize,
 }
 
+/// Choices drawn as bars; the rest are summarized in one line.
+const SHOWN: usize = 8;
+
 fn bars(bundle: &Bundle, t: &Timed) -> Html {
     let d = &t.turn.decision;
     let mut order: Vec<usize> = (0..d.probs.len()).collect();
     order.sort_by(|&a, &b| d.probs[b].total_cmp(&d.probs[a]));
+    let hidden = order.len().saturating_sub(SHOWN);
+    let rest: f64 = order.iter().skip(SHOWN).map(|&i| d.probs[i]).sum();
     html! {
         <div class="bars">
-            { for order.iter().map(|&i| {
+            { for order.iter().take(SHOWN).map(|&i| {
                 let p = d.probs[i];
                 let style = format!("width: {:.1}%", p * 100.0);
                 html! {
@@ -31,6 +36,9 @@ fn bars(bundle: &Bundle, t: &Timed) -> Html {
                     </div>
                 }
             }) }
+            if hidden > 0 {
+                <p class="meta">{ format!("… and {hidden} more, {rest:.3} between them") }</p>
+            }
         </div>
     }
 }
@@ -92,6 +100,29 @@ fn describe(by: &Move) -> String {
         ),
         Move::Sentiment { noul, p } => {
             format!("sentiment reflection: nothing fit the label, and the {noul} Noul said {p:.2}")
+        }
+        Move::ScriptRule {
+            chosen,
+            used,
+            matched,
+        } => {
+            let pattern = |r: &str| keywords().pattern(r).unwrap_or("").to_owned();
+            if *matched {
+                format!(
+                    "script rule {chosen} (pattern \"{}\") fits, and its reassembly answers",
+                    pattern(chosen)
+                )
+            } else if chosen == used {
+                format!(
+                    "script rule {chosen} (pattern \"{}\") does not fit these words, so its reassembly that needs none answers",
+                    pattern(chosen)
+                )
+            } else {
+                format!(
+                    "script rule {chosen} (pattern \"{}\") does not fit, so {used} answers instead",
+                    pattern(chosen)
+                )
+            }
         }
     }
 }
@@ -197,7 +228,18 @@ pub fn trace(props: &TraceProps) -> Html {
         return html! { <section class="trace"><p class="hint">{ "Each reply you get is traced here: select one to inspect it." }</p></section> };
     };
     let d = &t.turn.decision;
-    let agree = t.turn.matcher == d.selected;
+    let scripted = b.keywords.is_empty();
+    let yard = if scripted {
+        b.label_index(&t.oracle).unwrap_or(t.turn.matcher)
+    } else {
+        t.turn.matcher
+    };
+    let agree = yard == d.selected;
+    let who = if scripted {
+        format!("The keyword script alone uses {}", t.oracle)
+    } else {
+        format!("1966-style keyword list picks {}", b.labels[yard])
+    };
     html! {
         <section class="trace">
             <h2>{ "State in" }</h2>
@@ -227,8 +269,7 @@ pub fn trace(props: &TraceProps) -> Html {
 
             <h2>{ "Yardstick" }</h2>
             <p class={classes!("mono", if agree { "agree" } else { "disagree" })}>
-                { format!("1966-style keyword list picks {} — {}", b.labels[t.turn.matcher],
-                    if agree { "agrees with the model" } else { "disagrees with the model" }) }
+                { format!("{who} — {}", if agree { "agrees with the model" } else { "disagrees with the model" }) }
             </p>
         </section>
     }

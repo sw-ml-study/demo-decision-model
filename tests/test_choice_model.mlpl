@@ -66,4 +66,23 @@ def u:test_accuracy_by_label() {
   u:assert_approx(take(r.acc, 0, 1), 0.6666666666666666, 0.000001, "two of three right")
 }
 
+@test {name: "a masked Noul label contributes nothing to the joint loss", tags: ["choice-model", "noul"]}
+def u:test_masked_joint_loss() {
+  "Model 4 trains on rows that answer only some Noul questions; a masked cell must not pull the head either way, and a full mask must reduce to the unmasked loss.";
+  fz = u:cm_featurize(["my mother listens", "hello there"], 32, 8);
+  cm_E = randn(3, [32, 4]) * 0.1;
+  cm_W = randn(4, [4, 2]) * 0.1;
+  cm_b = fill([2], 0);
+  cm_N = randn(5, [4, 2]) * 0.1;
+  cm_nb = fill([2], 0);
+  y = [0, 1];
+  ny = reshape([1, 0, 0, 1], [2, 2]);
+  full = u:cm_masked_joint_loss(fz.ids, fz.wmask, y, ny, fill([2, 2], 1), 0.1);
+  u:assert_approx(full, u:cm_joint_loss(fz.ids, fz.wmask, y, ny, 0.1), 0.000000001, "a full mask is the plain joint loss")?;
+  nm = reshape([1, 0, 1, 0], [2, 2]);
+  a = u:cm_masked_joint_loss(fz.ids, fz.wmask, y, ny, nm, 0.1);
+  b = u:cm_masked_joint_loss(fz.ids, fz.wmask, y, reshape([1, 1, 0, 0], [2, 2]), nm, 0.1);
+  u:assert_approx(a, b, 0.000000001, "changing only masked labels changes nothing")
+}
+
 u:run_registered_tests()

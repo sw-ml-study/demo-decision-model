@@ -172,6 +172,36 @@ Nouls keep improving to 12, and choosing by the Choice would have shipped a
 question detector that missed half the questions. Model 3 escalates 19% of
 inputs, against a third for model 2, with the same accuracy when it replies.
 
+### Model 4: labels nobody here wrote
+
+Every model up to 3 learned classes one person invented, scored against a
+keyword list the same person wrote. Model 4 ([`RC01`](docs/experiments/RC01-rule-choice.md))
+throws that out. Its Choice is over **the rules of Weizenbaum's 1966 DOCTOR
+script**, and its labels come from running that script over
+[8,464 inputs nobody here labelled](docs/experiments/OR01-oracle-corpus.md):
+7,000 sentences of dialogue from ten public-domain novels, 180 everyday lines,
+and the old generated frames, relabelled. The script picks the rule; the model
+learns to pick the same one.
+
+| At the 5-minute snapshot | held-out (869) | probes (96) |
+|---|---|---|
+| picks the rule the 1966 script picked | **84.9%** | **93.8%** |
+| majority-class baseline | 30.1% | 21.9% |
+| reply identical to the script's, word for word | 85.5% | 93.8% |
+| confidence when right / when wrong | 0.72 / 0.43 | 0.80 / 0.49 |
+
+Two things came free with the corpus. A novel sentence ends in a question mark
+or it does not, which is a question label 1,001 times over, written by the
+author rather than by us. And what the sentences do not say -- whether they are
+negative or positive -- is simply **masked** out of the loss, so each row trains
+the heads it can answer for and leaves the others alone.
+
+Full batch stopped being affordable at 7,595 rows (30 s a step in the
+interpreter, twenty steps in ten minutes). Adam's moments persist between calls,
+so training runs one minibatch of 256 per call: 1,268 steps, 42 epochs, same ten
+minutes. Past five minutes, agreement falls while confidence rises -- an hour
+would buy nothing.
+
 ### ELIZA's mechanics, back in the program
 
 The model only decides what kind of reply fits. What made ELIZA feel like ELIZA

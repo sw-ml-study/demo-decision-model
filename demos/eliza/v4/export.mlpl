@@ -1,0 +1,159 @@
+# Trains demo 01's model 4 and exports it for the browser. Model 4 learns Weizenbaum's decisions rather than the author's: its Choice is over the DOCTOR rules the oracle fired on 7,595 training inputs (rare rules merged into their keyword's most common one), and its three Noul heads (question, negative, positive) share the encoder, each trained only where a row carries that label. The corpus is featurized in Rust (demos/eliza/sim/src/bin/featurize.rs) because building eight thousand rows of lists is quadratic in the interpreter; everything learned is learned here. One Adam run from seeded random initialization over shuffled minibatches of 256, every other batch with 30% word dropout, snapshotted when the measured training clock passes 0 s, 10 s, 1 min, 5 min and 10 min. Every snapshot is scored identically on the held-out split and on the 96 frozen probes, both labelled by the oracle; the default is chosen by mean validation accuracy over all four heads, never by the probes.
+include "../../../lib/choice_model.mlpl";
+
+def u:x4_round(a, q) {
+  "Round to 1/q for transport; parity is computed from the rounded weights.";
+  floor(a * q + 0.5) / q
+}
+
+def u:x4_flat(a) {
+  "An array as rank 1.";
+  reshape(a, [reduce_mul(shape(a))])
+}
+
+def u:x4_col(a, j) {
+  "Column j of an [N, m] array, as rank 1.";
+  reshape(gather_rows(transpose(a), [j]), [take(shape(a), 0, 0)])
+}
+
+def u:x4_rows1(v, idx) {
+  "Elements idx of a rank-1 array (gather_rows wants a table).";
+  reshape(gather_rows(reshape(v, [reduce_mul(shape(v)), 1]), idx), [reduce_mul(shape(idx))])
+}
+
+def u:x4_batch(b, w) {
+  "A featurized split from the Rust featurizer's record: ids and pooling weights, Choice labels, Noul labels and their mask.";
+  n = b.n;
+  mask = reshape(b.mask, [n, w]);
+  {n: n, ids: reshape(b.ids, [n, w]), mask: mask, wmask: u:cm_pool_weights(mask), y: b.y, nouls: reshape(b.nouls, [n, 3]), nm: reshape(b.noul_mask, [n, 3])}
+}
+
+def u:x4_noul_metrics(pred, truth, nm, j) {
+  "For Noul column j at threshold 0.5, over the rows labelled for it: accuracy, the share of true cases caught (recall), and the share of false cases wrongly flagged.";
+  m = u:x4_col(nm, j);
+  pj = u:x4_col(pred, j);
+  tj = u:x4_col(truth, j);
+  cells = reduce_add(m);
+  pos = reduce_add(tj * m);
+  neg = reduce_add((1 - tj) * m);
+  [reduce_add(eq(pj, tj) * m) / (cells + eq(cells, 0)), reduce_add(pj * tj * m) / (pos + eq(pos, 0)), reduce_add(pj * (1 - tj) * m) / (neg + eq(neg, 0))]
+}
+
+def u:x4_label(sec) {
+  "A training-time label read off the measured clock, never assumed: whole seconds under a minute, else minutes to one decimal.";
+  if lt(sec, 60) {
+    str_concat(to_string(floor(sec + 0.5)), " s")
+  } else {
+    str_concat(to_string(floor(sec / 6 + 0.5) / 10), " min")
+  }
+}
+
+x4_d = unwrap(parse_json(unwrap(read_text("tmp/model4/data.json"))));
+x4_width = x4_d.width;
+x4_dim = 32;
+x4_eps = 0.1;
+x4_lr = 0.01;
+x4_bs = 256;
+x4_targets = [0, 10, 60, 300, 600];
+x4_k = list_len(x4_d.labels);
+x4_rows = list_len(x4_d.vocab) + 1;
+
+x4_tr = u:x4_batch(x4_d.train, x4_width);
+x4_va = u:x4_batch(x4_d.val, x4_width);
+x4_pr = u:x4_batch(x4_d.probes, x4_width);
+x4_pn = x4_d.parity.n;
+x4_pids = reshape(x4_d.parity.ids, [x4_pn, x4_width]);
+x4_pw = u:cm_pool_weights(reshape(x4_d.parity.mask, [x4_pn, x4_width]));
+x4_sub = iota(1024);
+x4_trs_ids = gather_rows(x4_tr.ids, x4_sub);
+x4_trs_w = u:cm_pool_weights(gather_rows(x4_tr.mask, x4_sub));
+x4_trs_y = u:x4_rows1(x4_tr.y, x4_sub);
+
+cm_E = param[x4_rows, 32];
+cm_E = randn(11, [x4_rows, 32]) * 0.1;
+cm_W = param[32, x4_k];
+cm_W = randn(12, [32, x4_k]) * 0.1;
+cm_b = param[x4_k];
+cm_b = fill([x4_k], 0);
+cm_N = param[32, 3];
+cm_N = randn(13, [32, 3]) * 0.1;
+cm_nb = param[3];
+cm_nb = fill([3], 0);
+
+x4_E = fill([0], 0);
+x4_Wh = fill([0], 0);
+x4_B = fill([0], 0);
+x4_NH = fill([0], 0);
+x4_NB = fill([0], 0);
+x4_P = fill([0], 0);
+x4_PN = fill([0], 0);
+x4_M = fill([0], 0);
+x4_secs = fill([0], 0);
+x4_steps = fill([0], 0);
+x4_elapsed = 0;
+x4_step = 0;
+x4_per_epoch = floor(x4_tr.n / x4_bs);
+x4_order = iota(x4_tr.n);
+x4_c = 0;
+while lt(x4_c, 5) {
+  x4_target = take(x4_targets, 0, x4_c) * 1000;
+  while lt(x4_elapsed, x4_target) {
+    x4_t0 = clock_ms();
+    x4_pos = x4_step - floor(x4_step / x4_per_epoch) * x4_per_epoch;
+    x4_order = if eq(x4_pos, 0) {
+      grade_down(random(100 + x4_step, [x4_tr.n]))
+    } else {
+      x4_order
+    };
+    x4_bi = u:x4_rows1(x4_order, iota(x4_bs) + x4_pos * x4_bs);
+    x4_bm = gather_rows(x4_tr.mask, x4_bi);
+    x4_bm = if eq(x4_step - floor(x4_step / 2) * 2, 1) {
+      x4_bm * ge(random(5000 + x4_step, shape(x4_bm)), 0.3)
+    } else {
+      x4_bm
+    };
+    x4_l = u:cm_train_masked(gather_rows(x4_tr.ids, x4_bi), u:cm_pool_weights(x4_bm), u:x4_rows1(x4_tr.y, x4_bi), gather_rows(x4_tr.nouls, x4_bi), gather_rows(x4_tr.nm, x4_bi), 1, x4_lr, x4_eps);
+    x4_step = x4_step + 1;
+    x4_elapsed = x4_elapsed + clock_ms() - x4_t0
+  };
+  x4_secs = concat(x4_secs, [floor(x4_elapsed / 100) / 10]);
+  x4_steps = concat(x4_steps, [x4_step]);
+  x4_w = {E: u:x4_round(cm_E, 1000), W: u:x4_round(cm_W, 10000), b: u:x4_round(cm_b, 10000), N: u:x4_round(cm_N, 10000), nb: u:x4_round(cm_nb, 10000)};
+  x4_vn = ge(u:cm_infer_nouls(x4_w, x4_va.ids, x4_va.wmask), 0.5);
+  x4_npred = ge(u:cm_infer_nouls(x4_w, x4_pr.ids, x4_pr.wmask), 0.5);
+  x4_pv = softmax(u:cm_infer(x4_w, x4_va.ids, x4_va.wmask), 1);
+  x4_pp = softmax(u:cm_infer(x4_w, x4_pr.ids, x4_pr.wmask), 1);
+  x4_ok = eq(argmax(x4_pp, 1), x4_pr.y);
+  x4_conf = reduce(:max, x4_pp, 1);
+  x4_wrong = reduce_add(1 - x4_ok);
+  x4_right = reduce_add(x4_ok);
+  x4_vq = take(u:x4_noul_metrics(x4_vn, x4_va.nouls, x4_va.nm, 0), 0, 0);
+  x4_vng = take(u:x4_noul_metrics(x4_vn, x4_va.nouls, x4_va.nm, 1), 0, 0);
+  x4_vps = take(u:x4_noul_metrics(x4_vn, x4_va.nouls, x4_va.nm, 2), 0, 0);
+  x4_vacc = mean(eq(argmax(x4_pv, 1), x4_va.y));
+  x4_row = [cross_entropy(u:cm_infer(x4_w, x4_trs_ids, x4_trs_w), x4_trs_y), x4_vacc, mean(x4_ok), reduce_add(x4_conf * (1 - x4_ok)) / (x4_wrong + eq(x4_wrong, 0)), reduce_add(x4_conf * x4_ok) / (x4_right + eq(x4_right, 0)), mean(x4_conf)];
+  x4_row = concat(concat(concat(x4_row, u:x4_noul_metrics(x4_npred, x4_pr.nouls, x4_pr.nm, 0)), u:x4_noul_metrics(x4_npred, x4_pr.nouls, x4_pr.nm, 1)), u:x4_noul_metrics(x4_npred, x4_pr.nouls, x4_pr.nm, 2));
+  x4_row = concat(x4_row, [x4_vq, x4_vng, x4_vps, (x4_vacc + x4_vq + x4_vng + x4_vps) / 4]);
+  x4_M = concat(x4_M, x4_row);
+  x4_E = concat(x4_E, u:x4_flat(x4_w.E));
+  x4_Wh = concat(x4_Wh, u:x4_flat(x4_w.W));
+  x4_B = concat(x4_B, x4_w.b);
+  x4_NH = concat(x4_NH, u:x4_flat(x4_w.N));
+  x4_NB = concat(x4_NB, x4_w.nb);
+  x4_P = concat(x4_P, u:x4_flat(softmax(u:cm_infer(x4_w, x4_pids, x4_pw), 1)));
+  x4_PN = concat(x4_PN, u:x4_flat(u:cm_infer_nouls(x4_w, x4_pids, x4_pw)));
+  print("snapshot", u:x4_label(x4_elapsed / 1000), " steps", x4_step, " epochs", floor(x4_step * x4_bs / x4_tr.n * 10) / 10, " train loss", take(x4_row, 0, 0), " val", x4_vacc, " probe", take(x4_row, 0, 2), " conf wrong", take(x4_row, 0, 3), " conf right", take(x4_row, 0, 4), " question acc/recall/fp", take(x4_row, 0, 6), take(x4_row, 0, 7), take(x4_row, 0, 8), " negative", take(x4_row, 0, 9), take(x4_row, 0, 10), take(x4_row, 0, 11), " positive", take(x4_row, 0, 12), take(x4_row, 0, 13), take(x4_row, 0, 14), " val q/n/p", x4_vq, x4_vng, x4_vps, " all heads", take(x4_row, 0, 18));
+  x4_c = x4_c + 1
+};
+
+x4_Mr = reshape(x4_M, [5, 19]);
+x4_budget = str_split(str_join([u:x4_label(take(x4_secs, 0, 0)), u:x4_label(take(x4_secs, 0, 1)), u:x4_label(take(x4_secs, 0, 2)), u:x4_label(take(x4_secs, 0, 3)), u:x4_label(take(x4_secs, 0, 4))], "|"), "|");
+x4_best = argmax(reshape(gather_rows(transpose(x4_Mr), [18]), [5]));
+print("default snapshot, chosen by mean validation accuracy over all four heads:", u:text_lg(x4_budget, x4_best));
+
+x4_bundle = {schema: "sw-ml-study.decision-bundle", version: 3, provenance: {producer: "demos/eliza/v4/export.mlpl", producer_revision: "model4-v1", generated_at: "2026-09-22", source_description: "demo 01 model 4: a Choice over the DOCTOR script's rules, learned from Weizenbaum's own decisions on 7,595 oracle-labelled inputs (novel dialogue, everyday lines, generated frames), with three Noul heads (question, negative, positive) trained on masked labels over the shared encoder and question marks made visible; an exact vocabulary of the 2,000 most frequent training words and bigrams; one Adam run (lr 0.01, label smoothing 0.1, minibatches of 256, 30% word dropout on alternate batches) from seeded random initialization, snapshotted when the measured training clock passed 0 s, 10 s, 1 min, 5 min and 10 min on an M1 Max with mlpl-repl 0.22.0. Embedding rounded to 1e-3, heads to 1e-4."}, demo: "demo 01", title: "ELIZA", question: "which of the script's rules should answer?", opening: "The doctor is in. What seems to be your problem?", labels: x4_d.labels, fallback: "xnone#0", threshold: 0.3, escalation: {min_confidence: 0.3, min_margin: 0.1, min_known: 1}, question_token: "qmark", nouls: {names: ["question", "negative", "positive"], head: reshape(x4_NH, [5, 96]), bias: reshape(x4_NB, [5, 3])}, vocab: x4_d.vocab, width: x4_width, dim: x4_dim, snapshots: {steps: x4_steps, seconds: x4_secs, budgets: x4_budget, metric_names: ["train loss", "val accuracy", "probe accuracy", "probe confidence when wrong", "probe confidence when right", "probe confidence", "question accuracy", "question recall", "question false positives", "negative accuracy", "negative recall", "negative false positives", "positive accuracy", "positive recall", "positive false positives", "val question accuracy", "val negative accuracy", "val positive accuracy", "val accuracy, all heads"], metrics: x4_Mr, embedding: reshape(x4_E, [5, x4_rows * 32]), head: reshape(x4_Wh, [5, 32 * x4_k]), bias: reshape(x4_B, [5, x4_k])}, default_snapshot: x4_best, responses: x4_d.labels, keywords: [], match_order: [], examples: x4_d.examples, parity: {inputs: x4_d.parity.texts, probs: reshape(x4_P, [5, x4_pn * x4_k]), nouls: reshape(x4_PN, [5, x4_pn * 3]), matcher: []}};
+
+x4_json = unwrap(to_json(x4_bundle));
+x4_saved = write_atomic("fixtures/bundles/demo01-model4.json", x4_json);
+print("bundle written", x4_saved, "bytes", str_len(x4_json), "classes", x4_k, "vocab", x4_rows - 1);
+print("")
