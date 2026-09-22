@@ -1,0 +1,8 @@
+number = 17
+slug = "dynamic-choice-sets"
+status = "pending"
+description = "Deliver PR05, the lesson sw-atlas is blocked on (docs/plan.md Saga 4 step 1; ..."
+role = "production"
+context_files = []
+created_at = "2026-09-22T11:33:26"
+commits = []
