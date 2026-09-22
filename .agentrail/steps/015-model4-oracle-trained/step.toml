@@ -1,0 +1,8 @@
+number = 15
+slug = "model4-oracle-trained"
+status = "pending"
+description = "Train model 4 on the oracle corpus: the Choice is over the DOCTOR rule ids th..."
+role = "production"
+context_files = []
+created_at = "2026-09-22T08:41:17"
+commits = []
