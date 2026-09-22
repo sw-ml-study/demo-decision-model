@@ -96,3 +96,6 @@ footer code { font-family: var(--mono); }
 .legend { flex-direction: column; align-items: flex-start; gap: 2px; }
 .legend .item { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .legend .item .k { margin-left: 0; }
+.memory p { margin: 1px 0; }
+.memory .recalled { color: var(--accent); font-weight: 700; }
+.memory .kw { color: var(--muted); }
