@@ -1202,6 +1202,151 @@ def u:cm_infer_nouls(weights, ids, wmask) {
 }
 #+end_src
 
+** The card scorer: =lib/scorer.mlpl=
+
+A Choice whose options are not columns of a head but text read at call time. One encoder reads the input, the question and every candidate card; the query is scored against each card by cosine, times a learned scale. Adding a candidate costs no parameters, which is the only thing this shape buys over a fixed head -- and DC01 measures how little that buys on cards the model never trained on.
+
+Every differentiated function takes plain arrays. A record field read inside ~grad~ is not a supported expression form, and one call deep it reports that the loss does not depend on the parameter, which is a much more expensive way to find out.
+
+The module comment says what the file is for.
+
+#+begin_src mlpl :tangle ../../lib/scorer.mlpl
+# A question-conditioned scorer over choices supplied as text, not as head columns: score_i = f(h_state, h_question, h_card_i). One shared text encoder reads the state, the question and every candidate card; the state and question become one query vector, which is scored against each card by inner product. Because a card enters through the encoder rather than through a column of a fixed head, the same weights score cards that did not exist when training ended -- which is the point, and what a fixed-head Choice cannot do. Domain-neutral: a card is text, a question is text, and what they mean is the caller's business; the caller also chooses the feature width and the pooling, since it supplies the ids and the pooling weights. Training runs over the caller's global params sc_E [rows, d], sc_Ws [d, d], sc_Wq [d, d], sc_Wc [d, d] and the scalar sc_g; inference runs over a plain weights record, and tests/test_scorer.mlpl asserts the two forward passes agree. Every differentiated entry point takes plain arrays, never a record: a record field read inside grad is not a supported expression form (probes/q5_record_field_in_grad.mlpl).
+include "text.mlpl";
+#+end_src
+
+*** ~u:sc_pooled(ids, wmask)~
+
+Mean-pooled rows of the caller's global embedding for a featurized batch: [N, d].
+
+#+begin_src mlpl :tangle ../../lib/scorer.mlpl
+def u:sc_pooled(ids, wmask) {
+  "Mean-pooled rows of the caller's global embedding for a featurized batch: [N, d].";
+  reduce_add(gather_rows(sc_E, ids) * wmask, 1)
+}
+#+end_src
+
+*** ~u:sc_query(sids, swm, qids, qwm, qi)~
+
+The query vector [N, d]: the state and its question encoded by the same embedding and combined through their own weights. qi [N] names each row's question, so one batch may mix questions. tanh keeps the query bounded, so a long card cannot win on magnitude alone.
+
+#+begin_src mlpl :tangle ../../lib/scorer.mlpl
+def u:sc_query(sids, swm, qids, qwm, qi) {
+  "The query vector [N, d]: the state and its question encoded by the same embedding and combined through their own weights. qi [N] names each row's question, so one batch may mix questions. tanh keeps the query bounded, so a long card cannot win on magnitude alone.";
+  hs = u:sc_pooled(sids, swm);
+  hq = gather_rows(u:sc_pooled(qids, qwm), qi);
+  tanh(matmul(hs, sc_Ws) + matmul(hq, sc_Wq))
+}
+#+end_src
+
+*** ~u:sc_unit(a, k)~
+
+The k rows of [k, d] scaled to unit length; a row of zeros is left alone. The caller passes k because shape() may not be called inside grad (probes/q5_record_field_in_grad.mlpl). Measured, not assumed: scoring by plain inner product gives a card that trained as an answer a magnitude no unseen card can match, and unseen cards then never win. Direction is what a card should be compared on.
+
+#+begin_src mlpl :tangle ../../lib/scorer.mlpl
+def u:sc_unit(a, k) {
+  "The k rows of [k, d] scaled to unit length; a row of zeros is left alone. The caller passes k because shape() may not be called inside grad (probes/q5_record_field_in_grad.mlpl). Measured, not assumed: scoring by plain inner product gives a card that trained as an answer a magnitude no unseen card can match, and unseen cards then never win. Direction is what a card should be compared on.";
+  n = sqrt(reduce_add(a * a, 1));
+  a / reshape(n + eq(n, 0), [k, 1])
+}
+#+end_src
+
+*** ~u:sc_cards(cids, cwm, k)~
+
+The k candidate cards encoded once and scaled to unit length, [k, d]. Cards are scored, not enumerated in a head, so this may be called with cards the model never trained on.
+
+#+begin_src mlpl :tangle ../../lib/scorer.mlpl
+def u:sc_cards(cids, cwm, k) {
+  "The k candidate cards encoded once and scaled to unit length, [k, d]. Cards are scored, not enumerated in a head, so this may be called with cards the model never trained on.";
+  u:sc_unit(matmul(u:sc_pooled(cids, cwm), sc_Wc), k)
+}
+#+end_src
+
+*** ~u:sc_mask(scores, cand)~
+
+Scores [N, K] with the cards a row was not offered pushed far below every offered one, so one softmax covers a choice set that differs from row to row.
+
+#+begin_src mlpl :tangle ../../lib/scorer.mlpl
+def u:sc_mask(scores, cand) {
+  "Scores [N, K] with the cards a row was not offered pushed far below every offered one, so one softmax covers a choice set that differs from row to row.";
+  scores + (cand - 1) * 1000
+}
+#+end_src
+
+*** ~u:sc_logits(sids, swm, qids, qwm, qi, cids, cwm, cand, k)~
+
+Scores [N, K] of every offered card for every row: the query against each unit card, times the learned scale sc_g, which is what lets a cosine reach a confident probability.
+
+#+begin_src mlpl :tangle ../../lib/scorer.mlpl
+def u:sc_logits(sids, swm, qids, qwm, qi, cids, cwm, cand, k) {
+  "Scores [N, K] of every offered card for every row: the query against each unit card, times the learned scale sc_g, which is what lets a cosine reach a confident probability.";
+  u:sc_mask(sc_g * matmul(u:sc_query(sids, swm, qids, qwm, qi), transpose(u:sc_cards(cids, cwm, k))), cand)
+}
+#+end_src
+
+*** ~u:sc_loss(sids, swm, qids, qwm, qi, cids, cwm, cand, k, y)~
+
+Cross-entropy of the k offered cards against the answer's card index.
+
+#+begin_src mlpl :tangle ../../lib/scorer.mlpl
+def u:sc_loss(sids, swm, qids, qwm, qi, cids, cwm, cand, k, y) {
+  "Cross-entropy of the k offered cards against the answer's card index.";
+  cross_entropy(u:sc_logits(sids, swm, qids, qwm, qi, cids, cwm, cand, k), y)
+}
+#+end_src
+
+*** ~u:sc_train(sids, swm, qids, qwm, qi, cids, cwm, cand, k, y, steps, lr)~
+
+Adam over the shared encoder and the three projections; returns the final loss. Adam's moments persist between calls in one process, so calling this once per minibatch continues one optimization.
+
+#+begin_src mlpl :tangle ../../lib/scorer.mlpl
+def u:sc_train(sids, swm, qids, qwm, qi, cids, cwm, cand, k, y, steps, lr) {
+  "Adam over the shared encoder and the three projections; returns the final loss. Adam's moments persist between calls in one process, so calling this once per minibatch continues one optimization.";
+  train steps {
+    adam(u:sc_loss(sids, swm, qids, qwm, qi, cids, cwm, cand, k, y), [sc_E, sc_Ws, sc_Wq, sc_Wc, sc_g], lr, 0.9, 0.999, 0.00000001)
+  };
+  u:sc_loss(sids, swm, qids, qwm, qi, cids, cwm, cand, k, y)
+}
+#+end_src
+
+*** ~u:sc_infer(w, sids, swm, qids, qwm, qi, cids, cwm, cand, k)~
+
+The same scores from a plain weights record, the inference half of u:sc_logits. A trained scorer is four arrays; this is all a consumer needs to run it.
+
+#+begin_src mlpl :tangle ../../lib/scorer.mlpl
+def u:sc_infer(w, sids, swm, qids, qwm, qi, cids, cwm, cand, k) {
+  "The same scores from a plain weights record, the inference half of u:sc_logits. A trained scorer is four arrays; this is all a consumer needs to run it.";
+  hs = reduce_add(gather_rows(w.E, sids) * swm, 1);
+  hq = gather_rows(reduce_add(gather_rows(w.E, qids) * qwm, 1), qi);
+  u = tanh(matmul(hs, w.Ws) + matmul(hq, w.Wq));
+  hc = u:sc_unit(matmul(reduce_add(gather_rows(w.E, cids) * cwm, 1), w.Wc), k);
+  u:sc_mask(w.g * matmul(u, transpose(hc)), cand)
+}
+#+end_src
+
+*** ~u:sc_choose(w, sids, swm, qids, qwm, qi, cids, cwm, cand, k)~
+
+The selected card per row and the full distribution over the offered cards: {selected [N], probs [N, K]}.
+
+#+begin_src mlpl :tangle ../../lib/scorer.mlpl
+def u:sc_choose(w, sids, swm, qids, qwm, qi, cids, cwm, cand, k) {
+  "The selected card per row and the full distribution over the offered cards: {selected [N], probs [N, K]}.";
+  p = softmax(u:sc_infer(w, sids, swm, qids, qwm, qi, cids, cwm, cand, k), 1);
+  {selected: argmax(p, 1), probs: p}
+}
+#+end_src
+
+*** ~u:sc_param_count(w)~
+
+How many learned numbers a scorer is: the shared embedding, the three projections and the scale. It does not grow when a card is added, which is the difference this lesson exists to measure.
+
+#+begin_src mlpl :tangle ../../lib/scorer.mlpl
+def u:sc_param_count(w) {
+  "How many learned numbers a scorer is: the shared embedding, the three projections and the scale. It does not grow when a card is added, which is the difference this lesson exists to measure.";
+  reduce_mul(shape(w.E)) + reduce_mul(shape(w.Ws)) + reduce_mul(shape(w.Wq)) + reduce_mul(shape(w.Wc)) + 1
+}
+#+end_src
+
 ** Demo 01's domain: =demos/eliza/eliza.mlpl=
 
 The nine response classes, their canned replies, the keyword matcher that serves as the yardstick, and the sentence frames the training corpus is generated from. One person wrote both the frames and the keyword list, which flatters the model's margin over the matcher; the planned ELIZA-oracle corpus is how that gets tested honestly.

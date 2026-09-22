@@ -1,0 +1,71 @@
+# Tests for lib/scorer.mlpl: the dynamic-choice-set scorer. The property under test is not accuracy -- that is a lesson's job -- but that cards enter through the encoder: a card the weights never saw is scored by its words, a card a row was not offered cannot win, and the training and inference forward passes agree exactly.
+include "lib/scorer.mlpl";
+include "lib/choice_model.mlpl";
+
+def u:ts_fz(texts, vocab) {
+  "Featurize a list of texts against a vocabulary with the library's own pooling.";
+  u:cm_featurize_vocab(texts, vocab, 8)
+}
+
+ts_texts = str_split("my mother never listens|i am sad today|are you a machine|hello there", "|");
+ts_cards = str_split("about family and mothers|about feeling sad|about machines and computers", "|");
+ts_questions = str_split("which card fits|which card is about feelings", "|");
+ts_vocab = u:text_vocab(str_split(str_join([str_join(ts_texts, "\n"), str_join(ts_cards, "\n"), str_join(ts_questions, "\n")], "\n"), "\n"), 8);
+
+sc_E = param[ts_vocab.size + 1, 4];
+sc_E = randn(3, [ts_vocab.size + 1, 4]) * 0.1;
+sc_Ws = param[4, 4];
+sc_Ws = randn(4, [4, 4]) * 0.1;
+sc_Wq = param[4, 4];
+sc_Wq = randn(5, [4, 4]) * 0.1;
+sc_Wc = param[4, 4];
+sc_Wc = randn(6, [4, 4]) * 0.1;
+sc_g = param[1];
+sc_g = fill([1], 4);
+
+ts_s = u:ts_fz(ts_texts, ts_vocab);
+ts_q = u:ts_fz(ts_questions, ts_vocab);
+ts_c = u:ts_fz(ts_cards, ts_vocab);
+ts_qi = [0, 0, 1, 1];
+ts_y = [0, 1, 2, 0];
+ts_all = fill([4, 3], 1);
+
+def u:ts_weights() {
+  "The trained globals as the plain record inference takes.";
+  {E: sc_E, Ws: sc_Ws, Wq: sc_Wq, Wc: sc_Wc, g: sc_g}
+}
+
+@test {name: "a card a row was not offered cannot be selected", tags: ["scorer", "dynamic-choices"]}
+def u:test_scorer_candidate_mask() {
+  "sw-atlas offers a different set of resource cards per query, so one set of weights has to answer over a choice set that changes from row to row. Masking is how that is done in one batch, and it has to be absolute, not a nudge.";
+  cand = reshape(concat([0, 1, 0], fill([9], 1)), [4, 3]);
+  r = u:sc_choose(u:ts_weights(), ts_s.ids, ts_s.wmask, ts_q.ids, ts_q.wmask, ts_qi, ts_c.ids, ts_c.wmask, cand, 3);
+  u:assert_eq(take(reshape(r.selected, [4]), 0, 0), 1, "the only offered card wins the first row")?;
+  u:assert_lt(take(reshape(r.probs, [12]), 0, 0), 0.000001, "and a card not offered gets no probability")
+}
+
+@test {name: "the training and inference forward passes agree exactly", tags: ["scorer", "parity"]}
+def u:test_scorer_parity() {
+  "The browser runs the inference half. If the two halves could drift, every number the page shows would be unverifiable.";
+  a = u:sc_logits(ts_s.ids, ts_s.wmask, ts_q.ids, ts_q.wmask, ts_qi, ts_c.ids, ts_c.wmask, ts_all, 3);
+  b = u:sc_infer(u:ts_weights(), ts_s.ids, ts_s.wmask, ts_q.ids, ts_q.wmask, ts_qi, ts_c.ids, ts_c.wmask, ts_all, 3);
+  u:assert_eq(reduce_add(abs(a - b)), 0, "not merely close")?;
+  u:assert_eq(u:sc_param_count(u:ts_weights()), reduce_mul(shape(sc_E)) + 49, "a scorer is its embedding, three projections and one scale")
+}
+
+@test {name: "training drives the loss down and a card held out of training is still scored by its words", tags: ["scorer", "dynamic-choices"]}
+def u:test_scorer_trains_and_generalizes() {
+  "This is the lesson's claim in miniature: a fixed head cannot score a column it does not have, and this scorer can, because a card enters as text. Scoring a card the weights never saw must change when its words change.";
+  before = u:sc_loss(ts_s.ids, ts_s.wmask, ts_q.ids, ts_q.wmask, ts_qi, ts_c.ids, ts_c.wmask, ts_all, 3, ts_y);
+  after = u:sc_train(ts_s.ids, ts_s.wmask, ts_q.ids, ts_q.wmask, ts_qi, ts_c.ids, ts_c.wmask, ts_all, 3, ts_y, 60, 0.05);
+  u:assert_lt(after, before, "the loss fell")?;
+  grown = u:ts_fz(str_split("about family and mothers|about feeling sad|about machines and computers|about mothers and family", "|"), ts_vocab);
+  cand4 = fill([4, 4], 1);
+  r = u:sc_choose(u:ts_weights(), ts_s.ids, ts_s.wmask, ts_q.ids, ts_q.wmask, ts_qi, grown.ids, grown.wmask, cand4, 4);
+  u:assert_shape(r.probs, [4, 4], "a fourth card, added after training, is scored like the rest")?;
+  swapped = u:ts_fz(str_split("about family and mothers|about feeling sad|about machines and computers|are you a machine", "|"), ts_vocab);
+  r2 = u:sc_choose(u:ts_weights(), ts_s.ids, ts_s.wmask, ts_q.ids, ts_q.wmask, ts_qi, swapped.ids, swapped.wmask, cand4, 4);
+  u:assert_gt(reduce_add(abs(r.probs - r2.probs)), 0.0001, "and changing only that card's words changes the scores")
+}
+
+u:run_registered_tests()

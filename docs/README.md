@@ -30,6 +30,9 @@ function with a free deterministic oracle, not the point.
 - [`reference/crate-contract.md`](reference/crate-contract.md) — what a project
   outside this repository may pin `tdm-model` and `tdm-trace` to, and what a tag
   promises.
+- [`reference/downstream-requests.md`](reference/downstream-requests.md) — what
+  projects that depend on this one have asked for, what was delivered, and
+  where the answer is.
 
 ## Implementation
 

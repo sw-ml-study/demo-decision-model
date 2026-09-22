@@ -1,0 +1,16 @@
+# Q5 reproducer: what a differentiated library entry point may take. A featurized batch is naturally a record of ids and pooling weights, but reading a field of it inside grad is not a supported expression form: the interpreter answers "grad: expression form not supported inside grad()", and when the read happens inside a user function the symptom is worse -- "the loss does not depend on <param>", with no gradient at all. Found while building PR05's scorer. Plain arrays differentiate exactly, which is why every trainable entry point in lib/ takes them. Checked by scripts/run-probes and asserted in tests/test_capability_probes.mlpl.
+q5_E = param[10, 4];
+q5_E = reshape([1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0, 3.0, 3.0, 3.0, 3.0, 4.0, 4.0, 4.0, 4.0, 5.0, 5.0, 5.0, 5.0, 6.0, 6.0, 6.0, 6.0], [10, 4]);
+q5_ids = reshape([1, 2, 3, 4], [2, 2]);
+q5_wm = fill([2, 2, 1], 0.5);
+
+def u:q5_pool(ids, wmask) {
+  "Mean-pool the embedding rows the ids address: the shape every model in this repository differentiates through.";
+  reduce_add(reduce_add(gather_rows(q5_E, ids) * wmask, 1))
+}
+
+q5_grad = grad(u:q5_pool(q5_ids, q5_wm), q5_E);
+q5_rows = reduce_add(ge(reduce_add(abs(q5_grad), 1), 0.0001));
+print("Q5 plain arrays, total absolute gradient", reduce_add(abs(q5_grad)));
+print("Q5 rows that received gradient", q5_rows, "of", take(shape(q5_grad), 0, 0));
+print("Q5 answer: plain arrays differentiate; a record field read inside grad is rejected, so trainable entry points take arrays")

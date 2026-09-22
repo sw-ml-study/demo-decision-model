@@ -96,3 +96,17 @@ memory = "65,286 parameters: a 2,001 x 32 vocabulary embedding, a 32 x 35 Choice
 speed = "minibatches of 256 because one full-batch step over 7,595 rows costs 30 s in the interpreter; Adam's moments persist between calls, so 1,268 minibatch steps (42 epochs) fit in 10 min. Snapshots measured at 0 s, 10 s, 1 min, 5 min, 10 min."
 quality = "default 5 min, chosen by mean validation accuracy over all four heads (0.950). Agreement with the oracle: 84.9% on the 869 held-out inputs (majority class 30.1%), 93.8% on the 96 probes (majority class 21.9%); the chosen rule's pattern fits the input 97.1% of the time and the reply is the oracle's word for word 85.5% of the time. Underconfident: mean confidence 0.72 when right, 0.43 when wrong, ECE 0.169. Question Noul 0.99 accurate (12 of 13 probes, no false alarms); positive Noul still catches only 1 of 5. Past 5 min validation agreement falls while confidence rises."
 status = "accepted"
+
+[[lesson]]
+id = "DC01"
+slug = "dynamic-choice-sets"
+title = "Choices supplied as text: one set of weights scores candidates it never saw, and how badly that fails here"
+source = "demos/eliza/v5/export.mlpl"
+library = ["lib/scorer.mlpl", "demos/eliza/sim/src/bin/cards.rs"]
+test = ["tests/test_scorer.mlpl", "crates/tdm-model/tests/scorer_bundle.rs"]
+fixture = "fixtures/bundles/demo01-scorer.json"
+implementation = "from-scratch"
+memory = "79,905 parameters: a 2,401 x 32 shared text embedding read by inputs, questions and cards alike, three 32 x 32 projections and one learned scale. Adding a candidate costs nothing; a fixed head would cost a column and a retrain. Bundle 2.13 MB"
+speed = "minibatches of 256 with the cards re-encoded every step; 674 steps (21 epochs) in 5 min. Snapshots measured at 0 s, 10 s, 1 min, 5 min."
+quality = "Two questions (which of 51 DOCTOR rules answers; which of four Noul cards is true) answered by one set of weights. On cards that trained: 85.3% over the full 51-card field, against model 4's fixed head at 86.1% on the same rows -- generality costs about a point. On twelve rules held out of training entirely (479 rows): 0.4% in the full field, 36.5% in a five-card field with trained distractors, 18.6% against equally untrained ones, which is chance. Plain inner product scored 0.0% held out (trained cards accumulate magnitude); tying the card projection to the state projection gave 0.6% held out and cost 15 points on seen cards. A lower bound in an unfriendly regime: an ELIZA rule card shares little but function words with an input."
+status = "accepted"

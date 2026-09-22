@@ -1,0 +1,178 @@
+# Trains demo 01's PR05 scorer and exports it. The Choice is not a head over labels here: every candidate is a card of text, read by the same encoder that reads the input, and scored by inner product against a query built from the input and the question. Two questions share the one scorer -- "which rule should answer this" over the DOCTOR script's 51 rule cards, and "what is true of this input" over the three Noul cards and "none of these" -- so a batch mixes choice sets of different sizes and different meanings. Twelve rules are held out entirely: their cards are never offered during training and every row they answer is removed from it, which is the measurement this lesson exists for. The tuples are featurized in Rust (demos/eliza/sim/src/bin/cards.rs); everything learned is learned here. Minibatches of 256, snapshots when the measured training clock passes 0 s, 10 s, 1 min and 5 min, default chosen by validation accuracy over both questions.
+include "../../../lib/scorer.mlpl";
+include "../../../lib/choice_model.mlpl";
+
+def u:x5_round(a, q) {
+  "Round to 1/q for transport; parity is computed from the rounded weights.";
+  floor(a * q + 0.5) / q
+}
+
+def u:x5_flat(a) {
+  "An array as rank 1.";
+  reshape(a, [reduce_mul(shape(a))])
+}
+
+def u:x5_rows1(v, idx) {
+  "Elements idx of a rank-1 array (gather_rows wants a table).";
+  reshape(gather_rows(reshape(v, [reduce_mul(shape(v)), 1]), idx), [reduce_mul(shape(idx))])
+}
+
+def u:x5_batch(b, w, k) {
+  "A featurized split from the Rust tuple builder: ids and pooling weights [n, w], the question index, the answer card, and the candidate mask [n, k].";
+  n = b.n;
+  mask = reshape(b.mask, [n, w]);
+  {n: n, ids: reshape(b.ids, [n, w]), mask: mask, wmask: u:cm_pool_weights(mask), q: b.question, y: b.y, cand: reshape(b.cand, [n, k]), small: reshape(b.cand_small, [n, k])}
+}
+
+def u:x5_acc(w, b, q, c, cand, k) {
+  "Share of rows whose highest-scoring offered card is the answer.";
+  r = u:sc_choose(w, b.ids, b.wmask, q.ids, q.wmask, b.q, c.ids, c.wmask, cand, k);
+  mean(eq(r.selected, b.y))
+}
+
+def u:x5_acc_where(w, b, q, c, cand, keep, k) {
+  "The same accuracy over the rows keep marks, which is how one split answers about one question at a time.";
+  r = u:sc_choose(w, b.ids, b.wmask, q.ids, q.wmask, b.q, c.ids, c.wmask, cand, k);
+  n = reduce_add(keep);
+  reduce_add(eq(r.selected, b.y) * keep) / (n + eq(n, 0))
+}
+
+def u:x5_lines(texts, n) {
+  "The first n texts of a list, for the parity block.";
+  out = fill([0], 0);
+  acc = "";
+  i = 0;
+  while lt(i, n) {
+    acc = if gt(str_len(acc), 0) {
+      str_concat(str_concat(acc, "\n"), u:text_lg(texts, i))
+    } else {
+      u:text_lg(texts, i)
+    };
+    i = i + 1
+  };
+  str_split(acc, "\n")
+}
+
+def u:x5_rank(w, b, q, c, cand, k) {
+  "The mean rank of the answer card among the cards a row was offered, counting from 0. Accuracy says whether the answer won; the rank says how badly it lost, which is what a reranker cares about.";
+  sc = u:sc_infer(w, b.ids, b.wmask, q.ids, q.wmask, b.q, c.ids, c.wmask, cand, k);
+  onehot = eq(reshape(iota(k), [1, k]) + fill([b.n, k], 0), reshape(b.y, [b.n, 1]));
+  ans = reduce_add(sc * onehot, 1);
+  mean(reduce_add(gt(sc, reshape(ans, [b.n, 1])) * cand, 1))
+}
+
+def u:x5_label(sec) {
+  "A training-time label read off the measured clock, never assumed.";
+  if lt(sec, 60) {
+    str_concat(to_string(floor(sec + 0.5)), " s")
+  } else {
+    str_concat(to_string(floor(sec / 6 + 0.5) / 10), " min")
+  }
+}
+
+x5_d = unwrap(parse_json(unwrap(read_text("tmp/model5/data.json"))));
+x5_w = x5_d.width;
+x5_cw = x5_d.card_width;
+x5_dim = 32;
+x5_lr = 0.01;
+x5_bs = 256;
+x5_targets = [0, 10, 60, 300];
+x5_k = list_len(x5_d.cards.names);
+x5_rows = list_len(x5_d.vocab) + 1;
+
+x5_tr = u:x5_batch(x5_d.train, x5_w, x5_k);
+x5_va = u:x5_batch(x5_d.val, x5_w, x5_k);
+x5_un = u:x5_batch(x5_d.unseen, x5_w, x5_k);
+x5_cmask = reshape(x5_d.cards.mask, [x5_k, x5_cw]);
+x5_cards = {ids: reshape(x5_d.cards.ids, [x5_k, x5_cw]), wmask: u:cm_pool_weights(x5_cmask)};
+x5_qmask = reshape(x5_d.questions.mask, [2, x5_w]);
+x5_qs = {ids: reshape(x5_d.questions.ids, [2, x5_w]), wmask: u:cm_pool_weights(x5_qmask)};
+x5_va_rule = eq(x5_va.q, 0);
+x5_va_noul = eq(x5_va.q, 1);
+
+sc_E = param[x5_rows, 32];
+sc_E = randn(21, [x5_rows, 32]) * 0.1;
+sc_Ws = param[32, 32];
+sc_Ws = randn(22, [32, 32]) * 0.1;
+sc_Wq = param[32, 32];
+sc_Wq = randn(23, [32, 32]) * 0.1;
+sc_Wc = param[32, 32];
+sc_Wc = randn(24, [32, 32]) * 0.1;
+sc_g = param[1];
+sc_g = fill([1], 8);
+
+x5_E = fill([0], 0);
+x5_WS = fill([0], 0);
+x5_WQ = fill([0], 0);
+x5_WC = fill([0], 0);
+x5_G = fill([0], 0);
+x5_M = fill([0], 0);
+x5_secs = fill([0], 0);
+x5_steps = fill([0], 0);
+x5_elapsed = 0;
+x5_step = 0;
+x5_per_epoch = floor(x5_tr.n / x5_bs);
+x5_order = iota(x5_tr.n);
+x5_c = 0;
+while lt(x5_c, 4) {
+  x5_target = take(x5_targets, 0, x5_c) * 1000;
+  while lt(x5_elapsed, x5_target) {
+    x5_t0 = clock_ms();
+    x5_pos = x5_step - floor(x5_step / x5_per_epoch) * x5_per_epoch;
+    x5_order = if eq(x5_pos, 0) {
+      grade_down(random(700 + x5_step, [x5_tr.n]))
+    } else {
+      x5_order
+    };
+    x5_bi = u:x5_rows1(x5_order, iota(x5_bs) + x5_pos * x5_bs);
+    x5_bm = gather_rows(x5_tr.mask, x5_bi);
+    x5_bm = if eq(x5_step - floor(x5_step / 2) * 2, 1) {
+      x5_bm * ge(random(9000 + x5_step, shape(x5_bm)), 0.3)
+    } else {
+      x5_bm
+    };
+    x5_l = u:sc_train(gather_rows(x5_tr.ids, x5_bi), u:cm_pool_weights(x5_bm), x5_qs.ids, x5_qs.wmask, u:x5_rows1(x5_tr.q, x5_bi), x5_cards.ids, x5_cards.wmask, gather_rows(x5_tr.cand, x5_bi), x5_k, u:x5_rows1(x5_tr.y, x5_bi), 1, x5_lr);
+    x5_step = x5_step + 1;
+    x5_elapsed = x5_elapsed + clock_ms() - x5_t0
+  };
+  x5_secs = concat(x5_secs, [floor(x5_elapsed / 100) / 10]);
+  x5_steps = concat(x5_steps, [x5_step]);
+  x5_wr = {E: u:x5_round(sc_E, 1000), Ws: u:x5_round(sc_Ws, 10000), Wq: u:x5_round(sc_Wq, 10000), Wc: u:x5_round(sc_Wc, 10000), g: u:x5_round(sc_g, 10000)};
+  x5_vall = u:x5_acc(x5_wr, x5_va, x5_qs, x5_cards, x5_va.cand, x5_k);
+  x5_vrule = u:x5_acc_where(x5_wr, x5_va, x5_qs, x5_cards, x5_va.cand, x5_va_rule, x5_k);
+  x5_vnoul = u:x5_acc_where(x5_wr, x5_va, x5_qs, x5_cards, x5_va.cand, x5_va_noul, x5_k);
+  x5_vunseen = u:x5_acc(x5_wr, x5_un, x5_qs, x5_cards, x5_un.cand, x5_k);
+  x5_vsmall = u:x5_acc(x5_wr, x5_va, x5_qs, x5_cards, x5_va.small, x5_k);
+  x5_usmall = u:x5_acc(x5_wr, x5_un, x5_qs, x5_cards, x5_un.small, x5_k);
+  x5_vrank = u:x5_rank(x5_wr, x5_va, x5_qs, x5_cards, x5_va.cand, x5_k);
+  x5_urank = u:x5_rank(x5_wr, x5_un, x5_qs, x5_cards, x5_un.cand, x5_k);
+  x5_row = [x5_vall, x5_vrule, x5_vnoul, x5_vunseen, x5_vsmall, x5_usmall, x5_vrank, x5_urank];
+  x5_M = concat(x5_M, x5_row);
+  x5_E = concat(x5_E, u:x5_flat(x5_wr.E));
+  x5_WS = concat(x5_WS, u:x5_flat(x5_wr.Ws));
+  x5_WQ = concat(x5_WQ, u:x5_flat(x5_wr.Wq));
+  x5_WC = concat(x5_WC, u:x5_flat(x5_wr.Wc));
+  x5_G = concat(x5_G, u:x5_flat(x5_wr.g));
+  print("snapshot", u:x5_label(x5_elapsed / 1000), " steps", x5_step, " epochs", floor(x5_step * x5_bs / x5_tr.n * 10) / 10, " val", x5_vall, " val rules", x5_vrule, " val nouls", x5_vnoul, " held-out full field", x5_vunseen, " val 5-way", x5_vsmall, " held-out 5-way", x5_usmall, " mean rank val/held-out", x5_vrank, x5_urank);
+  x5_c = x5_c + 1
+};
+
+x5_Mr = reshape(x5_M, [4, 8]);
+x5_best = argmax(reshape(gather_rows(transpose(x5_Mr), [0]), [4]));
+x5_budget = str_split(str_join([u:x5_label(take(x5_secs, 0, 0)), u:x5_label(take(x5_secs, 0, 1)), u:x5_label(take(x5_secs, 0, 2)), u:x5_label(take(x5_secs, 0, 3))], "|"), "|");
+print("default snapshot, chosen by validation accuracy over both questions:", u:text_lg(x5_budget, x5_best));
+
+x5_pn = 40;
+x5_pi = iota(x5_pn);
+x5_pids = gather_rows(x5_va.ids, x5_pi);
+x5_pwm = u:cm_pool_weights(gather_rows(x5_va.mask, x5_pi));
+x5_pq = u:x5_rows1(x5_va.q, x5_pi);
+x5_pcand = gather_rows(x5_va.cand, x5_pi);
+x5_bw = {E: reshape(u:x5_rows1(x5_E, iota(x5_rows * 32) + x5_best * x5_rows * 32), [x5_rows, 32]), Ws: reshape(u:x5_rows1(x5_WS, iota(1024) + x5_best * 1024), [32, 32]), Wq: reshape(u:x5_rows1(x5_WQ, iota(1024) + x5_best * 1024), [32, 32]), Wc: reshape(u:x5_rows1(x5_WC, iota(1024) + x5_best * 1024), [32, 32]), g: u:x5_rows1(x5_G, [x5_best])};
+x5_pp = softmax(u:sc_infer(x5_bw, x5_pids, x5_pwm, x5_qs.ids, x5_qs.wmask, x5_pq, x5_cards.ids, x5_cards.wmask, x5_pcand, x5_k), 1);
+
+x5_bundle = {schema: "sw-ml-study.scorer-bundle", version: 1, provenance: {producer: "demos/eliza/v5/export.mlpl", producer_revision: "pr05-v1", generated_at: "2026-09-22", source_description: "demo 01's PR05 scorer: score_i = f(h_state, h_question, h_card_i) over cards supplied as text, scored by cosine against a learned scale, trained on 8,336 tuples from the oracle corpus across two questions (which of the DOCTOR script's rules should answer; which of three Nouls is true), with twelve rules held out of training entirely. One Adam run (lr 0.01, minibatches of 256, 30% word dropout on alternate batches) from seeded random initialization; snapshots when the measured training clock passed 0 s, 10 s, 1 min and 5 min on an M1 Max with mlpl-repl 0.22.0. Embedding rounded to 1e-3, projections to 1e-4."}, demo: "demo 01", title: "ELIZA", dim: x5_dim, width: x5_w, card_width: x5_cw, question_token: "qmark", vocab: x5_d.vocab, questions: x5_d.questions.texts, cards: {names: x5_d.cards.names, texts: x5_d.cards.texts}, held_out: x5_d.held_out, rule_count: x5_d.rule_count, snapshots: {steps: x5_steps, seconds: x5_secs, budgets: x5_budget, metric_names: ["val accuracy", "val accuracy, rule question", "val accuracy, Noul question", "accuracy on rules held out of training", "val accuracy, five-card field", "held-out accuracy, five-card field", "mean rank of the answer, val", "mean rank of the answer, held out"], metrics: x5_Mr, embedding: reshape(x5_E, [4, x5_rows * 32]), state: reshape(x5_WS, [4, 1024]), question: reshape(x5_WQ, [4, 1024]), card: reshape(x5_WC, [4, 1024]), scale: x5_G}, default_snapshot: x5_best, parity: {inputs: u:x5_lines(x5_d.val.texts, x5_pn), questions: x5_pq, probs: u:x5_flat(x5_pp), cards: x5_k}};
+
+x5_json = unwrap(to_json(x5_bundle));
+print("bundle written", write_atomic("fixtures/bundles/demo01-scorer.json", x5_json), "bytes", str_len(x5_json), "cards", x5_k, "vocab", x5_rows - 1);
+print("")

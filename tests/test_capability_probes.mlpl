@@ -60,6 +60,16 @@ def u:p_adam_run() {
   {start: before, end: u:p_adam_loss()}
 }
 
+p5_E = param[10, 4];
+p5_E = randn(7, [10, 4]) * 0.1;
+p5_ids = reshape([1, 2, 3, 4], [2, 2]);
+p5_wm = fill([2, 2, 1], 0.5);
+
+def u:p5_pool(ids, wmask) {
+  "Mean-pool the embedding rows the ids address: the shape every model in this repository differentiates through.";
+  reduce_add(reduce_add(gather_rows(p5_E, ids) * wmask, 1))
+}
+
 @test {name: "Q1 freeze holds an encoder fixed while a separate head trains", tags: ["probe", "calibration"]}
 def u:test_q1_freeze() {
   "The shape the calibration lessons need: fit a post-hoc map over a frozen state representation. A vacuous pass is the risk here, so the head is asserted to have moved.";
@@ -105,6 +115,15 @@ def u:test_q4_adam_state_persists() {
   u:assert_eq(a.start, b.start, "both runs start from exactly the same loss")?;
   u:assert_gt(abs(a.end - b.end), 0, "yet they do not end at the same loss")?;
   u:assert_lt(b.end, a.end, "the second run is further along, carrying the first run's momentum")
+}
+
+@test {name: "Q5 a differentiated entry point takes arrays, not a record", tags: ["probe", "dynamic-choices"]}
+def u:test_q5_record_field_in_grad() {
+  "Found building the PR05 scorer, whose helpers took a featurized batch as a record for readability. A record field read inside grad is not a supported expression form, and inside a user function the symptom is silent: the interpreter reports that the loss does not depend on the parameter, and training runs producing nothing. Every trainable entry point in lib/ takes plain arrays because of this.";
+  g = grad(u:p5_pool(p5_ids, p5_wm), p5_E);
+  u:assert_shape(g, [10, 4], "the gradient has the embedding's shape")?;
+  rows = reduce_add(ge(reduce_add(abs(g), 1), 0.0001));
+  u:assert_eq(rows, 4, "and only the four addressed rows receive it")
 }
 
 u:run_registered_tests()

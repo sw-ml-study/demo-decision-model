@@ -53,6 +53,19 @@ model4-score:
 model4-frame-nouls:
     ../sw-mlpl/target/release/mlpl-repl --source-dir . -f demos/eliza/v4/frame-nouls.mlpl
 
+# Build the (state, question, choices, answer) tuples for the PR05 card scorer.
+scorer-cards:
+    mkdir -p tmp/model5
+    cargo run --release -p eliza-sim --bin cards -- demos/eliza/oracle/corpus.tsv demos/eliza/oracle/frame-nouls.tsv fixtures/bundles/demo01-doctor.json tmp/model5/data.json
+
+# Train the PR05 card scorer and rewrite its bundle (about 6 minutes).
+scorer-train: scorer-cards
+    ../sw-mlpl/target/release/mlpl-repl --source-dir . -f demos/eliza/v5/export.mlpl
+
+# Score the card scorer against model 4's fixed head, including on cards held out of training.
+scorer-score:
+    cargo run --release -p eliza-sim --example scorer_score
+
 # Train demo 01's Choice model and rewrite its weights (about 25 seconds).
 eliza-train:
     ./scripts/run-eliza-train

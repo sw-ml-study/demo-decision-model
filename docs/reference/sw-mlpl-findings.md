@@ -103,6 +103,43 @@ Not filed upstream: this is standard optimizer behaviour, not a defect. It is
 recorded here because it is a trap that produced a wrong number in this
 repository before it was caught.
 
+## Q5 — a record field read inside `grad` is not a supported expression form
+
+Found building PR05's scorer. A featurized batch is naturally a record of ids
+and pooling weights, and the scorer's helpers took one for readability:
+`u:sc_loss(s, q, c, ...)` reading `s.ids` and `s.wmask` inside. Training ran and
+reported a loss that never moved.
+
+Read directly inside `grad`, the interpreter is explicit:
+
+```
+error: unsupported: grad: expression form not supported inside grad()
+```
+
+Read inside a *user function* called from `grad`, it is not:
+
+```
+error: unsupported: grad: the loss does not depend on 'sc_Ws'
+       (no gradient flows to it) -- was the loss computed eagerly before grad,
+       or is this the wrong parameter?
+```
+
+That second message names the wrong suspect. The parameter is fine and the loss
+does depend on it; what the tape cannot follow is the field read on the way to
+it. `probes/q5_record_field_in_grad.mlpl` reduces it to the pooling shape every
+model here differentiates through, and shows the plain-array form producing an
+exact gradient on exactly the four addressed rows.
+
+**Workaround, now a rule for this repository: every differentiated entry point
+in `lib/` takes plain arrays.** Records are still the right shape for
+featurizer *output* and for weights at inference, where nothing is
+differentiated — `u:sc_infer` takes a weights record and is not on a gradient
+path. Only the loss and the training loop are restricted.
+
+Worth filing upstream as a diagnostics issue rather than a feature request: the
+silent form is the expensive one, and it would cost little to say "a record
+field was read inside grad" instead of blaming the parameter.
+
 ## Gate note
 
 `mlpl-repl` exits non-zero on an evaluation error, so `scripts/run-probes`
