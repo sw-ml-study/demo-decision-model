@@ -9,14 +9,14 @@
 const MODULUS: u64 = 2_147_483_647;
 
 /// Lowercase ASCII letters, keep letters, digits and spaces, delete apostrophes,
-/// and turn every other character into a space. Matches `u:text_clean`, which
-/// works byte by byte, so non-ASCII bytes also become spaces.
+/// and turn every other character into a space. Matches `u:text_clean`: both
+/// delete straight and curly apostrophes, and both work character by character.
 fn clean(s: &str) -> String {
-    s.bytes()
-        .filter_map(|b| match b {
-            b'A'..=b'Z' => Some(char::from(b + 32)),
-            b'a'..=b'z' | b'0'..=b'9' | b' ' => Some(char::from(b)),
-            b'\'' => None,
+    s.chars()
+        .filter_map(|c| match c {
+            'A'..='Z' => Some(c.to_ascii_lowercase()),
+            'a'..='z' | '0'..='9' | ' ' => Some(c),
+            '\'' | '\u{2018}' | '\u{2019}' => None,
             _ => Some(' '),
         })
         .collect()

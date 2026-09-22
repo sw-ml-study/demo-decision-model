@@ -151,3 +151,11 @@ fn below_the_threshold_the_policy_abstains_to_the_fallback() {
     assert!(!t.reply.acted);
     assert_eq!(Some(t.reply.label), b.label_index(&b.fallback));
 }
+
+#[test]
+fn a_curly_apostrophe_is_an_apostrophe() {
+    // Phones and novels type ’; before this fix "I don’t know" became
+    // "i don t know" and missed every rule written for "dont".
+    assert_eq!(words("I don’t know"), ["i", "dont", "know"]);
+    assert_eq!(words("it’s ‘fine’"), ["its", "fine"]);
+}

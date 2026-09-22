@@ -1,6 +1,6 @@
-number = 15
+number = 14
 slug = "eliza-oracle-corpus"
-status = "pending"
+status = "in-progress"
 description = "User plan: train a better model from a real ELIZA oracle rather than from fra..."
 role = "production"
 context_files = []

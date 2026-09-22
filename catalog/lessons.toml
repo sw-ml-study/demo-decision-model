@@ -68,3 +68,17 @@ memory = "41,905 parameters: a 1,292 x 32 vocabulary embedding, a 32 x 17 Choice
 speed = "one joint Adam run over 3,000 rows, about 7 s per step in the interpreter; snapshots at 0, 3, 20, 100, 200 steps measured at 0 s, 19 s, 2.3 min, 12 min, 23.1 min; all three Nouls come from the Choice's forward pass at no extra encoder cost"
 quality = "default 12 min, chosen by mean validation accuracy over all four heads (0.898), not by the Choice alone, which peaks at 2.3 min while the Nouls keep improving. On 96 frozen probes: question Noul 0.98 accurate, catching 12 of 13 questions with 1% false alarms; negative 0.79 (recall 0.66); positive 0.94 but catching only 1 of 5 -- positives are rare in training and probes. Reply class correct 71% after policy, 77% when not escalating, escalated 19% (model 2: 33%); visible wrong COMPUTER 1, GREET 0."
 status = "accepted"
+
+[[lesson]]
+id = "OR01"
+slug = "oracle-corpus"
+title = "Weizenbaum's own decisions as labels: a DOCTOR oracle over 8,462 inputs nobody here labelled"
+source = "demos/eliza/sim/src/bin/label.rs"
+library = ["demos/eliza/sim/src/bin/corpus.rs"]
+test = ["demos/eliza/sim/tests/oracle.rs"]
+fixture = "fixtures/bundles/demo01-doctor.json"
+implementation = "from-scratch"
+memory = "the DOCTOR script as data: 35 keywords, 52 decomposition rules; corpus 8,462 labelled inputs"
+speed = "labelling the whole corpus takes under a second in Rust"
+quality = "oracle reproduces the published 1966 transcript exchanges (tests). Corpus: 7,000 sentences of novel dialogue from ten public-domain books, 181 everyday lines, 1,322 generated sentences; 32% of inputs match no ELIZA keyword; 44 rules used."
+status = "accepted"

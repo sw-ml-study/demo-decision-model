@@ -1,0 +1,1322 @@
+hello
+hi
+hey
+good morning
+good afternoon
+greetings
+howdy
+hello eliza
+hi eliza
+hey eliza
+good morning eliza
+good afternoon eliza
+greetings eliza
+howdy eliza
+hello there
+hi there
+hey there
+good morning there
+good afternoon there
+greetings there
+howdy there
+hello doctor
+hi doctor
+hey doctor
+good morning doctor
+good afternoon doctor
+greetings doctor
+howdy doctor
+well hello there
+well hi there
+well hey there
+well good morning there
+well good afternoon there
+well greetings there
+well howdy there
+hello again
+hi again
+hey again
+good morning again
+good afternoon again
+greetings again
+howdy again
+my mother never listens to me
+my father never listens to me
+my mom never listens to me
+my dad never listens to me
+my sister never listens to me
+my brother never listens to me
+my parents never listens to me
+my wife never listens to me
+my husband never listens to me
+my son never listens to me
+my daughter never listens to me
+my grandmother never listens to me
+my girlfriend never listens to me
+my boyfriend never listens to me
+i argued with my mother today
+i argued with my father today
+i argued with my mom today
+i argued with my dad today
+i argued with my sister today
+i argued with my brother today
+i argued with my parents today
+i argued with my wife today
+i argued with my husband today
+i argued with my son today
+i argued with my daughter today
+i argued with my grandmother today
+i argued with my girlfriend today
+i argued with my boyfriend today
+do you think my mother loves me?
+do you think my father loves me?
+do you think my mom loves me?
+do you think my dad loves me?
+do you think my sister loves me?
+do you think my brother loves me?
+do you think my parents loves me?
+do you think my wife loves me?
+do you think my husband loves me?
+do you think my son loves me?
+do you think my daughter loves me?
+do you think my grandmother loves me?
+do you think my girlfriend loves me?
+do you think my boyfriend loves me?
+my mother is always on my case
+my father is always on my case
+my mom is always on my case
+my dad is always on my case
+my sister is always on my case
+my brother is always on my case
+my parents is always on my case
+my wife is always on my case
+my husband is always on my case
+my son is always on my case
+my daughter is always on my case
+my grandmother is always on my case
+my girlfriend is always on my case
+my boyfriend is always on my case
+i really miss my mother
+i really miss my father
+i really miss my mom
+i really miss my dad
+i really miss my sister
+i really miss my brother
+i really miss my parents
+i really miss my wife
+i really miss my husband
+i really miss my son
+i really miss my daughter
+i really miss my grandmother
+i really miss my girlfriend
+i really miss my boyfriend
+you remind me of my mother
+you remind me of my father
+you remind me of my mom
+you remind me of my dad
+you remind me of my sister
+you remind me of my brother
+you remind me of my parents
+you remind me of my wife
+you remind me of my husband
+you remind me of my son
+you remind me of my daughter
+you remind me of my grandmother
+you remind me of my girlfriend
+you remind me of my boyfriend
+i feel sad
+i feel anxious
+i feel lonely
+i feel depressed
+i feel miserable
+i feel empty
+i feel angry
+i feel tired
+i feel scared
+i feel hopeless
+i feel stressed
+i feel afraid
+i feel happy
+i feel great
+i feel better
+i feel excited
+i feel relieved
+i feel hopeful
+i have been so sad lately
+i have been so anxious lately
+i have been so lonely lately
+i have been so depressed lately
+i have been so miserable lately
+i have been so empty lately
+i have been so angry lately
+i have been so tired lately
+i have been so scared lately
+i have been so hopeless lately
+i have been so stressed lately
+i have been so afraid lately
+i have been so happy lately
+i have been so great lately
+i have been so better lately
+i have been so excited lately
+i have been so relieved lately
+i have been so hopeful lately
+do you ever feel sad?
+do you ever feel anxious?
+do you ever feel lonely?
+do you ever feel depressed?
+do you ever feel miserable?
+do you ever feel empty?
+do you ever feel angry?
+do you ever feel tired?
+do you ever feel scared?
+do you ever feel hopeless?
+do you ever feel stressed?
+do you ever feel afraid?
+do you ever feel happy?
+do you ever feel great?
+do you ever feel better?
+do you ever feel excited?
+do you ever feel relieved?
+do you ever feel hopeful?
+i am sad today
+i am anxious today
+i am lonely today
+i am depressed today
+i am miserable today
+i am empty today
+i am angry today
+i am tired today
+i am scared today
+i am hopeless today
+i am stressed today
+i am afraid today
+i am happy today
+i am great today
+i am better today
+i am excited today
+i am relieved today
+i am hopeful today
+everything makes me sad
+everything makes me anxious
+everything makes me lonely
+everything makes me depressed
+everything makes me miserable
+everything makes me empty
+everything makes me angry
+everything makes me tired
+everything makes me scared
+everything makes me hopeless
+everything makes me stressed
+everything makes me afraid
+everything makes me happy
+everything makes me great
+everything makes me better
+everything makes me excited
+everything makes me relieved
+everything makes me hopeful
+i think i am sad
+i think i am anxious
+i think i am lonely
+i think i am depressed
+i think i am miserable
+i think i am empty
+i think i am angry
+i think i am tired
+i think i am scared
+i think i am hopeless
+i think i am stressed
+i think i am afraid
+i think i am happy
+i think i am great
+i think i am better
+i think i am excited
+i think i am relieved
+i think i am hopeful
+i want a vacation
+i want more money
+i want some peace
+i want a fresh start
+i want someone to talk to
+i want help
+i want a break
+i want to be happy
+i want a better life
+i wish i had a vacation
+i wish i had more money
+i wish i had some peace
+i wish i had a fresh start
+i wish i had someone to talk to
+i wish i had help
+i wish i had a break
+i wish i had to be happy
+i wish i had a better life
+all i need is a vacation
+all i need is more money
+all i need is some peace
+all i need is a fresh start
+all i need is someone to talk to
+all i need is help
+all i need is a break
+all i need is to be happy
+all i need is a better life
+do you think i will ever get a vacation
+do you think i will ever get more money
+do you think i will ever get some peace
+do you think i will ever get a fresh start
+do you think i will ever get someone to talk to
+do you think i will ever get help
+do you think i will ever get a break
+do you think i will ever get to be happy
+do you think i will ever get a better life
+i would really like a vacation
+i would really like more money
+i would really like some peace
+i would really like a fresh start
+i would really like someone to talk to
+i would really like help
+i would really like a break
+i would really like to be happy
+i would really like a better life
+someday i hope for a vacation
+someday i hope for more money
+someday i hope for some peace
+someday i hope for a fresh start
+someday i hope for someone to talk to
+someday i hope for help
+someday i hope for a break
+someday i hope for to be happy
+someday i hope for a better life
+i had a dream about falling
+i had a dream about being chased
+i had a dream about the ocean
+i had a dream about my old school
+i had a dream about flying
+i had a dream about a dark house
+i had a dream about my teeth falling out
+i had a dream about a storm
+last night i dreamt about falling
+last night i dreamt about being chased
+last night i dreamt about the ocean
+last night i dreamt about my old school
+last night i dreamt about flying
+last night i dreamt about a dark house
+last night i dreamt about my teeth falling out
+last night i dreamt about a storm
+i keep having nightmares about falling
+i keep having nightmares about being chased
+i keep having nightmares about the ocean
+i keep having nightmares about my old school
+i keep having nightmares about flying
+i keep having nightmares about a dark house
+i keep having nightmares about my teeth falling out
+i keep having nightmares about a storm
+do you think my dream about falling means anything?
+do you think my dream about being chased means anything?
+do you think my dream about the ocean means anything?
+do you think my dream about my old school means anything?
+do you think my dream about flying means anything?
+do you think my dream about a dark house means anything?
+do you think my dream about my teeth falling out means anything?
+do you think my dream about a storm means anything?
+in my dream there was falling
+in my dream there was being chased
+in my dream there was the ocean
+in my dream there was my old school
+in my dream there was flying
+in my dream there was a dark house
+in my dream there was my teeth falling out
+in my dream there was a storm
+you were in my dream about falling
+you were in my dream about being chased
+you were in my dream about the ocean
+you were in my dream about my old school
+you were in my dream about flying
+you were in my dream about a dark house
+you were in my dream about my teeth falling out
+you were in my dream about a storm
+computers scare me
+machines scare me
+robots scare me
+programs scare me
+algorithms scare me
+chatbots scare me
+a computer scare me
+a machine scare me
+a robot scare me
+a program scare me
+i do not trust computers
+i do not trust machines
+i do not trust robots
+i do not trust programs
+i do not trust algorithms
+i do not trust chatbots
+i do not trust a computer
+i do not trust a machine
+i do not trust a robot
+i do not trust a program
+are you one of those computers?
+are you one of those machines?
+are you one of those robots?
+are you one of those programs?
+are you one of those algorithms?
+are you one of those chatbots?
+are you one of those a computer?
+are you one of those a machine?
+are you one of those a robot?
+are you one of those a program?
+do you think computers can think
+do you think machines can think
+do you think robots can think
+do you think programs can think
+do you think algorithms can think
+do you think chatbots can think
+do you think a computer can think
+do you think a machine can think
+do you think a robot can think
+do you think a program can think
+are you really computers?
+are you really machines?
+are you really robots?
+are you really programs?
+are you really algorithms?
+are you really chatbots?
+are you really a computer?
+are you really a machine?
+are you really a robot?
+are you really a program?
+i think computers are taking over
+i think machines are taking over
+i think robots are taking over
+i think programs are taking over
+i think algorithms are taking over
+i think chatbots are taking over
+i think a computer are taking over
+i think a machine are taking over
+i think a robot are taking over
+i think a program are taking over
+yes
+yeah
+yep
+sure
+absolutely
+correct
+i do
+that is true
+uh huh
+yes i think so
+yeah i think so
+yep i think so
+sure i think so
+absolutely i think so
+correct i think so
+i do i think so
+that is true i think so
+uh huh i think so
+yes that is right
+yeah that is right
+yep that is right
+sure that is right
+absolutely that is right
+correct that is right
+i do that is right
+that is true that is right
+uh huh that is right
+oh yes
+oh yeah
+oh yep
+oh sure
+oh absolutely
+oh correct
+oh i do
+oh that is true
+oh uh huh
+yes of course
+yeah of course
+yep of course
+sure of course
+absolutely of course
+correct of course
+i do of course
+that is true of course
+uh huh of course
+yes i agree
+yeah i agree
+yep i agree
+sure i agree
+absolutely i agree
+correct i agree
+i do i agree
+that is true i agree
+uh huh i agree
+no
+nope
+nah
+not really
+no way
+definitely not
+i do not
+never
+no not really
+nope not really
+nah not really
+not really not really
+no way not really
+definitely not not really
+i do not not really
+never not really
+no i do not think so
+nope i do not think so
+nah i do not think so
+not really i do not think so
+no way i do not think so
+definitely not i do not think so
+i do not i do not think so
+never i do not think so
+oh no
+oh nope
+oh nah
+oh not really
+oh no way
+oh definitely not
+oh i do not
+oh never
+no never
+nope never
+nah never
+not really never
+no way never
+definitely not never
+i do not never
+never never
+no i disagree
+nope i disagree
+nah i disagree
+not really i disagree
+no way i disagree
+definitely not i disagree
+i do not i disagree
+never i disagree
+i don't know
+i dont know
+not sure
+maybe
+perhaps
+who knows
+i have no idea
+i cannot say
+hard to say
+i don't know i guess
+i dont know i guess
+not sure i guess
+maybe i guess
+perhaps i guess
+who knows i guess
+i have no idea i guess
+i cannot say i guess
+hard to say i guess
+hmm i don't know
+hmm i dont know
+hmm not sure
+hmm maybe
+hmm perhaps
+hmm who knows
+hmm i have no idea
+hmm i cannot say
+hmm hard to say
+honestly i don't know
+honestly i dont know
+honestly not sure
+honestly maybe
+honestly perhaps
+honestly who knows
+honestly i have no idea
+honestly i cannot say
+honestly hard to say
+i don't know what to say
+i dont know what to say
+not sure what to say
+maybe what to say
+perhaps what to say
+who knows what to say
+i have no idea what to say
+i cannot say what to say
+hard to say what to say
+well i don't know
+well i dont know
+well not sure
+well maybe
+well perhaps
+well who knows
+well i have no idea
+well i cannot say
+well hard to say
+why do you say that
+why do you mean
+why do you know
+why do you think so
+why do you help
+why do you feel
+why do you do that
+why do you understand
+why do you care
+what do you mean by say that?
+what do you mean by mean?
+what do you mean by know?
+what do you mean by think so?
+what do you mean by help?
+what do you mean by feel?
+what do you mean by do that?
+what do you mean by understand?
+what do you mean by care?
+how do you say that
+how do you mean
+how do you know
+how do you think so
+how do you help
+how do you feel
+how do you do that
+how do you understand
+how do you care
+can you say that?
+can you mean?
+can you know?
+can you think so?
+can you help?
+can you feel?
+can you do that?
+can you understand?
+can you care?
+what should i say that
+what should i mean
+what should i know
+what should i think so
+what should i help
+what should i feel
+what should i do that
+what should i understand
+what should i care
+why would you say that?
+why would you mean?
+why would you know?
+why would you think so?
+why would you help?
+why would you feel?
+why would you do that?
+why would you understand?
+why would you care?
+everyone ignores me
+everyone hates me
+everyone leaves
+everyone lets me down
+everyone messes things up
+everyone understands me
+everyone cares
+everyone laughs at me
+everyone forgets about me
+nobody ignores me
+nobody hates me
+nobody leaves
+nobody lets me down
+nobody messes things up
+nobody understands me
+nobody cares
+nobody laughs at me
+nobody forgets about me
+i always ignores me
+i always hates me
+i always leaves
+i always lets me down
+i always messes things up
+i always understands me
+i always cares
+i always laughs at me
+i always forgets about me
+people always ignores me
+people always hates me
+people always leaves
+people always lets me down
+people always messes things up
+people always understands me
+people always cares
+people always laughs at me
+people always forgets about me
+no one ever ignores me
+no one ever hates me
+no one ever leaves
+no one ever lets me down
+no one ever messes things up
+no one ever understands me
+no one ever cares
+no one ever laughs at me
+no one ever forgets about me
+everybody ignores me
+everybody hates me
+everybody leaves
+everybody lets me down
+everybody messes things up
+everybody understands me
+everybody cares
+everybody laughs at me
+everybody forgets about me
+you are stupid
+you are useless
+you are annoying
+you are pointless
+you are dumb
+you are a waste of time
+you are ridiculous
+you are boring
+this is stupid
+this is useless
+this is annoying
+this is pointless
+this is dumb
+this is a waste of time
+this is ridiculous
+this is boring
+that was stupid
+that was useless
+that was annoying
+that was pointless
+that was dumb
+that was a waste of time
+that was ridiculous
+that was boring
+you are being stupid
+you are being useless
+you are being annoying
+you are being pointless
+you are being dumb
+you are being a waste of time
+you are being ridiculous
+you are being boring
+this conversation is stupid
+this conversation is useless
+this conversation is annoying
+this conversation is pointless
+this conversation is dumb
+this conversation is a waste of time
+this conversation is ridiculous
+this conversation is boring
+i hate you
+you do not understand
+you never listen
+shut up
+sorry
+so sorry
+i apologize
+my apologies
+forgive me
+pardon me
+sorry about that
+so sorry about that
+i apologize about that
+my apologies about that
+forgive me about that
+pardon me about that
+i am sorry
+i am so sorry
+i am i apologize
+i am my apologies
+i am forgive me
+i am pardon me
+sorry for being rude
+so sorry for being rude
+i apologize for being rude
+my apologies for being rude
+forgive me for being rude
+pardon me for being rude
+oh sorry
+oh so sorry
+oh i apologize
+oh my apologies
+oh forgive me
+oh pardon me
+sorry again
+so sorry again
+i apologize again
+my apologies again
+forgive me again
+pardon me again
+thank you
+thanks
+goodbye
+bye
+see you later
+i have to go
+take care
+thank you for listening
+thanks for listening
+goodbye for listening
+bye for listening
+see you later for listening
+i have to go for listening
+take care for listening
+ok thank you
+ok thanks
+ok goodbye
+ok bye
+ok see you later
+ok i have to go
+ok take care
+thank you doctor
+thanks doctor
+goodbye doctor
+bye doctor
+see you later doctor
+i have to go doctor
+take care doctor
+thank you eliza
+thanks eliza
+goodbye eliza
+bye eliza
+see you later eliza
+i have to go eliza
+take care eliza
+well thank you
+well thanks
+well goodbye
+well bye
+well see you later
+well i have to go
+well take care
+my job is stressing me out
+my boss is stressing me out
+my work is stressing me out
+my career is stressing me out
+my manager is stressing me out
+my coworkers is stressing me out
+my exams is stressing me out
+my classes is stressing me out
+my deadline is stressing me out
+my promotion is stressing me out
+i hate my job
+i hate my boss
+i hate my work
+i hate my career
+i hate my manager
+i hate my coworkers
+i hate my exams
+i hate my classes
+i hate my deadline
+i hate my promotion
+i might lose my job
+i might lose my boss
+i might lose my work
+i might lose my career
+i might lose my manager
+i might lose my coworkers
+i might lose my exams
+i might lose my classes
+i might lose my deadline
+i might lose my promotion
+my job is too demanding
+my boss is too demanding
+my work is too demanding
+my career is too demanding
+my manager is too demanding
+my coworkers is too demanding
+my exams is too demanding
+my classes is too demanding
+my deadline is too demanding
+my promotion is too demanding
+i worry about my job
+i worry about my boss
+i worry about my work
+i worry about my career
+i worry about my manager
+i worry about my coworkers
+i worry about my exams
+i worry about my classes
+i worry about my deadline
+i worry about my promotion
+do you think i should quit my job
+do you think i should quit my boss
+do you think i should quit my work
+do you think i should quit my career
+do you think i should quit my manager
+do you think i should quit my coworkers
+do you think i should quit my exams
+do you think i should quit my classes
+do you think i should quit my deadline
+do you think i should quit my promotion
+i love my job
+i love my boss
+i love my work
+i love my career
+i love my manager
+i love my coworkers
+i love my exams
+i love my classes
+i love my deadline
+i love my promotion
+my job is going great
+my boss is going great
+my work is going great
+my career is going great
+my manager is going great
+my coworkers is going great
+my exams is going great
+my classes is going great
+my deadline is going great
+my promotion is going great
+my dog died
+my cat died
+my pet died
+my best friend died
+my friend died
+my goldfish died
+my hamster died
+my horse died
+i lost my dog
+i lost my cat
+i lost my pet
+i lost my best friend
+i lost my friend
+i lost my goldfish
+i lost my hamster
+i lost my horse
+i miss my dog so much
+i miss my cat so much
+i miss my pet so much
+i miss my best friend so much
+i miss my friend so much
+i miss my goldfish so much
+i miss my hamster so much
+i miss my horse so much
+my dog passed away
+my cat passed away
+my pet passed away
+my best friend passed away
+my friend passed away
+my goldfish passed away
+my hamster passed away
+my horse passed away
+i am grieving my dog
+i am grieving my cat
+i am grieving my pet
+i am grieving my best friend
+i am grieving my friend
+i am grieving my goldfish
+i am grieving my hamster
+i am grieving my horse
+my dog is gone
+my cat is gone
+my pet is gone
+my best friend is gone
+my friend is gone
+my goldfish is gone
+my hamster is gone
+my horse is gone
+the weather was the economy today
+the weather was sports today
+the weather was cooking today
+the weather was gardening today
+the weather was traffic today
+the weather was history today
+the weather was the moon today
+the weather was taxes today
+the weather was trains today
+the weather was pizza today
+the weather was the internet today
+the weather was music today
+i watched a movie about the economy
+i watched a movie about sports
+i watched a movie about cooking
+i watched a movie about gardening
+i watched a movie about traffic
+i watched a movie about history
+i watched a movie about the moon
+i watched a movie about taxes
+i watched a movie about trains
+i watched a movie about pizza
+i watched a movie about the internet
+i watched a movie about music
+we talked about the economy at lunch
+we talked about sports at lunch
+we talked about cooking at lunch
+we talked about gardening at lunch
+we talked about traffic at lunch
+we talked about history at lunch
+we talked about the moon at lunch
+we talked about taxes at lunch
+we talked about trains at lunch
+we talked about pizza at lunch
+we talked about the internet at lunch
+we talked about music at lunch
+the news was all about the economy
+the news was all about sports
+the news was all about cooking
+the news was all about gardening
+the news was all about traffic
+the news was all about history
+the news was all about the moon
+the news was all about taxes
+the news was all about trains
+the news was all about pizza
+the news was all about the internet
+the news was all about music
+did you know about the economy?
+did you know about sports?
+did you know about cooking?
+did you know about gardening?
+did you know about traffic?
+did you know about history?
+did you know about the moon?
+did you know about taxes?
+did you know about trains?
+did you know about pizza?
+did you know about the internet?
+did you know about music?
+what do you think of the economy
+what do you think of sports
+what do you think of cooking
+what do you think of gardening
+what do you think of traffic
+what do you think of history
+what do you think of the moon
+what do you think of taxes
+what do you think of trains
+what do you think of pizza
+what do you think of the internet
+what do you think of music
+qwerty
+zzz
+hmm ok
+lmao
+hahaha
+this is sparta
+much wow
+yolo
+it is what it is
+big mood
+that was fun
+life is good
+things are going well
+i had a great day
+haha that is funny
+nice
+ugh
+this day is the worst
+hello how is your day?
+hi how is your day?
+hey how is your day?
+good morning how is your day?
+good afternoon how is your day?
+greetings how is your day?
+howdy how is your day?
+oh hello
+oh hi
+oh hey
+oh good morning
+oh good afternoon
+oh greetings
+oh howdy
+i cannot talk to my mother anymore
+i cannot talk to my father anymore
+i cannot talk to my mom anymore
+i cannot talk to my dad anymore
+i cannot talk to my sister anymore
+i cannot talk to my brother anymore
+i cannot talk to my parents anymore
+i cannot talk to my wife anymore
+i cannot talk to my husband anymore
+i cannot talk to my son anymore
+i cannot talk to my daughter anymore
+i cannot talk to my grandmother anymore
+i cannot talk to my girlfriend anymore
+i cannot talk to my boyfriend anymore
+my mother and i had a fight
+my father and i had a fight
+my mom and i had a fight
+my dad and i had a fight
+my sister and i had a fight
+my brother and i had a fight
+my parents and i had a fight
+my wife and i had a fight
+my husband and i had a fight
+my son and i had a fight
+my daughter and i had a fight
+my grandmother and i had a fight
+my girlfriend and i had a fight
+my boyfriend and i had a fight
+why am i always so sad
+why am i always so anxious
+why am i always so lonely
+why am i always so depressed
+why am i always so miserable
+why am i always so empty
+why am i always so angry
+why am i always so tired
+why am i always so scared
+why am i always so hopeless
+why am i always so stressed
+why am i always so afraid
+why am i always so happy
+why am i always so great
+why am i always so better
+why am i always so excited
+why am i always so relieved
+why am i always so hopeful
+i just feel sad again
+i just feel anxious again
+i just feel lonely again
+i just feel depressed again
+i just feel miserable again
+i just feel empty again
+i just feel angry again
+i just feel tired again
+i just feel scared again
+i just feel hopeless again
+i just feel stressed again
+i just feel afraid again
+i just feel happy again
+i just feel great again
+i just feel better again
+i just feel excited again
+i just feel relieved again
+i just feel hopeful again
+i keep hoping for a vacation
+i keep hoping for more money
+i keep hoping for some peace
+i keep hoping for a fresh start
+i keep hoping for someone to talk to
+i keep hoping for help
+i keep hoping for a break
+i keep hoping for to be happy
+i keep hoping for a better life
+what i need is a vacation
+what i need is more money
+what i need is some peace
+what i need is a fresh start
+what i need is someone to talk to
+what i need is help
+what i need is a break
+what i need is to be happy
+what i need is a better life
+i had a strange dream about falling
+i had a strange dream about being chased
+i had a strange dream about the ocean
+i had a strange dream about my old school
+i had a strange dream about flying
+i had a strange dream about a dark house
+i had a strange dream about my teeth falling out
+i had a strange dream about a storm
+my nightmares are about falling
+my nightmares are about being chased
+my nightmares are about the ocean
+my nightmares are about my old school
+my nightmares are about flying
+my nightmares are about a dark house
+my nightmares are about my teeth falling out
+my nightmares are about a storm
+i spend all day with computers
+i spend all day with machines
+i spend all day with robots
+i spend all day with programs
+i spend all day with algorithms
+i spend all day with chatbots
+i spend all day with a computer
+i spend all day with a machine
+i spend all day with a robot
+i spend all day with a program
+can computers really understand people?
+can machines really understand people?
+can robots really understand people?
+can programs really understand people?
+can algorithms really understand people?
+can chatbots really understand people?
+can a computer really understand people?
+can a machine really understand people?
+can a robot really understand people?
+can a program really understand people?
+yes definitely
+yeah definitely
+yep definitely
+sure definitely
+absolutely definitely
+correct definitely
+i do definitely
+that is true definitely
+uh huh definitely
+well yes
+well yeah
+well yep
+well sure
+well absolutely
+well correct
+well i do
+well that is true
+well uh huh
+no not at all
+nope not at all
+nah not at all
+not really not at all
+no way not at all
+definitely not not at all
+i do not not at all
+never not at all
+well no
+well nope
+well nah
+well not really
+well no way
+well definitely not
+well i do not
+well never
+i am i don't know
+i am i dont know
+i am not sure
+i am maybe
+i am perhaps
+i am who knows
+i am i have no idea
+i am i cannot say
+i am hard to say
+i don't know really
+i dont know really
+not sure really
+maybe really
+perhaps really
+who knows really
+i have no idea really
+i cannot say really
+hard to say really
+do you really say that?
+do you really mean?
+do you really know?
+do you really think so?
+do you really help?
+do you really feel?
+do you really do that?
+do you really understand?
+do you really care?
+how can you say that
+how can you mean
+how can you know
+how can you think so
+how can you help
+how can you feel
+how can you do that
+how can you understand
+how can you care
+they always ignores me
+they always hates me
+they always leaves
+they always lets me down
+they always messes things up
+they always understands me
+they always cares
+they always laughs at me
+they always forgets about me
+nobody ever ignores me
+nobody ever hates me
+nobody ever leaves
+nobody ever lets me down
+nobody ever messes things up
+nobody ever understands me
+nobody ever cares
+nobody ever laughs at me
+nobody ever forgets about me
+you are so stupid
+you are so useless
+you are so annoying
+you are so pointless
+you are so dumb
+you are so a waste of time
+you are so ridiculous
+you are so boring
+honestly this is stupid
+honestly this is useless
+honestly this is annoying
+honestly this is pointless
+honestly this is dumb
+honestly this is a waste of time
+honestly this is ridiculous
+honestly this is boring
+sorry my fault
+so sorry my fault
+i apologize my fault
+my apologies my fault
+forgive me my fault
+pardon me my fault
+well sorry
+well so sorry
+well i apologize
+well my apologies
+well forgive me
+well pardon me
+thank you for your help
+thanks for your help
+goodbye for your help
+bye for your help
+see you later for your help
+i have to go for your help
+take care for your help
+alright thank you
+alright thanks
+alright goodbye
+alright bye
+alright see you later
+alright i have to go
+alright take care
+i have problems at my job
+i have problems at my boss
+i have problems at my work
+i have problems at my career
+i have problems at my manager
+i have problems at my coworkers
+i have problems at my exams
+i have problems at my classes
+i have problems at my deadline
+i have problems at my promotion
+my job makes me miserable
+my boss makes me miserable
+my work makes me miserable
+my career makes me miserable
+my manager makes me miserable
+my coworkers makes me miserable
+my exams makes me miserable
+my classes makes me miserable
+my deadline makes me miserable
+my promotion makes me miserable
+i cannot get over losing my dog
+i cannot get over losing my cat
+i cannot get over losing my pet
+i cannot get over losing my best friend
+i cannot get over losing my friend
+i cannot get over losing my goldfish
+i cannot get over losing my hamster
+i cannot get over losing my horse
+since my dog died i feel empty
+since my cat died i feel empty
+since my pet died i feel empty
+since my best friend died i feel empty
+since my friend died i feel empty
+since my goldfish died i feel empty
+since my hamster died i feel empty
+since my horse died i feel empty
+someone mentioned the economy yesterday
+someone mentioned sports yesterday
+someone mentioned cooking yesterday
+someone mentioned gardening yesterday
+someone mentioned traffic yesterday
+someone mentioned history yesterday
+someone mentioned the moon yesterday
+someone mentioned taxes yesterday
+someone mentioned trains yesterday
+someone mentioned pizza yesterday
+someone mentioned the internet yesterday
+someone mentioned music yesterday
+i saw a video about the economy
+i saw a video about sports
+i saw a video about cooking
+i saw a video about gardening
+i saw a video about traffic
+i saw a video about history
+i saw a video about the moon
+i saw a video about taxes
+i saw a video about trains
+i saw a video about pizza
+i saw a video about the internet
+i saw a video about music

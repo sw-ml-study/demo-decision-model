@@ -12,6 +12,7 @@
 mod bundle;
 mod conversation;
 mod features;
+mod keyword;
 mod matcher;
 mod model;
 mod responder;
@@ -22,6 +23,7 @@ pub use conversation::{
     Script,
 };
 pub use features::{Features, featurize, featurize_vocab, hash, tokens, words};
+pub use keyword::{Answer, Decomp, Key, KeywordEngine, KeywordScript};
 pub use matcher::KeywordMatcher;
 pub use model::{Decision, Model};
 pub use responder::{Outcome, Reply, Turn, respond, respond_at};

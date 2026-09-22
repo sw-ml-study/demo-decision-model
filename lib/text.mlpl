@@ -6,7 +6,7 @@ def u:text_lg(l, i) {
 }
 
 def u:text_clean(s) {
-  "Lowercase ASCII letters, keep letters, digits, and spaces, delete apostrophes (so don't becomes dont), and turn every other character into a space.";
+  "Lowercase ASCII letters, keep letters, digits, and spaces, delete apostrophes -- straight or curly, since phones and novels type the curly one -- so don't becomes dont, and turn every other character into a space.";
   upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   lower = "abcdefghijklmnopqrstuvwxyz";
   keep = "abcdefghijklmnopqrstuvwxyz0123456789 ";
@@ -22,7 +22,7 @@ def u:text_clean(s) {
       if gt(str_find(keep, ch), 0 - 1) {
         ch
       } else {
-        if str_eq(ch, "'") {
+        if str_eq(ch, "'") + str_eq(ch, "’") + str_eq(ch, "‘") {
           ""
         } else {
           " "
