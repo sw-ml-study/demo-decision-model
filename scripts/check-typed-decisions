@@ -42,8 +42,16 @@ if ! "$mlpl" --source-dir "$repo_root" "$repo_root/demos/typed-decisions/concise
     tail -5 "$work/concise.txt" >&2
     exit 1
 fi
-grep -q "kind         phishing 0.999" "$work/concise.txt" || {
+# Both the competence and the failure the document shows: six known features
+# give phishing, and one known feature -- the word "the" -- gives a confident
+# wrong answer on a wire-fraud request. If either changes, the prose is wrong.
+grep -q "6 known  phishing 0.999" "$work/concise.txt" || {
     echo "concise-hello no longer reaches its measured answer:" >&2
+    cat "$work/concise.txt" >&2
+    exit 1
+}
+grep -q "1 known  legitimate 0.999.*wire the funds" "$work/concise.txt" || {
+    echo "concise-hello no longer shows the failure its document explains:" >&2
     cat "$work/concise.txt" >&2
     exit 1
 }

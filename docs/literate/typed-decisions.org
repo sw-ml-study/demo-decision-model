@@ -34,7 +34,7 @@
 #+begin_export html
 <nav style="margin:0 0 1.5em 0; padding:0.6em 0; border-bottom:1px solid #d0d7de; font-size:0.95em">
 <a href="https://sw-ml-study.github.io/demo-decision-model/">Live demo</a> ·
-<a href="concise-hello.html">The concise hello (36 lines)</a> ·
+<a href="concise-hello.html">The concise hello (38 lines)</a> ·
 <a href="typed-decisions.html">The hello world (four stages)</a> ·
 <a href="literate.html">The full model</a> ·
 <a href="https://github.com/sw-ml-study/demo-decision-model">Repository</a>
@@ -64,7 +64,7 @@ reproducible is the /contract/ -- unstructured state in, bounded typed decisions
 out, probabilities visible, code owning the branch -- and that contract is what
 this document builds, in four stages.
 
-Shorter still: [[file:concise-hello.html][the concise hello]] is the same three heads in 36 annotated
+Shorter still: [[file:concise-hello.html][the concise hello]] is the same three heads in 38 annotated
 lines, written against the widely-shared "Jev in 25 lines of Python". This
 document is that program plus what a claim needs -- a real corpus, held-out
 splits, and a calibration measurement.
@@ -742,6 +742,49 @@ It is also self-contained on purpose: the corpus is in the file and there is no
 IO, so ~scripts/bundle-program~ can flatten its includes and hand the result to
 [[https://sw-ml-study.github.io/sw-mlpl/][sw-MLPL's Live Editor]], where the same program trains in your browser with
 nothing installed.
+
+* What this page is not counting
+
+The program says ~include~ twice and then calls itself a hello world, so here is
+the bill, from the same call-graph walk ~scripts/bundle-program~ runs: 561 lines
+of library exist across ~decision.mlpl~, ~text.mlpl~ and ~choice_model.mlpl~, of
+which this program can reach 29 functions and 319 lines. The program itself is
+392 lines, 363 of them neither blank nor comment. So this document describes
+about 710 lines of MLPL, all of it in this repository and all of it readable.
+
+The corpus is 120 messages written by one person -- the same person who chose
+the labels and wrote the model. That is the weakest joint in the page: a corpus
+and a label set from one hand flatter any model trained on them. Model 4
+elsewhere in this repository exists precisely to remove that joint, by taking
+its labels from a program written in 1966 by someone else.
+
+* What a sceptical reader will ask
+
+*Twenty-four test messages is nothing.*
+
+True, and the page says so where it prints the numbers. Twenty-four messages
+cannot pin an expected calibration error to the third decimal, and the accuracy
+of 0.750 carries a standard error of about 0.09. What twenty-four messages
+*can* show is a direction: confidence 0.912 against accuracy 0.750 is not
+subtle, and neither is 0.162 going to 0.097 while no answer changes. Treat the
+direction as the claim and the decimals as decoration.
+
+*You fitted the temperature on data you also drew from.*
+
+The temperature is fitted on a calibration split of 24 messages and reported on
+a test split of 24 the fit never saw; both are held out of training. That is the
+correct shape, at a size too small to be comfortable.
+
+*The model memorizes its training set -- train accuracy is 1.000.*
+
+Yes. Seventy-two messages and two hundred Adam steps with no regularization will
+do that, which is why nothing here is measured on the training split.
+
+*A mean-pooled bag of words is not an interesting model.*
+
+It is not meant to be. The subject is the decision contract, and the model is
+the smallest thing that can hold it up while the measurements are honest.
+[[https://github.com/sw-ml-study/demo-decision-model/blob/main/docs/plan.md][The plan]] is where bigger encoders get compared against exactly these numbers.
 
 * What the four stages were for
 

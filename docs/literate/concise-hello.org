@@ -1,19 +1,9 @@
-#+title: The concise hello: a typed decision model in thirty-six lines
-#+subtitle: what "Jev in 25 lines of Python" looks like when the model is yours
+#+title: The concise hello: a typed decision model in thirty-eight lines
+#+subtitle: what "Jev in 25 lines of Python" looks like when the model is yours, and what that comparison hides on both sides
 #+author: Michael A Wright
 #+startup: showall
 #+property: header-args:mlpl :results output :exports code :eval no-export
-#+options: toc:nil num:nil timestamp:nil ^:{}
-
-#+begin_export html
-<nav style="margin:0 0 1.5em 0; padding:0.6em 0; border-bottom:1px solid #d0d7de; font-size:0.95em">
-<a href="https://sw-ml-study.github.io/demo-decision-model/">Live demo</a> ·
-<a href="concise-hello.html">The concise hello (36 lines)</a> ·
-<a href="typed-decisions.html">The hello world (four stages)</a> ·
-<a href="literate.html">The full model</a> ·
-<a href="https://github.com/sw-ml-study/demo-decision-model">Repository</a>
-</nav>
-#+end_export
+#+options: toc:2 num:nil timestamp:nil ^:{}
 #+HTML_HEAD: <style>
 #+HTML_HEAD: /* Colour for the MLPL blocks. htmlize turns the faces sw-MLPL's major mode
 #+HTML_HEAD:    applies into these class names; batch Emacs has no display and so no
@@ -39,6 +29,15 @@
 #+HTML_HEAD: }
 #+HTML_HEAD: </style>
 
+#+begin_export html
+<nav style="margin:0 0 1.5em 0; padding:0.6em 0; border-bottom:1px solid #d0d7de; font-size:0.95em">
+<a href="https://sw-ml-study.github.io/demo-decision-model/">Live demo</a> ·
+<a href="concise-hello.html">The concise hello (38 lines)</a> ·
+<a href="typed-decisions.html">The hello world (four stages)</a> ·
+<a href="literate.html">The full model</a> ·
+<a href="https://github.com/sw-ml-study/demo-decision-model">Repository</a>
+</nav>
+#+end_export
 
 * The program this answers
 
@@ -57,16 +56,20 @@ It is a good demonstration and the arithmetic is right. What the line count
 leaves out is everything underneath: a 0.6B-parameter model to download, a
 tokenizer, a runtime to host them, and the pretraining corpus that made those
 logits mean anything. The three choices also have to be smuggled in as the
-tokens ~A~, ~B~ and ~C~, which is why practitioners in the thread report having
-to permute the letters and to check how much probability mass the allowed tokens
+tokens ~A~, ~B~ and ~C~, which is why practitioners in that discussion report
+permuting the letters and checking how much probability mass the allowed tokens
 hold: the model is being asked a question in a vocabulary that was never about
 this question.
 
+This page shows the same interface with the model in your hands -- and then
+spends as much space on what *this* version hides, because a comparison that
+only counts the other side's costs is not worth reading.
+
 * The same shape, when the model is yours
 
-Here the model is the arrays this file declares, and the answer's domain is
-named in the data -- column 0 /is/ phishing. There is no tokenizer to mislead
-and no letters to permute. Inference is five lines:
+The model is the arrays this file declares, and the answer's domain is named in
+the data: column 0 /is/ phishing. There is no tokenizer to mislead and no
+letters to permute. Inference is five lines:
 
 #+begin_example
 h    = mean of the embedding rows this message's known words address
@@ -81,9 +84,9 @@ train the thing.
 
 * The corpus it is given
 
-Twelve messages and their three labels. It is a separate file, passed in on the
-command line, because the program this is measured against does not carry a
-corpus either -- what it carries instead is a pretrained model that already saw
+Twelve messages and their three labels, in a separate file passed in on the
+command line -- because the program this is measured against does not carry a
+corpus either; what it carries instead is a pretrained model that already saw
 one. Tangling this document writes it:
 
 #+begin_src json :tangle ../../demos/typed-decisions/messages.json
@@ -112,8 +115,8 @@ one. Tangling this document writes it:
 
 * The program, annotated
 
-The module comment, and the one include. Everything the program borrows is in
-that line: a featurizer, and the typed-decision contract it pulls in behind it.
+The module comment, and the include. That one line is not free, and the section
+after the program counts what it costs.
 
 #+begin_src mlpl :tangle ../../demos/typed-decisions/concise-hello.mlpl
 # The whole idea on one screen, annotated in docs/literate/concise-hello.org: a typed decision model that trains itself, then answers three bounded questions about a sentence it has never seen. The comparison it exists for is the widely-shared "Jev in 25 lines of Python", whose twenty-five lines sit on top of a downloaded language model and its tokenizer; there is nothing underneath this one but the arrays it declares. The corpus is not in the file -- it is passed in on the command line, the way that program's pretraining data is not counted either: mlpl-repl concise-hello.mlpl -- demos/typed-decisions/messages.json. The longer demos/typed-decisions/typed-decisions.mlpl is this program plus what a claim needs: a hundred and twenty messages, held-out splits, and calibration.
@@ -124,15 +127,16 @@ The first line is the whole of the data handling: the corpus arrives as a path
 on the command line, and ~parse_json~ turns it into arrays. Nothing about the
 messages is written into this file.
 
-The four bindings after it exist because of a language rule worth knowing: a
-record field may not be read inside ~grad~, so anything the loss touches is
-pulled out into a plain array first. (One call deep, the interpreter used to
-report that the loss did not depend on the parameter; it now names the field,
-a fix that landed upstream while this was being written.)
+The four bindings after it exist because of a language rule: a record field may
+not be read inside ~grad~, so anything the loss touches is pulled into a plain
+array first. (One call deep the interpreter used to report that the loss did not
+depend on the parameter; it now names the field, a fix that landed upstream
+while this was being written.)
 
 Then the model: one embedding, and three heads built with the Model DSL's
 ~linear~, which carries its own initialization and bias. Eight dimensions of
-state, three columns for the Choice, one for the Noul, three for the Scale.
+state, three columns for the Choice, one for the Noul, three for the Scale --
+11 by 8 plus 8 by 7 plus 7, about 600 numbers once the vocabulary is counted.
 
 #+begin_src mlpl :tangle ../../demos/typed-decisions/concise-hello.mlpl
 os_data = unwrap(parse_json(unwrap(read_text(unwrap(list_get(args(), 0))))));
@@ -150,7 +154,9 @@ os_asks = linear(8, 1, 5);
 os_urgency = linear(8, 3, 6);
 #+end_src
 
-The encoder, entire. Look up a row per known word, take their mean.
+The encoder, entire. Look up a row per known word, take their mean. A word the
+corpus never used has no row to look up and contributes nothing -- which is
+worth remembering when you read the last line of the output below.
 
 #+begin_src mlpl :tangle ../../demos/typed-decisions/concise-hello.mlpl
 def u:os_state(ids, wmask) {
@@ -159,9 +165,9 @@ def u:os_state(ids, wmask) {
 }
 #+end_src
 
-The loss adds one term per question, and the encoder underneath is pulled by
-all three at once -- which is what makes it a shared representation rather than
-three private ones.
+The loss adds one term per question, and the encoder underneath is pulled by all
+three at once, which is what makes it a shared representation rather than three
+private ones.
 
 #+begin_src mlpl :tangle ../../demos/typed-decisions/concise-hello.mlpl
 def u:os_loss(ids, wmask, cat, cred, urg) {
@@ -172,11 +178,7 @@ def u:os_loss(ids, wmask, cat, cred, urg) {
 }
 #+end_src
 
-Three hundred Adam steps, about two tenths of a second. With twelve messages it
-memorizes them completely, which is a real defect and the reason the
-[[file:typed-decisions.html][four-stage document]] exists: there the same architecture trains on 120 messages,
-is measured on messages it never saw, and is then calibrated, because a model
-this sure of itself is not reporting probabilities yet.
+Three hundred Adam steps, about two tenths of a second.
 
 #+begin_src mlpl :tangle ../../demos/typed-decisions/concise-hello.mlpl
 train 300 {
@@ -184,77 +186,156 @@ train 300 {
 };
 #+end_src
 
-Inference, on a sentence that is not in the corpus. Each head's logits become a
-typed decision through [[https://github.com/sw-ml-study/demo-decision-model/blob/main/lib/decision.mlpl][lib/decision.mlpl]]: a Choice carries a distribution, a
-selection, a confidence and a margin; a Noul carries one probability; a Scale
-carries an expectation over ordered levels. The labels come from the data file,
-so the answer's domain is named in the corpus rather than encoded as letters of
-the alphabet.
+Then it interrogates itself on six sentences, none of which are in the corpus,
+and prints how many features it recognized in each. That count is the honest
+part: it is the difference between an answer and a guess, and the program prints
+it whether or not it flatters the result.
 
 #+begin_src mlpl :tangle ../../demos/typed-decisions/concise-hello.mlpl
-os_message = "hr asks you to confirm your password";
-os_new = u:cm_featurize_vocab(str_split(os_message, "\n"), os_vocab, 12);
-os_h = u:os_state(os_new.ids, os_new.wmask);
-os_a = u:choice("what kind of message is this?", os_data.kinds, reshape(apply(os_kind, os_h), [3]));
-os_b = u:noul("does it ask for credentials?", take(reshape(apply(os_asks, os_h), [1]), 0, 0));
-os_c = u:scale("how urgent is it?", os_data.levels, reshape(apply(os_urgency, os_h), [3]));
-print(os_message);
-print("  kind        ", u:decision_label(os_a), floor(os_a.confidence * 1000) / 1000);
-print("  credentials ", floor(os_b.p * 1000) / 1000);
-print("  urgency     ", u:decision_label(os_c), " expectation", floor(os_c.expectation * 1000) / 1000);
+os_probes = str_split("hr asks you to confirm your password|please re-enter your credentials to avoid suspension|your mailbox is full, log in to restore delivery|the invoice you requested is attached|can we move tomorrow's standup|urgent: wire the funds before close of business", "|");
+os_i = 0;
+while lt(os_i, list_len(os_probes)) {
+  os_m = u:text_lg(os_probes, os_i);
+  os_new = u:cm_featurize_vocab(str_split(os_m, "\n"), os_vocab, 12);
+  os_h = u:os_state(os_new.ids, os_new.wmask);
+  os_a = u:choice("what kind of message is this?", os_data.kinds, reshape(apply(os_kind, os_h), [3]));
+  os_b = u:noul("does it ask for credentials?", take(reshape(apply(os_asks, os_h), [1]), 0, 0));
+  os_c = u:scale("how urgent is it?", os_data.levels, reshape(apply(os_urgency, os_h), [3]));
+  print(take(os_new.counts, 0, 0), "known ", u:decision_label(os_a), floor(os_a.confidence * 1000) / 1000, " credentials", floor(os_b.p * 1000) / 1000, " urgency", u:decision_label(os_c), " <-", os_m);
+  os_i = os_i + 1
+};
 print("")
 #+end_src
 
 * Running it
 
 Both files are published beside this page: [[https://sw-ml-study.github.io/demo-decision-model/concise-hello.mlpl][concise-hello.mlpl]] and
-[[https://sw-ml-study.github.io/demo-decision-model/messages.json][messages.json]]. With sw-MLPL's interpreter on your path:
+[[https://sw-ml-study.github.io/demo-decision-model/messages.json][messages.json]]. With sw-MLPL's interpreter (measured against ~mlpl-repl 0.22.0~)
+on your path:
 
 #+begin_example
 mlpl-repl concise-hello.mlpl -- messages.json
 #+end_example
 
-In the repository it is ~just concise-hello~. Unlike [[file:typed-decisions.html][the four-stage program]], it
-will not run in a browser: a corpus passed in means ~read_text~ and ~args~, and
-the Live Editor has no file system. That is the trade this document chose --
-the program carries no data, and pays for it by needing somewhere to read it
-from.
+In the repository it is ~just concise-hello~, and ~scripts/check-typed-decisions~
+runs it in the gate and fails if the output below changes. Unlike [[file:typed-decisions.html][the four-stage
+program]] it will not run in a browser: a corpus passed in means ~read_text~ and
+~args~, and the Live Editor has no file system.
 
 * What it prints
 
 #+begin_example
-$ mlpl-repl demos/typed-decisions/concise-hello.mlpl -- demos/typed-decisions/messages.json
-
-hr asks you to confirm your password
-  kind         phishing 0.999
-  credentials  0.999
-  urgency      high  expectation 1.999
+6 known  phishing 0.999  credentials 0.999  urgency high    <- hr asks you to confirm your password
+2 known  phishing 0.999  credentials 0.999  urgency high    <- please re-enter your credentials to avoid suspension
+3 known  phishing 0.999  credentials 0.999  urgency high    <- your mailbox is full, log in to restore delivery
+2 known  legitimate 0.999  credentials 0  urgency medium    <- the invoice you requested is attached
+2 known  legitimate 0.999  credentials 0  urgency medium    <- can we move tomorrow's standup
+1 known  legitimate 0.999  credentials 0  urgency medium    <- urgent: wire the funds before close of business
 #+end_example
 
-That sentence is not in the corpus; "password" and "confirm" are, and for a
-model this size that is enough. The 0.999 is exactly the overconfidence twelve
-training examples should produce, and believing it is the mistake the
-[[file:typed-decisions.html][four-stage document]] spends its last stage measuring and correcting.
+Read the last line before the first five. "Urgent: wire the funds before close
+of business" is a textbook business-email-compromise request, and this model
+calls it *legitimate at 0.999*. The one feature it recognized was the word
+"the". Everything else in that sentence -- wire, funds, urgent, business -- is
+absent from twelve training messages, so the state it pooled was one row, and
+the head turned that into a confident answer anyway.
 
-* Counting honestly
+That is not a bug in the arithmetic. It is what a twelve-example model is, and
+it is why the confidence numbers on this page should not be believed.
 
-| | lines of code | its data | what holds it up |
-|---+---+---+---|
-| the Python version | ~25 | none in the program; it does not train | a 0.6B-parameter model, a tokenizer, a runtime, and the corpus they were trained on |
-| this | 36 | a JSON file, passed in | nothing: ~matmul~, ~softmax~, ~cross_entropy~, ~adam~ |
+* What the include drags in
 
-Thirty-six against twenty-five is not a win and is not meant to be one. Eleven
-of those lines are the training loop and the loss -- the part the shorter
-program does not have, because it borrows a model instead of fitting one. What
-the comparison is actually about is what the two programs /are/: one reads a
-pretrained model's opinion about three token ids, the other is a decision model
-you trained, whose every parameter you can print, and whose answer domain is
-written down rather than spelled ~A~, ~B~, ~C~.
+The program says ~include "../../lib/choice_model.mlpl"~ and then claims to be
+thirty-eight lines. That include is not free, so here is the bill, produced by
+the same reachability analysis the gate's bundler runs -- it walks the call
+graph from the program's top-level statements and counts only what can actually
+be reached:
+
+| | lines |
+|---+---|
+| the program itself | 38 (36 excluding its two docstrings) |
+| library files it includes | 561 across ~decision.mlpl~, ~text.mlpl~, ~choice_model.mlpl~ |
+| of those, functions it can actually reach | 24 library functions, 274 lines (plus its own two, 10 lines) |
+
+So the honest figure is **320 lines of MLPL** -- 46 in the file and 274 it
+reaches -- all of it in this repository and all of it readable. Rather more than
+half of what it reaches is the decision contract, which is what makes the output
+a typed decision rather than a bare array; the featurizer accounts for most of
+the rest.
+
+The comparison, then, is not 38 against 25. It is:
+
+| | what you read | what it stands on |
+|---+---+---|
+| the Python version | ~25 lines | PyTorch and a transformer library (hundreds of thousands of lines), a tokenizer, and a 0.6B-parameter checkpoint |
+| this | 38 lines | ~300 lines of MLPL in this repository, and an interpreter |
+
+Neither number is impressive on its own. The difference is what you can open.
+
+* What a sceptical reader will ask
+
+*Isn't this just logistic regression over a bag of words?*
+
+Essentially, yes -- a mean-pooled embedding with three linear heads is a
+generalized linear model with a learned feature map, and nothing about it is
+new. The claim here is not novelty of architecture. It is that the *interface*
+is worth having: bounded domains named in data, several typed questions from one
+pass, probabilities exposed rather than prose, and the branch owned by code you
+can read. If that shape is best served by a small linear model, that is a point
+in its favour, not against it.
+
+*Then why not three lines of scikit-learn?*
+
+For this task, scikit-learn would be shorter and better tuned, and if your goal
+is a classifier you should use it. Two things it would not give you: the same
+language training the model and running it (this file is also what the browser
+runs, in the [[file:typed-decisions.html][four-stage version]]), and a typed decision object -- a Choice that
+carries a distribution, a selection, a confidence and a margin; a Noul that is
+one probability; a Scale that has an expectation because its labels are ordered.
+The contract is the product.
+
+*Your model says 0.999 about everything. That number is meaningless.*
+
+Correct, and the program prints the evidence against itself: the same 0.999 for
+six known features and for one. Twelve examples, three hundred steps, no
+regularization and no held-out data will do that. [[file:typed-decisions.html][The four-stage document]] is
+where it is measured on 120 messages and 24 it never saw (0.750 accurate while
+claiming 0.912) and then corrected with one fitted temperature (claim 0.652,
+expected calibration error 0.162 to 0.097). Nothing on *this* page is a
+calibration claim.
+
+*Isn't it just keyword matching with extra steps?*
+
+At twelve examples, largely yes, and the failure above is what that looks like.
+A bag of words with a learned embedding can only generalize along words it has
+seen; "wire the funds" shares nothing with the training set but a determiner.
+The architecture is not what fixes that -- more data is, and the [[file:typed-decisions.html][larger version]]
+still gets only 0.750 with ten times as much. Treat the small number as the
+honest ceiling of a small corpus.
+
+*The comparison is unfair: their twenty-five lines answer any question you can
+phrase; yours answers three it was trained for.*
+
+That is the real asymmetry, and it cuts against this page. A pretrained model
+carries knowledge about the world; this one carries knowledge about twelve
+sentences. What this page claims is narrower: that the *decision* half -- taking
+state in and returning bounded, typed, inspectable probabilities -- does not
+require a language model at all, and reads more directly when written
+as itself.
+
+*How do I know the numbers on this page are real?*
+
+Every block above tangles into ~demos/typed-decisions/concise-hello.mlpl~ byte
+for byte, and ~just check~ fails if it does not. The gate runs the program and
+fails if the output in "What it prints" changes. The line counts in the table
+come from the same script the bundler uses, not from a hand count. Nothing here
+was typed into prose from memory.
 
 * Where to go next
 
 - [[file:typed-decisions.html][Typed decisions: the hello world]] -- the same three heads over 120 messages,
-  with held-out splits and a calibration measurement.
+  with held-out splits and the calibration measurement this page deliberately
+  does not make.
 - [[https://sw-ml-study.github.io/demo-decision-model/][The live demo]] -- the full model, in your browser, with the trace open.
 - [[https://github.com/sw-ml-study/demo-decision-model][The repository]]; this document's source is
   [[https://github.com/sw-ml-study/demo-decision-model/blob/main/docs/literate/concise-hello.org][docs/literate/concise-hello.org]], and it tangles both

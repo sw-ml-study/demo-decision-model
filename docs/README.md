@@ -36,6 +36,9 @@ function with a free deterministic oracle, not the point.
   quality claim in this repository cites a row here.
 - [`reference/sw-mlpl-findings.md`](reference/sw-mlpl-findings.md) — language and
   host gaps met while building, each with a reproducer under `probes/`.
+- [`reference/claims-discipline.md`](reference/claims-discipline.md) — the ten
+  rules every page here is written against: name what you are not counting,
+  print the evidence against yourself, and let the gate produce every number.
 - [`reference/crate-contract.md`](reference/crate-contract.md) — what a project
   outside this repository may pin `tdm-model` and `tdm-trace` to, and what a tag
   promises.

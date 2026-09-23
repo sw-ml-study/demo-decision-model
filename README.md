@@ -40,7 +40,7 @@ Everything published lives at one URL, and each page links to the others:
         ┌────────────────┼────────────────┐
         ▼                ▼                ▼
  concise-hello.html  typed-decisions  literate.html
-  36 lines, one      .html            the whole repository's
+  38 lines, one      .html            the whole repository's
   annotated program  the same three   MLPL, function by
         │            heads over a     function
         │            real corpus, in         ▲
@@ -52,7 +52,7 @@ Everything published lives at one URL, and each page links to the others:
 | Page | What it is | Runs where |
 |---|---|---|
 | [Live demo](https://sw-ml-study.github.io/demo-decision-model/) | the trained model, chat with a trace view | your browser |
-| [The concise hello](https://sw-ml-study.github.io/demo-decision-model/concise-hello.html) | a typed decision model in 36 annotated lines, corpus passed in | locally: [`concise-hello.mlpl`](https://sw-ml-study.github.io/demo-decision-model/concise-hello.mlpl) + [`messages.json`](https://sw-ml-study.github.io/demo-decision-model/messages.json) |
+| [The concise hello](https://sw-ml-study.github.io/demo-decision-model/concise-hello.html) | a typed decision model in 38 annotated lines, corpus passed in | locally: [`concise-hello.mlpl`](https://sw-ml-study.github.io/demo-decision-model/concise-hello.mlpl) + [`messages.json`](https://sw-ml-study.github.io/demo-decision-model/messages.json) |
 | [The hello world](https://sw-ml-study.github.io/demo-decision-model/typed-decisions.html) | the same three heads over 120 messages, in four stages, ending in calibration | locally, or in [sw-MLPL's Live Editor](https://sw-ml-study.github.io/sw-mlpl/) from [`typed-decisions.mlpl`](https://sw-ml-study.github.io/demo-decision-model/typed-decisions.mlpl) |
 | [The full model](https://sw-ml-study.github.io/demo-decision-model/literate.html) | every library and demo source, split at function boundaries | it *is* the repository's sources |
 | [`demo01-train.mlpl`](https://sw-ml-study.github.io/demo-decision-model/demo01-train.mlpl) | demo 01's first model, training from random weights | the Live Editor |
@@ -65,6 +65,11 @@ documents), [`demos/typed-decisions/`](demos/typed-decisions) and
 Each document tangles its program byte for byte, `just check` proves it, and
 the gate runs each program and pins the numbers its prose quotes — so no page
 here can describe code that does not exist or numbers it did not produce.
+
+How these pages are written to survive a hostile reader — name what you are not
+counting, print the evidence against yourself, quote a baseline, answer the
+obvious objection in the page — is
+[`docs/reference/claims-discipline.md`](docs/reference/claims-discipline.md).
 
 ## What is on the slide
 
@@ -322,12 +327,12 @@ Actions workflow; CI builds nothing. The footer names the source commit it was
 built from, the host, and the time, and marks a build from uncommitted source
 as `-dirty`.
 
-### The short version: 36 lines
+### The short version: 38 lines
 
 If you have seen the widely-shared **"Jev in 25 lines of Python"** and want the
 same thing with the model in your hands,
 **[The concise hello](https://sw-ml-study.github.io/demo-decision-model/concise-hello.html)**
-is 36 annotated lines that train a typed decision model and then answer three
+is 38 annotated lines that train a typed decision model and then answer three
 bounded questions about a sentence it never saw. Inference is five of them:
 
 ```
@@ -338,13 +343,18 @@ urg  = softmax(apply(os_urgency, h))     -- Scale over three levels
                                          -- and no token was generated
 ```
 
-Counting honestly: 25 Python lines sit on a 0.6B-parameter download, a
-tokenizer and the corpus they were trained on, and must smuggle the three
-choices in as the tokens `A`, `B` and `C`. These 36 sit on `matmul`, `softmax`,
-`cross_entropy` and `adam`; the corpus is a JSON file passed in on the command
-line, and the answer's domain is named in it. Eleven of the 36 are the training
-loop and the loss — the part the shorter program does not have, because it
-borrows a model instead of fitting one.
+Counting honestly, on both sides: 25 Python lines sit on a 0.6B-parameter
+download, a tokenizer, a transformer library and the corpus they were trained
+on, and must smuggle the three choices in as the tokens `A`, `B` and `C`. These
+38 sit on 274 lines of library in this repository that they actually reach —
+320 lines of MLPL in total, which the document counts rather than hides — and an
+interpreter. The answer's domain is named in the data instead of spelled `A`,
+`B`, `C`.
+
+And the program prints its own worst case every run: given *"urgent: wire the
+funds before close of business"* it answers **legitimate at 0.999**, because the
+only word it recognized was "the". Twelve training messages buy exactly that
+much, and the gate fails if that line ever stops appearing.
 
 ### Start here: typed decisions, the hello world
 
