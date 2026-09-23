@@ -1,0 +1,806 @@
+# Text to model input: ASCII normalization, words, and hashed word-plus-bigram feature slots. Domain-neutral; the technique is ported from moe-microscope's docent. A hashed slot knows nothing about meaning, so a word never seen in training contributes nothing but its context -- that limit is deliberate and visible.
+
+def u:text_lg(l, i) {
+  "Element i of a string list.";
+  unwrap(list_get(l, i))
+}
+
+def u:text_clean(s) {
+  "Lowercase ASCII letters, keep letters, digits, and spaces, delete apostrophes -- straight or curly, since phones and novels type the curly one -- so don't becomes dont, and turn every other character into a space.";
+  upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  lower = "abcdefghijklmnopqrstuvwxyz";
+  keep = "abcdefghijklmnopqrstuvwxyz0123456789 ";
+  n = str_len(s);
+  out = "";
+  i = 0;
+  while lt(i, n) {
+    ch = str_slice(s, i, 1);
+    up = str_find(upper, ch);
+    piece = if gt(up, 0 - 1) {
+      str_slice(lower, up, 1)
+    } else {
+      if gt(str_find(keep, ch), 0 - 1) {
+        ch
+      } else {
+        if str_eq(ch, "'") + str_eq(ch, "’") + str_eq(ch, "‘") {
+          ""
+        } else {
+          " "
+        }
+      }
+    };
+    out = str_concat(out, piece);
+    i = i + 1
+  };
+  out
+}
+
+def u:text_words(s) {
+  "The non-empty words of a cleaned string, joined by single spaces (an empty string when there are none).";
+  parts = str_split(u:text_clean(s), " ");
+  n = list_len(parts);
+  out = "";
+  i = 0;
+  while lt(i, n) {
+    w = u:text_lg(parts, i);
+    out = if gt(str_len(w), 0) {
+      if gt(str_len(out), 0) {
+        str_concat(str_concat(out, " "), w)
+      } else {
+        w
+      }
+    } else {
+      out
+    };
+    i = i + 1
+  };
+  out
+}
+
+def u:text_hash(s) {
+  "Base-31 rolling checksum of a string's bytes modulo 2147483647.";
+  bytes = tokenize_bytes(s);
+  n = reduce_mul(shape(bytes));
+  h = 7;
+  i = 0;
+  while lt(i, n) {
+    h = mod(h * 31 + take(bytes, 0, i), 2147483647);
+    i = i + 1
+  };
+  h
+}
+
+def u:text_features(s, slots, f) {
+  "Feature record for one input: padded slot ids [f], a mask [f], the feature count, and the feature tokens as a |-joined string for display. Words come first, then adjacent bigrams joined by an underscore; features beyond f are dropped.";
+  joined = u:text_words(s);
+  words = if gt(str_len(joined), 0) {
+    str_split(joined, " ")
+  } else {
+    str_split("", " ")
+  };
+  nw = if gt(str_len(joined), 0) {
+    list_len(words)
+  } else {
+    0
+  };
+  ids = fill([f], 0);
+  mask = fill([f], 0);
+  tokens = "";
+  n = 0;
+  i = 0;
+  while lt(i, nw) * lt(n, f) {
+    w = u:text_lg(words, i);
+    ids = scatter(ids, n, mod(u:text_hash(w), slots));
+    mask = scatter(mask, n, 1);
+    tokens = if gt(n, 0) {
+      str_concat(str_concat(tokens, "|"), w)
+    } else {
+      w
+    };
+    n = n + 1;
+    i = i + 1
+  };
+  i = 0;
+  while lt(i, nw - 1) * lt(n, f) {
+    bg = str_concat(str_concat(u:text_lg(words, i), "_"), u:text_lg(words, i + 1));
+    ids = scatter(ids, n, mod(u:text_hash(bg), slots));
+    mask = scatter(mask, n, 1);
+    tokens = str_concat(str_concat(tokens, "|"), bg);
+    n = n + 1;
+    i = i + 1
+  };
+  {ids: ids, mask: mask, n: n, tokens: tokens}
+}
+
+def u:text_vocab(texts, f) {
+  "An exact vocabulary over the features of a string list: the distinct tokens, |-joined in first-seen order, and a record mapping each token to its row (1-based; row 0 is reserved for unknown). Replaces hashing, under which an unseen word lands on a slot some trained word owns and silently inherits its meaning.";
+  n = list_len(texts);
+  seen = "|";
+  order = "";
+  count = 0;
+  json = "{";
+  i = 0;
+  while lt(i, n) {
+    toks = str_split(u:text_features(u:text_lg(texts, i), 1, f).tokens, "|");
+    nt = list_len(toks);
+    j = 0;
+    while lt(j, nt) {
+      t = u:text_lg(toks, j);
+      probe = str_concat(str_concat("|", t), "|");
+      fresh = gt(str_len(t), 0) * lt(str_find(seen, probe), 0);
+      count = count + fresh;
+      seen = if fresh {
+        str_concat(seen, str_concat(t, "|"))
+      } else {
+        seen
+      };
+      order = if fresh {
+        if gt(count, 1) {
+          str_concat(str_concat(order, "|"), t)
+        } else {
+          t
+        }
+      } else {
+        order
+      };
+      json = if fresh {
+        str_concat(json, str_concat(str_concat(str_concat(if gt(count, 1) {
+                  ","
+                } else {
+                  ""
+                }, "\""), t), str_concat("\":", to_string(count))))
+      } else {
+        json
+      };
+      j = j + 1
+    };
+    i = i + 1
+  };
+  {tokens: order, size: count, index: unwrap(parse_json(str_concat(json, "}")))}
+}
+
+def u:text_vocab_features(s, vocab, f) {
+  "Feature record for one input against an exact vocabulary: row ids [f], a mask [f] marking only the tokens the vocabulary knows, the count of known features, and all feature tokens for display. An unknown token contributes nothing, rather than someone else's meaning.";
+  r = u:text_features(s, 1, f);
+  toks = str_split(r.tokens, "|");
+  nt = if gt(r.n, 0) {
+    list_len(toks)
+  } else {
+    0
+  };
+  ids = fill([f], 0);
+  mask = fill([f], 0);
+  known = 0;
+  j = 0;
+  while lt(j, nt) {
+    t = u:text_lg(toks, j);
+    hit = has_field(vocab.index, t);
+    ids = if hit {
+      scatter(ids, j, unwrap(record_get(vocab.index, t)))
+    } else {
+      ids
+    };
+    mask = scatter(mask, j, hit);
+    known = known + hit;
+    j = j + 1
+  };
+  {ids: ids, mask: mask, n: known, tokens: r.tokens}
+}
+
+# The typed decision contract: the Decision record and the three primitives a decision model may expose (Choice, Noul, Scale). Fixed once and pinned by tests/test_decision.mlpl, because a lesson that has already been measured must not have the shape shift underneath it. There is no generation primitive in this file and there never will be: a decision model reports belief, and ordinary program code owns every threshold, every side effect, and every string a user sees.
+
+def u:decision_kinds() {
+  "The three legal decision kinds, in the order the documentation introduces them.";
+  ["choice", "noul", "scale"]
+}
+
+def u:decision_size(v) {
+  "Element count of a rank-1 array.";
+  reduce_mul(shape(v))
+}
+
+def u:decision_probs(logits) {
+  "Probabilities from a rank-1 logit vector.";
+  softmax(logits, 0)
+}
+
+def u:decision_temper(logits, t) {
+  "Temperature-scaled logits: t above 1 softens the distribution, t below 1 sharpens it, t of 1 is the identity. The cheapest calibration map there is, and the baseline every other one must beat.";
+  logits / t
+}
+
+def u:decision_selected(probs) {
+  "Index of the most probable label; ties go to the first.";
+  argmax(probs)
+}
+
+def u:decision_confidence(probs) {
+  "Probability of the selected label.";
+  take(probs, 0, argmax(probs))
+}
+
+def u:decision_margin(probs) {
+  "Gap between the two most probable labels, or 1 for a single-label set. Reported beside confidence everywhere because the two fail differently: .48 confidence with .21 margin is an uncertain decision, while .48 with .01 is a coin flip between two candidates, and a policy may reasonably treat those differently.";
+  n = u:decision_size(probs);
+  if lt(n, 2) {
+    1
+  } else {
+    ord = grade_down(probs);
+    take(probs, 0, take(ord, 0, 0)) - take(probs, 0, take(ord, 0, 1))
+  }
+}
+
+def u:decision_expectation(probs) {
+  "Expected level index of a distribution over ordered levels: the sum of i times p_i. Meaningful only when the labels are ordered, which is why only a Scale carries it.";
+  reduce_add(probs * range(u:decision_size(probs)))
+}
+
+def u:decision_uncalibrated() {
+  "The calibration record of a raw model output: no map has been applied.";
+  {method: "none", t: 1}
+}
+
+def u:decision_temperature_map(t) {
+  "The calibration record of a temperature-scaled output, naming the fitted scalar so a trace can be read back.";
+  {method: "temperature", t: t}
+}
+
+def u:decision_build(kind, question, labels, probs, calibration) {
+  "The one Decision constructor. Every field every consumer may rely on is set here, so no lesson invents its own shape: kind, question, labels, probs, selected, confidence, margin, and the calibration provenance.";
+  {kind: kind, question: question, labels: labels, probs: probs, selected: u:decision_selected(probs), confidence: u:decision_confidence(probs), margin: u:decision_margin(probs), calibration: calibration}
+}
+
+def u:choice_from_probs(question, labels, probs, calibration) {
+  "A Choice decision from a distribution that is already normalized, for replaying a recorded trace.";
+  u:decision_build("choice", question, labels, probs, calibration)
+}
+
+def u:choice(question, labels, logits) {
+  "A Choice decision over a labelled set: which one, with what probability. The choices are an input rather than a fixed output layer, so a caller may offer a set that did not exist during training.";
+  u:choice_from_probs(question, labels, u:decision_probs(logits), u:decision_uncalibrated())
+}
+
+def u:choice_tempered(question, labels, logits, t) {
+  "A Choice decision with temperature scaling applied, recording the scalar it used.";
+  u:choice_from_probs(question, labels, u:decision_probs(u:decision_temper(logits, t)), u:decision_temperature_map(t))
+}
+
+def u:noul_from_p(proposition, p, calibration) {
+  "A Noul decision from a probability that is already calibrated or replayed. Carried as a two-label distribution so that one validator, one trace schema, and one renderer serve all three kinds; p remains readable as its own field.";
+  d = u:decision_build("noul", proposition, ["false", "true"], [1 - p, p], calibration);
+  {kind: d.kind, question: d.question, labels: d.labels, probs: d.probs, selected: d.selected, confidence: d.confidence, margin: d.margin, calibration: d.calibration, p: p}
+}
+
+def u:noul(proposition, logit) {
+  "A Noul decision: one probability that a proposition holds of the state.";
+  u:noul_from_p(proposition, sigmoid(logit), u:decision_uncalibrated())
+}
+
+def u:noul_tempered(proposition, logit, t) {
+  "A Noul decision with temperature scaling applied, recording the scalar it used.";
+  u:noul_from_p(proposition, sigmoid(logit / t), u:decision_temperature_map(t))
+}
+
+def u:scale_from_probs(question, levels, probs, calibration) {
+  "A Scale decision from a distribution that is already normalized, for replaying a recorded trace.";
+  d = u:decision_build("scale", question, levels, probs, calibration);
+  {kind: d.kind, question: d.question, labels: d.labels, probs: d.probs, selected: d.selected, confidence: d.confidence, margin: d.margin, calibration: d.calibration, expectation: u:decision_expectation(probs)}
+}
+
+def u:scale(question, levels, logits) {
+  "A Scale decision over ordered levels: the distribution and its expectation. A Scale differs from a Choice only in that its labels are ordered, which is what makes the expectation meaningful and makes an adjacent error cheaper than a distant one.";
+  u:scale_from_probs(question, levels, u:decision_probs(logits), u:decision_uncalibrated())
+}
+
+def u:scale_tempered(question, levels, logits, t) {
+  "A Scale decision with temperature scaling applied, recording the scalar it used.";
+  u:scale_from_probs(question, levels, u:decision_probs(u:decision_temper(logits, t)), u:decision_temperature_map(t))
+}
+
+def u:decision_label(d) {
+  "The selected label as text.";
+  unwrap(list_get(d.labels, d.selected))
+}
+
+def u:decision_prob(d, i) {
+  "Probability of the label at index i.";
+  take(d.probs, 0, i)
+}
+
+def u:decision_index_of(d, name) {
+  "Index of a named label, or -1 when the decision does not offer it.";
+  n = list_len(d.labels);
+  found = 0 - 1;
+  i = 0;
+  while lt(i, n) {
+    found = if str_eq(unwrap(list_get(d.labels, i)), name) {
+      i
+    } else {
+      found
+    };
+    i = i + 1
+  };
+  found
+}
+
+def u:decision_prob_of(d, name) {
+  "Probability of a named label, or 0 when the decision does not offer it. This is how policy reads a distribution: by name, never by a position a later saga might renumber.";
+  i = u:decision_index_of(d, name);
+  if lt(i, 0) {
+    0
+  } else {
+    take(d.probs, 0, i)
+  }
+}
+
+def u:decision_acts(d, min_confidence, min_margin) {
+  "Whether application policy may act on this decision. Both thresholds belong to the caller: the model reports belief, and the program decides what belief is enough. Abstention is the complement.";
+  ge(d.confidence, min_confidence) * ge(d.margin, min_margin)
+}
+
+def u:decision_abstains(d, min_confidence, min_margin) {
+  "Whether application policy must fall back rather than act.";
+  1 - u:decision_acts(d, min_confidence, min_margin)
+}
+
+def u:decision_kind_known(kind) {
+  "Whether a kind string is one of the three legal kinds.";
+  ks = u:decision_kinds();
+  n = list_len(ks);
+  ok = 0;
+  i = 0;
+  while lt(i, n) {
+    ok = ok + str_eq(unwrap(list_get(ks, i)), kind);
+    i = i + 1
+  };
+  gt(ok, 0)
+}
+
+def u:decision_valid(d) {
+  "Whether a Decision is well formed: a known kind, one probability per label, at least one label, no negative probability, a distribution summing to one within 1e-9, a selected index in range, and the expectation present exactly when the kind is scale. Cheap enough to assert on every decision a lesson records.";
+  n = u:decision_size(d.probs);
+  u:decision_kind_known(d.kind) * eq(list_len(d.labels), n) * gt(n, 0) * ge(reduce(:min, d.probs), 0) * lt(abs(reduce_add(d.probs) - 1), 0.000000001) * ge(d.selected, 0) * lt(d.selected, n) * eq(has_field(d, "expectation"), str_eq(d.kind, "scale"))
+}
+
+# The smallest Choice model: hashed word-and-bigram slots, a learned embedding per slot, a masked mean pool, and one linear head over a fixed label set. Domain-neutral. Training runs over the caller's global params cm_E [slots, d], cm_W [d, k], and cm_b [k] (models and params cannot be passed into grad as arguments); inference runs over a plain weights record, so a trained model is just arrays that to_native can save and parse_native can load. Parity between the two forward passes is asserted in tests/test_choice_model.mlpl.
+
+def u:cm_featurize(texts, slots, f) {
+  "Feature matrices for a string list: slot ids [N, f], the pooling weights [N, f, 1] (mask divided by the row's feature count, so the pool is a mean), and the counts [N]. Computed once, outside grad.";
+  n = list_len(texts);
+  ids = fill([0], 0);
+  w = fill([0], 0);
+  counts = fill([0], 0);
+  i = 0;
+  while lt(i, n) {
+    r = u:text_features(u:text_lg(texts, i), slots, f);
+    denom = if gt(r.n, 0) {
+      r.n
+    } else {
+      1
+    };
+    ids = concat(ids, r.ids);
+    w = concat(w, r.mask / denom);
+    counts = concat(counts, [r.n]);
+    i = i + 1
+  };
+  {ids: reshape(ids, [n, f]), wmask: reshape(w, [n, f, 1]), counts: counts}
+}
+
+def u:cm_logits(ids, wmask) {
+  "Training forward pass over the caller's global params: gather each slot's embedding, mean-pool with the precomputed weights, apply the head. Returns [N, k].";
+  matmul(reduce_add(gather_rows(cm_E, ids) * wmask, 1), cm_W) + cm_b
+}
+
+def u:cm_train(ids, wmask, y, steps, lr) {
+  "Full-batch Adam over the caller's global params for a fixed number of steps; returns the final training loss. The block holds only the adam call because adam returns the loss it stepped from, so the forward pass runs once per step rather than twice.";
+  train steps {
+    adam(cross_entropy(u:cm_logits(ids, wmask), y), [cm_E, cm_W, cm_b], lr, 0.9, 0.999, 0.00000001)
+  };
+  cross_entropy(u:cm_logits(ids, wmask), y)
+}
+
+def u:cm_infer(weights, ids, wmask) {
+  "Inference forward pass over a plain weights record {E, W, b}. Same arithmetic as cm_logits, no tape, no globals.";
+  matmul(reduce_add(gather_rows(weights.E, ids) * wmask, 1), weights.W) + weights.b
+}
+
+def u:cm_param_count(weights) {
+  "Trainable parameters in a weights record.";
+  reduce_mul(shape(weights.E)) + reduce_mul(shape(weights.W)) + reduce_mul(shape(weights.b))
+}
+
+def u:cm_save(path, weights) {
+  "Write a weights record (plus whatever metadata fields it carries) to a native binary file.";
+  write_bytes(path, unwrap(to_native(weights)))
+}
+
+def u:cm_load(path) {
+  "Read a weights record written by cm_save.";
+  parse_native(read_bytes(path)?)
+}
+
+def u:cm_decide(weights, text, question) {
+  "One Choice decision over one input, using the label set, slot count, and feature width stored with the weights. Returns the Decision plus the features the model actually saw, so a caller can show them.";
+  labels = str_split(weights.labels, "|");
+  r = u:text_features(text, weights.slots, weights.width);
+  denom = if gt(r.n, 0) {
+    r.n
+  } else {
+    1
+  };
+  wmask = reshape(r.mask / denom, [1, weights.width, 1]);
+  logits = reshape(u:cm_infer(weights, reshape(r.ids, [1, weights.width]), wmask), [list_len(labels)]);
+  {decision: u:choice(question, labels, logits), tokens: r.tokens, n_features: r.n}
+}
+
+def u:cm_accuracy_by_label(pred, y, k) {
+  "Per-label accuracy [k] and per-label counts [k] over parallel prediction and truth vectors; a label with no examples scores 0.";
+  hits = eq(pred, y);
+  acc = fill([k], 0);
+  cnt = fill([k], 0);
+  c = 0;
+  while lt(c, k) {
+    sel = eq(y, c);
+    m = reduce_add(sel);
+    cnt = scatter(cnt, c, m);
+    acc = scatter(acc, c, if gt(m, 0) {
+        reduce_add(hits * sel) / m
+      } else {
+        0
+      });
+    c = c + 1
+  };
+  {acc: acc, count: cnt}
+}
+
+def u:cm_featurize_vocab(texts, vocab, f) {
+  "Feature matrices against an exact vocabulary: row ids [N, f], the known-feature mask [N, f], pooling weights [N, f, 1] averaging only known features, and known counts [N]. An input with no known feature pools to zero, so its logits are the bias alone.";
+  n = list_len(texts);
+  ids = fill([0], 0);
+  m = fill([0], 0);
+  counts = fill([0], 0);
+  i = 0;
+  while lt(i, n) {
+    r = u:text_vocab_features(u:text_lg(texts, i), vocab, f);
+    ids = concat(ids, r.ids);
+    m = concat(m, r.mask);
+    counts = concat(counts, [r.n]);
+    i = i + 1
+  };
+  mask = reshape(m, [n, f]);
+  {ids: reshape(ids, [n, f]), mask: mask, wmask: u:cm_pool_weights(mask), counts: counts}
+}
+
+def u:cm_pool_weights(mask) {
+  "Mean-pool weights [N, F, 1] from a feature mask [N, F]: each kept feature gets one over its row's count; a row with none kept gets zeros.";
+  s = shape(mask);
+  n = take(s, 0, 0);
+  f = take(s, 0, 1);
+  counts = reduce_add(mask, 1);
+  safe = counts + eq(counts, 0);
+  reshape(mask / reshape(safe, [n, 1]), [n, f, 1])
+}
+
+def u:cm_dropout(fz, p, seed) {
+  "A copy of a featurized batch with each known feature independently dropped with probability p. Trained on alongside the original, it teaches the model that thin evidence is not grounds for certainty.";
+  s = shape(fz.mask);
+  kept = fz.mask * ge(random(seed, s), p);
+  {ids: fz.ids, mask: kept, wmask: u:cm_pool_weights(kept), counts: reduce_add(kept, 1)}
+}
+
+def u:cm_smooth_loss(ids, wmask, y, eps) {
+  "Label-smoothed cross-entropy over the caller's global params: (1 - eps) times the loss on the true label plus eps times the mean loss over all labels, so no answer is ever worth pushing to probability one.";
+  logits = u:cm_logits(ids, wmask);
+  (1 - eps) * cross_entropy(logits, y) + eps * (0 - mean(log(softmax(logits, 1))))
+}
+
+def u:cm_train_smooth(ids, wmask, y, steps, lr, eps) {
+  "Full-batch Adam on the label-smoothed loss for a fixed number of steps; returns the final plain cross-entropy.";
+  train steps {
+    adam(u:cm_smooth_loss(ids, wmask, y, eps), [cm_E, cm_W, cm_b], lr, 0.9, 0.999, 0.00000001)
+  };
+  cross_entropy(u:cm_logits(ids, wmask), y)
+}
+
+def u:cm_stack(a, b) {
+  "Stack two arrays of any equal trailing shape along their first axis (concat joins only rank-1 arrays).";
+  s = shape(a);
+  rows = take(s, 0, 0) + take(shape(b), 0, 0);
+  reshape(concat(reshape(a, [reduce_mul(s)]), reshape(b, [reduce_mul(shape(b))])), scatter(s, 0, rows))
+}
+
+def u:cm_stack_batches(a, b) {
+  "Stack two featurized batches row-wise, keeping ids and pooling weights aligned.";
+  {ids: u:cm_stack(a.ids, b.ids), wmask: u:cm_stack(a.wmask, b.wmask)}
+}
+
+def u:cm_pooled(ids, wmask) {
+  "The shared state representation over the caller's global embedding: the mean of the rows the known features address. Every decision head reads this one vector, which is what makes several typed questions cost one pass.";
+  reduce_add(gather_rows(cm_E, ids) * wmask, 1)
+}
+
+def u:cm_noul_logits(ids, wmask) {
+  "Logits [N, m] of the caller's global Noul heads cm_N [d, m] and cm_nb [m]: one independent yes-or-no question per column, over the same pooled state as the Choice.";
+  matmul(u:cm_pooled(ids, wmask), cm_N) + cm_nb
+}
+
+def u:cm_joint_loss(ids, wmask, y, ny, eps) {
+  "Label-smoothed Choice cross-entropy plus the mean binary cross-entropy of every Noul column against its 0-or-1 labels ny [N, m]. Composed from log and sigmoid because there is no binary cross-entropy builtin; the small constant keeps the log finite.";
+  p = sigmoid(u:cm_noul_logits(ids, wmask));
+  bce = 0 - mean(ny * log(p + 0.000000001) + (1 - ny) * log(1 - p + 0.000000001));
+  u:cm_smooth_loss(ids, wmask, y, eps) + bce
+}
+
+def u:cm_train_joint(ids, wmask, y, ny, steps, lr, eps) {
+  "Full-batch Adam on the joint Choice-and-Noul loss over all five global params; returns the final plain Choice cross-entropy.";
+  train steps {
+    adam(u:cm_joint_loss(ids, wmask, y, ny, eps), [cm_E, cm_W, cm_b, cm_N, cm_nb], lr, 0.9, 0.999, 0.00000001)
+  };
+  cross_entropy(u:cm_logits(ids, wmask), y)
+}
+
+def u:cm_masked_joint_loss(ids, wmask, y, ny, nm, eps) {
+  "As u:cm_joint_loss, but each Noul label counts only where its mask nm [N, m] is 1: the mean binary cross-entropy is over the labelled cells alone, so rows that answer only some of the questions still train the ones they answer.";
+  p = sigmoid(u:cm_noul_logits(ids, wmask));
+  cells = reduce_add(nm);
+  bce = 0 - reduce_add(nm * (ny * log(p + 0.000000001) + (1 - ny) * log(1 - p + 0.000000001))) / (cells + eq(cells, 0));
+  u:cm_smooth_loss(ids, wmask, y, eps) + bce
+}
+
+def u:cm_train_masked(ids, wmask, y, ny, nm, steps, lr, eps) {
+  "Adam on the masked joint loss over all five global params; returns the final plain Choice cross-entropy. Adam's moments persist between calls in one process, so calling this once per minibatch continues one optimization.";
+  train steps {
+    adam(u:cm_masked_joint_loss(ids, wmask, y, ny, nm, eps), [cm_E, cm_W, cm_b, cm_N, cm_nb], lr, 0.9, 0.999, 0.00000001)
+  };
+  cross_entropy(u:cm_logits(ids, wmask), y)
+}
+
+def u:cm_infer_nouls(weights, ids, wmask) {
+  "Noul probabilities [N, m] from a plain weights record carrying N and nb: the inference half of u:cm_noul_logits, with a sigmoid.";
+  sigmoid(matmul(reduce_add(gather_rows(weights.E, ids) * wmask, 1), weights.N) + weights.nb)
+}
+
+# Demo 01's domain: the response classes, the canned replies, the 1966-style keyword matcher that is the yardstick, and the templates the training corpus is generated from. Everything ELIZA-specific in the repository lives here or beside it; lib/ never learns these words. Lists are |-joined strings because MLPL lists are immutable and have no append.
+
+def u:ez_labels() {
+  "The response classes, in label order. FALLBACK is a trained class with its own examples, not a leftover bucket.";
+  "GREET|FAMILY|FEELING|DESIRE|DREAM|COMPUTER|YES|NO|FALLBACK"
+}
+
+def u:ez_label_count() {
+  "How many response classes there are.";
+  list_len(str_split(u:ez_labels(), "|"))
+}
+
+def u:ez_label(i) {
+  "The i-th class name.";
+  u:text_lg(str_split(u:ez_labels(), "|"), i)
+}
+
+def u:ez_label_index(name) {
+  "Index of a class by name, or -1.";
+  ls = str_split(u:ez_labels(), "|");
+  n = list_len(ls);
+  found = 0 - 1;
+  i = 0;
+  while lt(i, n) {
+    found = if str_eq(u:text_lg(ls, i), name) {
+      i
+    } else {
+      found
+    };
+    i = i + 1
+  };
+  found
+}
+
+def u:ez_responses(i) {
+  "The canned replies for class i, |-joined. These are the only strings the demo can ever say.";
+  all = ["Hello. How are you feeling today?|Hi there. What would you like to talk about?|Good to see you. Where shall we begin?", "Tell me more about your family.|How do you get along with your family?|What was it like growing up with them?", "Why do you think you feel that way?|How long have you felt like this?|Does that feeling come and go?", "Why do you want that?|What would it mean to you if you got it?|Suppose you got it. What then?", "What does that dream suggest to you?|Do you dream often?|Who else appears in your dreams?", "Do computers worry you?|Why do you mention machines?|Do you think machines understand people?", "You seem quite certain.|I see. Please go on.|What makes you so sure?", "Why not?|Are you saying no just to be contrary?|What would change your mind?", "Please go on.|Tell me more about that.|I see. What else?"];
+  u:text_lg(all, i)
+}
+
+def u:ez_response(i, turn) {
+  "One reply for class i, chosen deterministically by turn number. Returns the table name, the index within it, and the text; nothing here composes a string.";
+  rs = str_split(u:ez_responses(i), "|");
+  at = mod(turn, list_len(rs));
+  {table: u:ez_label(i), index: at, text: u:text_lg(rs, at)}
+}
+
+def u:ez_keywords(i) {
+  "The keyword list for class i, exactly as a 1966 author would have hand-written it: space separated, no morphology, no synonyms it did not think of.";
+  all = ["hello hi", "mother father sister brother family wife husband children", "sad unhappy depressed feel feels", "want wish need", "dream dreams dreamt dreamed", "computer computers machine machines", "yes", "no"];
+  if lt(i, list_len(all)) {
+    u:text_lg(all, i)
+  } else {
+    ""
+  }
+}
+
+def u:ez_match_order() {
+  "Class indices in keyword-priority order, so a sentence hitting two lists resolves the way ELIZA's ranks did: a dream outranks who appears in it.";
+  [4, 1, 5, 2, 3, 7, 6, 0]
+}
+
+def u:ez_matcher(text) {
+  "The yardstick: first class in priority order with a whole-word keyword hit, else FALLBACK. This is what the learned model has to beat.";
+  words = str_split(u:text_words(text), " ");
+  nw = list_len(words);
+  order = u:ez_match_order();
+  found = u:ez_label_index("FALLBACK");
+  oi = 0;
+  while lt(oi, 8) * eq(found, u:ez_label_index("FALLBACK")) {
+    c = take(order, 0, oi);
+    keys = str_split(u:ez_keywords(c), " ");
+    nk = list_len(keys);
+    hit = 0;
+    wi = 0;
+    while lt(wi, nw) {
+      ki = 0;
+      while lt(ki, nk) {
+        hit = hit + str_eq(u:text_lg(words, wi), u:text_lg(keys, ki));
+        ki = ki + 1
+      };
+      wi = wi + 1
+    };
+    found = if gt(hit, 0) {
+      c
+    } else {
+      found
+    };
+    oi = oi + 1
+  };
+  found
+}
+
+def u:ez_templates(i) {
+  "Sentence frames for class i, |-joined, each with one {} slot. The last frame of every class is held out of training and used as the validation split, so validation measures a phrasing the model never saw.";
+  all = ["hello {}|hi {}|good morning {}|hey {}|good evening {}", "my {} never listens to me|i argued with my {} again|i miss my {}|my {} is always criticizing me|i cannot talk to my {}", "i feel {}|i have been so {} lately|lately everything makes me {}|i am {} all the time|why am i always so {}", "i want {}|i really wish i had {}|all i need is {}|i would love {}|i keep hoping for {}", "i had a dream about {}|last night i dreamt of {}|i keep having nightmares about {}|in my dream there was {}|i dreamed about {} again", "{} scare me|i do not trust {}|are you one of those {}|i think {} are taking over|i spend all day with {}", "{}|{} i think so|{} that is right|oh {}|{} definitely", "{}|{} not really|{} i do not think so|oh {}|{} never", "the weather was {} today|i watched a movie about {}|we talked about {} at lunch|the news was all about {}|i read an article about {}"];
+  u:text_lg(all, i)
+}
+
+def u:ez_fillers(i) {
+  "Slot fillers for class i, |-joined. Several are words the keyword list above does not contain (mom, dad, parents, anxious, robots, yeah, nope): that gap is the experiment.";
+  all = ["there|eliza|doctor|again|today|friend", "mother|father|mom|dad|sister|brother|parents|grandmother", "sad|anxious|lonely|depressed|miserable|empty|angry|exhausted", "a new job|more money|some peace and quiet|a vacation|someone to talk to|a fresh start", "falling|my old school|being chased|the ocean|a dark house|flying", "computers|machines|robots|programs|algorithms|phones", "yes|yeah|yep|sure|of course|absolutely", "no|nope|nah|not at all|no way|definitely not", "the economy|sports|cooking|gardening|traffic|history"];
+  u:text_lg(all, i)
+}
+
+def u:ez_render(template, filler) {
+  "Fill a frame's single {} slot.";
+  str_join(str_split(template, "{}"), filler)
+}
+
+def u:ez_corpus(first, last) {
+  "Every sentence generated from frames [first, last) of every class. Returns the sentences as a newline-joined string and their labels as an array, in the same order.";
+  k = u:ez_label_count();
+  lines = "";
+  y = fill([0], 0);
+  c = 0;
+  while lt(c, k) {
+    ts = str_split(u:ez_templates(c), "|");
+    fs = str_split(u:ez_fillers(c), "|");
+    nf = list_len(fs);
+    t = first;
+    while lt(t, last) {
+      fi = 0;
+      while lt(fi, nf) {
+        s = u:ez_render(u:text_lg(ts, t), u:text_lg(fs, fi));
+        lines = if gt(str_len(lines), 0) {
+          str_concat(str_concat(lines, "\n"), s)
+        } else {
+          s
+        };
+        y = concat(y, [c]);
+        fi = fi + 1
+      };
+      t = t + 1
+    };
+    c = c + 1
+  };
+  {texts: str_split(lines, "\n"), y: y}
+}
+
+def u:ez_wild() {
+  "Hand-written sentences that came from no frame at all, with their intended class. Small and noisy on purpose: it is the only honest out-of-distribution read in this slice, so it is reported as counts, never as a headline percentage.";
+  pairs = "my mom keeps calling me::FAMILY\ndad forgot my birthday again::FAMILY\nmy parents are getting divorced::FAMILY\ni cannot stop crying::FEELING\neverything seems pointless::FEELING\ni feel like nobody understands me::FEELING\ni wish i could just quit::DESIRE\ni need a break from all of this::DESIRE\ni dreamt i was drowning::DREAM\nnightmares every single night::DREAM\ndo you think robots have feelings::COMPUTER\nmy computer crashed again::COMPUTER\nyeah::YES\nsure thing::YES\nnope::NO\nnot at all::NO\nhello::GREET\nhey eliza::GREET\ni bought a new car::FALLBACK\nit rained all weekend::FALLBACK";
+  rows = str_split(pairs, "\n");
+  n = list_len(rows);
+  lines = "";
+  y = fill([0], 0);
+  i = 0;
+  while lt(i, n) {
+    parts = str_split(u:text_lg(rows, i), "::");
+    lines = if gt(str_len(lines), 0) {
+      str_concat(str_concat(lines, "\n"), u:text_lg(parts, 0))
+    } else {
+      u:text_lg(parts, 0)
+    };
+    y = concat(y, [u:ez_label_index(u:text_lg(parts, 1))]);
+    i = i + 1
+  };
+  {texts: str_split(lines, "\n"), y: y}
+}
+
+# Demo 01's Choice model, trained from random weights in the browser. This is the program the live demo hands you to run in sw-MLPL's own hosted Live Editor: paste it or Load it, press Run, and watch a model that starts at chance learn to pick a reply class -- the same library, the same corpus and the same optimizer the committed model was trained with, only smaller so an interpreter in WASM can finish it while you watch. Browser-safe by construction: no file IO, no clock, no arguments, and scripts/bundle-program proves it by walking the call graph before flattening the include tree into one file. The configuration is smaller than the shipped model's (512 slots, 24 dimensions, 30 steps against 1024, 32, 200) so that an interpreter in WASM finishes in seconds rather than minutes; it reaches 0.81 validation accuracy against the shipped model's 0.879, which is the honest price of the wait.
+
+bz_slots = 512;
+bz_width = 24;
+bz_dim = 24;
+bz_lr = 0.08;
+bz_stages = [0, 5, 15, 30];
+
+def u:bz_accuracy(weights, fz, y) {
+  "Share of rows whose highest-scoring class is the labelled one.";
+  mean(eq(argmax(u:cm_infer(weights, fz.ids, fz.wmask), 1), y))
+}
+
+def u:bz_confidence(weights, fz) {
+  "Mean probability the model gives its own pick -- how sure it is, which is a different question from whether it is right.";
+  mean(reduce(:max, softmax(u:cm_infer(weights, fz.ids, fz.wmask), 1), 1))
+}
+
+def u:bz_weights() {
+  "The globals as the plain record inference takes.";
+  {E: cm_E, W: cm_W, b: cm_b, labels: u:ez_labels(), slots: bz_slots, width: bz_width}
+}
+
+def u:bz_show(text, weights) {
+  "Print one input, the class the model picks for it, and how sure it is.";
+  d = u:cm_decide(weights, text, "what should the reply be?");
+  print("   ", text, "->", u:text_lg(d.decision.labels, d.decision.selected), floor(d.decision.confidence * 1000) / 1000);
+  1
+}
+
+bz_train = u:ez_corpus(0, 4);
+bz_val = u:ez_corpus(4, 5);
+bz_trf = u:cm_featurize(bz_train.texts, bz_slots, bz_width);
+bz_vaf = u:cm_featurize(bz_val.texts, bz_slots, bz_width);
+bz_k = u:ez_label_count();
+
+cm_E = param[512, 24];
+cm_E = randn(11, [512, 24]) * 0.1;
+cm_W = param[24, 9];
+cm_W = randn(12, [24, 9]) * 0.1;
+cm_b = param[9];
+cm_b = fill([9], 0);
+
+print("Demo 01's Choice model, trained here, in your browser.");
+print("");
+print(u:cm_param_count(u:bz_weights()), "parameters,", list_len(bz_train.texts), "training sentences,", bz_k, "reply classes.");
+print("The weights start as seeded random numbers. Nothing is downloaded.");
+print("");
+print("steps   train   val     confidence");
+
+bz_done = 0;
+bz_c = 0;
+while lt(bz_c, 4) {
+  bz_target = take(bz_stages, 0, bz_c);
+  bz_loss = if gt(bz_target, bz_done) {
+    u:cm_train(bz_trf.ids, bz_trf.wmask, bz_train.y, bz_target - bz_done, bz_lr)
+  } else {
+    0
+  };
+  bz_done = bz_target;
+  bz_w = u:bz_weights();
+  print(bz_target, "    ", floor(u:bz_accuracy(bz_w, bz_trf, bz_train.y) * 1000) / 1000, "  ", floor(u:bz_accuracy(bz_w, bz_vaf, bz_val.y) * 1000) / 1000, "  ", floor(u:bz_confidence(bz_w, bz_vaf) * 1000) / 1000);
+  bz_c = bz_c + 1
+};
+
+print("");
+print("At 0 steps every class scores about one ninth and the model is guessing.");
+print("Most of the accuracy arrives in the first few steps; after that, training");
+print("mostly buys confidence -- including confidence in wrong answers, which is");
+print("the problem the rest of this repository is about.");
+print("");
+print("What it says now, on sentences it was never trained on:");
+bz_final = u:bz_weights();
+bz_s1 = u:bz_show("my mother never listens to me", bz_final);
+bz_s2 = u:bz_show("i dreamed about my brother", bz_final);
+bz_s3 = u:bz_show("are you a computer", bz_final);
+bz_s4 = u:bz_show("i want a better job", bz_final);
+bz_s5 = u:bz_show("i bought a new car", bz_final);
+print("");
+print("The last one has no right answer among the nine: this model has no way to");
+print("say none of these, and says something anyway. Model 2 added that escape");
+print("hatch. Change a number above and press Run again to see what it does.");
+print("")
