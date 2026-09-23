@@ -192,6 +192,30 @@
     { background-color: #ffff00; color: #000000; font-weight: bold; }
   .org-svg { }
 </style>
+<style>
+/* Colour for the MLPL blocks. htmlize turns the faces sw-MLPL's major mode
+applies into these class names; batch Emacs has no display and so no
+colours of its own, which is why they are chosen here. */
+pre.src, pre.example { background: #fafafa; border: 1px solid #e4e4e7; border-radius: 6px; line-height: 1.45; }
+.org-mlpl-keyword, .org-mlpl-context-keyword, .org-keyword { color: #8250df; font-weight: 600; }
+.org-mlpl-builtin { color: #0550ae; }
+.org-mlpl-number, .org-constant { color: #953800; }
+.org-string { color: #0a7d55; }
+.org-comment, .org-comment-delimiter { color: #6a737d; font-style: italic; }
+.org-mlpl-operator { color: #57606a; }
+.org-warning { color: #b35900; }
+@media (prefers-color-scheme: dark) {
+body { background: #0d1117; color: #c9d1d9; }
+a { color: #79c0ff; }
+pre.src, pre.example { background: #161b22; border-color: #30363d; color: #c9d1d9; }
+.org-mlpl-keyword, .org-mlpl-context-keyword, .org-keyword { color: #d2a8ff; }
+.org-mlpl-builtin { color: #79c0ff; }
+.org-mlpl-number, .org-constant { color: #ffa657; }
+.org-string { color: #7ee2b8; }
+.org-comment, .org-comment-delimiter { color: #8b949e; }
+.org-mlpl-operator { color: #8b949e; }
+}
+</style>
 </head>
 <body>
 <div id="content" class="content">
@@ -203,47 +227,47 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org404347e">1. What this is</a></li>
-<li><a href="#orgc22dae3">2. A typed decision is a distribution</a></li>
-<li><a href="#orgbad320f">3. The program, in order</a>
+<li><a href="#orgc6d37c6">1. What this is</a></li>
+<li><a href="#org4b4b979">2. A typed decision is a distribution</a></li>
+<li><a href="#org15178e3">3. The program, in order</a>
 <ul>
-<li><a href="#org4140f6d">3.1. The whole configuration</a></li>
-<li><a href="#orgb2462c4">3.2. The corpus, in full</a></li>
-<li><a href="#org15b5388">3.3. Reading a row</a></li>
-<li><a href="#org3ad6777">3.4. The split is a position, not a coin</a></li>
-<li><a href="#org09c38fb">3.5. One split as arrays</a></li>
+<li><a href="#org7e1ab1d">3.1. The whole configuration</a></li>
+<li><a href="#org703aae2">3.2. The corpus, in full</a></li>
+<li><a href="#orgd727ed8">3.3. Reading a row</a></li>
+<li><a href="#org004d3ee">3.4. The split is a position, not a coin</a></li>
+<li><a href="#orgcadbac8">3.5. One split as arrays</a></li>
 </ul>
 </li>
-<li><a href="#org5227590">4. One state, three heads</a>
+<li><a href="#org5b45823">4. One state, three heads</a>
 <ul>
-<li><a href="#orgdb1ff4f">4.1. The shared state</a></li>
-<li><a href="#org9e0e571">4.2. What training minimizes</a></li>
-<li><a href="#org837b6fd">4.3. The training loop</a></li>
+<li><a href="#org4cddecc">4.1. The shared state</a></li>
+<li><a href="#orge594e52">4.2. What training minimizes</a></li>
+<li><a href="#org65d18af">4.3. The training loop</a></li>
 </ul>
 </li>
-<li><a href="#org6d2c857">5. Measuring it</a>
+<li><a href="#org07f59e3">5. Measuring it</a>
 <ul>
-<li><a href="#orgf80396e">5.1. A head, and whether it was right</a></li>
-<li><a href="#org6f2de2b">5.2. Three ways of scoring a probability</a></li>
-<li><a href="#org43c07eb">5.3. Fitting one number</a></li>
+<li><a href="#org7ba2155">5.1. A head, and whether it was right</a></li>
+<li><a href="#org8eb793b">5.2. Three ways of scoring a probability</a></li>
+<li><a href="#org0f17531">5.3. Fitting one number</a></li>
 </ul>
 </li>
-<li><a href="#org16450d8">6. The program</a>
+<li><a href="#org73be7d2">6. The program</a>
 <ul>
-<li><a href="#orgf333ca3">6.1. Printing a decision</a></li>
-<li><a href="#org66ac2c0">6.2. Stage 1: written down, not learned</a></li>
-<li><a href="#org524df91">6.3. Stage 2: the same shape, learned</a></li>
-<li><a href="#org0c3d0c9">6.4. Stage 3: three decisions from one pass</a></li>
-<li><a href="#org4b131c8">6.5. Stage 4: classification is not calibration</a></li>
+<li><a href="#orga221796">6.1. Printing a decision</a></li>
+<li><a href="#orgb9ee494">6.2. Stage 1: written down, not learned</a></li>
+<li><a href="#orge8fa679">6.3. Stage 2: the same shape, learned</a></li>
+<li><a href="#orgf68e228">6.4. Stage 3: three decisions from one pass</a></li>
+<li><a href="#orgd3defe8">6.5. Stage 4: classification is not calibration</a></li>
 </ul>
 </li>
-<li><a href="#orgc6f93eb">7. Running it</a></li>
-<li><a href="#org0218524">8. What the four stages were for</a></li>
+<li><a href="#org8fd1212">7. Running it</a></li>
+<li><a href="#orgf843461">8. What the four stages were for</a></li>
 </ul>
 </div>
 </div>
-<div id="outline-container-org404347e" class="outline-2">
-<h2 id="org404347e"><span class="section-number-2">1.</span> What this is</h2>
+<div id="outline-container-orgc6d37c6" class="outline-2">
+<h2 id="orgc6d37c6"><span class="section-number-2">1.</span> What this is</h2>
 <div class="outline-text-2" id="text-1">
 <p style="margin:0 0 1em 0">
 <a href="https://sw-ml-study.github.io/demo-decision-model/">Live demo</a> ·
@@ -256,7 +280,7 @@ A typed decision model small enough to read in one sitting. It takes a short
 message and answers three bounded questions about it at once:
 </p>
 
-<pre class="example" id="org302f535">
+<pre class="example" id="orgc0f346c">
 "payroll asks you to confirm your password on this page"
 
   what kind of message?      legitimate .000  spam .000  phishing .999
@@ -287,8 +311,8 @@ open, and read <a href="literate.html">its own literate document</a>. This page 
 </p>
 </div>
 </div>
-<div id="outline-container-orgc22dae3" class="outline-2">
-<h2 id="orgc22dae3"><span class="section-number-2">2.</span> A typed decision is a distribution</h2>
+<div id="outline-container-org4b4b979" class="outline-2">
+<h2 id="org4b4b979"><span class="section-number-2">2.</span> A typed decision is a distribution</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 Before any model exists, the shape of the answer can be shown on its own. These
@@ -297,13 +321,13 @@ gate, so they cannot drift away from what the interpreter actually prints.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-mlpl">include "lib/decision.mlpl";
-d = u:choice("what kind of message is this?", ["legitimate", "spam", "phishing"], [1.2, 2.0, 4.1]);
-print("probs      ", d.probs);
-print("selected   ", u:decision_label(d));
-print("confidence ", d.confidence);
-print("margin     ", d.margin);
-u:decision_valid(d)
+<pre class="src src-mlpl">include <span class="org-string">"lib/decision.mlpl"</span><span class="org-mlpl-operator">;</span>
+d <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>choice(<span class="org-string">"what kind of message is this?"</span><span class="org-mlpl-operator">,</span> [<span class="org-string">"legitimate"</span><span class="org-mlpl-operator">,</span> <span class="org-string">"spam"</span><span class="org-mlpl-operator">,</span> <span class="org-string">"phishing"</span>]<span class="org-mlpl-operator">,</span> [<span class="org-mlpl-number">1.2</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">2.0</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">4.1</span>])<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"probs      "</span><span class="org-mlpl-operator">,</span> d<span class="org-mlpl-operator">.</span>probs)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"selected   "</span><span class="org-mlpl-operator">,</span> u<span class="org-mlpl-operator">:</span>decision_label(d))<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"confidence "</span><span class="org-mlpl-operator">,</span> d<span class="org-mlpl-operator">.</span>confidence)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"margin     "</span><span class="org-mlpl-operator">,</span> d<span class="org-mlpl-operator">.</span>margin)<span class="org-mlpl-operator">;</span>
+u<span class="org-mlpl-operator">:</span>decision_valid(d)
 </pre>
 </div>
 
@@ -331,11 +355,11 @@ distribution so that one validator and one renderer serve all three kinds:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-mlpl">include "lib/decision.mlpl";
-n = u:noul("does it ask for credentials?", 2.1);
-print("p          ", n.p);
-print("selected   ", u:decision_label(n));
-n.probs
+<pre class="src src-mlpl">include <span class="org-string">"lib/decision.mlpl"</span><span class="org-mlpl-operator">;</span>
+n <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>noul(<span class="org-string">"does it ask for credentials?"</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">2.1</span>)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"p          "</span><span class="org-mlpl-operator">,</span> n<span class="org-mlpl-operator">.</span>p)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"selected   "</span><span class="org-mlpl-operator">,</span> u<span class="org-mlpl-operator">:</span>decision_label(n))<span class="org-mlpl-operator">;</span>
+n<span class="org-mlpl-operator">.</span>probs
 </pre>
 </div>
 
@@ -352,11 +376,11 @@ expectation meaningful:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-mlpl">include "lib/decision.mlpl";
-s = u:scale("how urgent is it?", ["low", "medium", "high"], [0.1, 1.0, 3.2]);
-print("probs      ", s.probs);
-print("expectation", s.expectation);
-u:decision_label(s)
+<pre class="src src-mlpl">include <span class="org-string">"lib/decision.mlpl"</span><span class="org-mlpl-operator">;</span>
+s <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>scale(<span class="org-string">"how urgent is it?"</span><span class="org-mlpl-operator">,</span> [<span class="org-string">"low"</span><span class="org-mlpl-operator">,</span> <span class="org-string">"medium"</span><span class="org-mlpl-operator">,</span> <span class="org-string">"high"</span>]<span class="org-mlpl-operator">,</span> [<span class="org-mlpl-number">0.1</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">1.0</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">3.2</span>])<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"probs      "</span><span class="org-mlpl-operator">,</span> s<span class="org-mlpl-operator">.</span>probs)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"expectation"</span><span class="org-mlpl-operator">,</span> s<span class="org-mlpl-operator">.</span>expectation)<span class="org-mlpl-operator">;</span>
+u<span class="org-mlpl-operator">:</span>decision_label(s)
 </pre>
 </div>
 
@@ -373,8 +397,8 @@ instead of written down.
 </p>
 </div>
 </div>
-<div id="outline-container-orgbad320f" class="outline-2">
-<h2 id="orgbad320f"><span class="section-number-2">3.</span> The program, in order</h2>
+<div id="outline-container-org15178e3" class="outline-2">
+<h2 id="org15178e3"><span class="section-number-2">3.</span> The program, in order</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 The module comment says what the file is for, and the two includes are the only
@@ -383,14 +407,14 @@ message into the rows of an embedding it may read.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-mlpl"># The hello world of this repository: a typed decision model small enough to read in one sitting, over messages rather than therapy. One shared state feeds three typed heads -- a Choice over three categories, a Noul asking whether the message wants your credentials, and a Scale of urgency -- trained together on the messages whose index is not held out, calibrated on the next fifth, and measured on the last fifth, which it never saw. There is no decoding loop because there is nothing to decode: the model reports probabilities over bounded domains and ordinary code decides what to do about them. Jev-like in interface only: Jev's architecture and its calibration training are unpublished, and nothing here reproduces them. Self-contained by design -- the corpus is in the file and there is no IO -- so the same program runs in a browser.
-include "../../lib/decision.mlpl";
-include "../../lib/choice_model.mlpl";
+<pre class="src src-mlpl"><span class="org-comment-delimiter"># </span><span class="org-comment">The hello world of this repository: a typed decision model small enough to read in one sitting, over messages rather than therapy. One shared state feeds three typed heads -- a Choice over three categories, a Noul asking whether the message wants your credentials, and a Scale of urgency -- trained together on the messages whose index is not held out, calibrated on the next fifth, and measured on the last fifth, which it never saw. There is no decoding loop because there is nothing to decode: the model reports probabilities over bounded domains and ordinary code decides what to do about them. Jev-like in interface only: Jev's architecture and its calibration training are unpublished, and nothing here reproduces them. Self-contained by design -- the corpus is in the file and there is no IO -- so the same program runs in a browser.
+</span>include <span class="org-string">"../../lib/decision.mlpl"</span><span class="org-mlpl-operator">;</span>
+include <span class="org-string">"../../lib/choice_model.mlpl"</span><span class="org-mlpl-operator">;</span>
 </pre>
 </div>
 </div>
-<div id="outline-container-org4140f6d" class="outline-3">
-<h3 id="org4140f6d"><span class="section-number-3">3.1.</span> The whole configuration</h3>
+<div id="outline-container-org7e1ab1d" class="outline-3">
+<h3 id="org7e1ab1d"><span class="section-number-3">3.1.</span> The whole configuration</h3>
 <div class="outline-text-3" id="text-3-1">
 <p>
 Sixteen features per message, sixteen dimensions of state, two hundred Adam
@@ -400,18 +424,18 @@ mapping <code>A</code>, <code>B</code>, <code>C</code> onto classes, and so no t
 </p>
 
 <div class="org-src-container">
-<pre class="src src-mlpl">td_width = 16;
-td_dim = 16;
-td_lr = 0.05;
-td_steps = 200;
-td_categories = ["legitimate", "spam", "phishing"];
-td_levels = ["low", "medium", "high"];
+<pre class="src src-mlpl">td_width <span class="org-mlpl-operator">=</span> <span class="org-mlpl-number">16</span><span class="org-mlpl-operator">;</span>
+td_dim <span class="org-mlpl-operator">=</span> <span class="org-mlpl-number">16</span><span class="org-mlpl-operator">;</span>
+td_lr <span class="org-mlpl-operator">=</span> <span class="org-mlpl-number">0.05</span><span class="org-mlpl-operator">;</span>
+td_steps <span class="org-mlpl-operator">=</span> <span class="org-mlpl-number">200</span><span class="org-mlpl-operator">;</span>
+td_categories <span class="org-mlpl-operator">=</span> [<span class="org-string">"legitimate"</span><span class="org-mlpl-operator">,</span> <span class="org-string">"spam"</span><span class="org-mlpl-operator">,</span> <span class="org-string">"phishing"</span>]<span class="org-mlpl-operator">;</span>
+td_levels <span class="org-mlpl-operator">=</span> [<span class="org-string">"low"</span><span class="org-mlpl-operator">,</span> <span class="org-string">"medium"</span><span class="org-mlpl-operator">,</span> <span class="org-string">"high"</span>]<span class="org-mlpl-operator">;</span>
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-orgb2462c4" class="outline-3">
-<h3 id="orgb2462c4"><span class="section-number-3">3.2.</span> The corpus, in full</h3>
+<div id="outline-container-org703aae2" class="outline-3">
+<h3 id="org703aae2"><span class="section-number-3">3.2.</span> The corpus, in full</h3>
 <div class="outline-text-3" id="text-3-2">
 <p>
 One hundred and twenty short messages, each with three labels. It is printed
@@ -427,161 +451,161 @@ hurry it is in.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-mlpl">def u:td_rows() {
-  "The corpus, one message per line as text|category|credentials|urgency: category 0 legitimate, 1 spam, 2 phishing; credentials 1 when the message asks for a password, a code, or bank details; urgency 0 low, 1 medium, 2 high. Hand-written for this demo, and printed here in full because a demo whose data you cannot read is not a demo.";
+<pre class="src src-mlpl">def u<span class="org-mlpl-operator">:</span>td_rows() {
+  <span class="org-string">"The corpus, one message per line as text|category|credentials|urgency: category 0 legitimate, 1 spam, 2 phishing; credentials 1 when the message asks for a password, a code, or bank details; urgency 0 low, 1 medium, 2 high. Hand-written for this demo, and printed here in full because a demo whose data you cannot read is not a demo."</span><span class="org-mlpl-operator">;</span>
   [
-    "standup moved to 10am tomorrow|0|0|1",
-    "you have won a free cruise, claim your prize now|1|0|0",
-    "your password expires today, sign in here to keep access|2|1|2",
-    "here are the notes from monday|0|0|0",
-    "lose twenty pounds with this one weird trick|1|0|0",
-    "payroll needs you to confirm your bank details now|2|1|2",
-    "your package was delivered to the front desk|0|0|0",
-    "cheap watches direct from the factory today only|1|0|0",
-    "your account has been locked, verify your identity|2|1|2",
-    "can you review the draft before friday|0|0|1",
-    "make money from home working two hours a week|1|0|1",
-    "unusual sign in detected, confirm your credentials|2|1|2",
-    "lunch is in the kitchen if you want some|0|0|0",
-    "hot singles in your area want to meet you|1|0|0",
-    "the ceo needs you to buy gift cards urgently|2|0|2",
-    "the quarterly report is attached for your records|0|0|0",
-    "buy discount pills without a prescription|1|0|0",
-    "your mailbox is full, log in to restore delivery|2|1|1",
-    "reminder: dentist appointment on thursday|0|0|1",
-    "double your crypto returns guaranteed no risk|1|0|1",
-    "security alert: enter your code to stop the transfer|2|1|2",
-    "i pushed the fix to the branch this morning|0|0|0",
-    "congratulations you are our lucky visitor today|1|0|0",
-    "confirm your login to avoid losing your files|2|1|2",
-    "welcome to the team, here is your desk number|0|0|0",
-    "increase your website traffic with our seo service|1|0|0",
-    "update your direct deposit before the next pay run|2|1|2",
-    "the office will be closed on monday for the holiday|0|0|1",
-    "limited time offer on printer ink cartridges|1|0|1",
-    "your vpn certificate expired, reauthenticate here|2|1|1",
-    "thanks for covering my shift last week|0|0|0",
-    "get a free trial of our miracle supplement|1|0|0",
-    "hr needs your social security number to fix payroll|2|1|2",
-    "please sign the updated handbook when you have time|0|0|1",
-    "your car warranty is about to expire, act now|1|0|1",
-    "invoice overdue, sign in to the portal to pay today|2|1|2",
-    "the build is green again after the revert|0|0|0",
-    "earn passive income with this trading robot|1|0|1",
-    "verify your email password or service will stop|2|1|2",
-    "we rescheduled the client call to wednesday|0|0|1",
-    "exclusive investment opportunity for select clients|1|0|1",
-    "your two factor code is needed to complete setup|2|1|2",
-    "your expense report was approved|0|0|0",
-    "clearance sale everything must go this weekend|1|0|1",
-    "action required: reset your password within an hour|2|1|2",
-    "printer on the second floor is fixed|0|0|0",
-    "meet your soulmate with our matchmaking service|1|0|0",
-    "the finance team requests an urgent wire transfer|2|0|2",
-    "agenda for the planning meeting is attached|0|0|1",
-    "we can remove your debt in thirty days|1|0|1",
-    "click to review the shared document with your login|2|1|1",
-    "i will be out of office next week|0|0|0",
-    "free gift card just for taking our survey|1|0|0",
-    "your subscription failed, update your card details|2|1|1",
-    "the parking permit renewal form is due friday|0|0|1",
-    "your horoscope reveals a fortune coming soon|1|0|0",
-    "it support needs remote access to your machine|2|1|1",
-    "congratulations on shipping the release|0|0|0",
-    "bulk email software that never lands in spam|1|0|0",
-    "confirm your identity to release the held package|2|1|1",
-    "coffee machine is being serviced this afternoon|0|0|0",
-    "solar panels installed at no cost to you|1|0|0",
-    "your benefits enrollment requires your bank login|2|1|2",
-    "please update your timesheet by end of day|0|0|1",
-    "this stock is about to explode, buy before monday|1|0|2",
-    "suspicious charge detected, verify your account now|2|1|2",
-    "the design review went well, notes to follow|0|0|0",
-    "collect your unclaimed inheritance from abroad|1|0|1",
-    "sign the attached contract with your company password|2|1|1",
-    "badge access to the lab starts on monday|0|0|1",
-    "discount designer bags shipped worldwide|1|0|0",
-    "your storage quota is exceeded, log in to keep files|2|1|1",
-    "training session on the new tool is optional|0|0|0",
-    "work from home data entry positions open now|1|0|1",
-    "urgent: the director asked me to handle this quietly|2|0|2",
-    "your laptop repair is finished at the help desk|0|0|1",
-    "your number was selected for a cash reward|1|0|1",
-    "your office license expired, sign in to renew|2|1|1",
-    "the server migration is scheduled for saturday|0|0|1",
-    "miracle cream removes wrinkles overnight|1|0|0",
-    "verify your payroll account before payday|2|1|2",
-    "team photo is at noon by the entrance|0|0|0",
-    "wholesale electronics at unbeatable prices|1|0|0",
-    "we detected malware, enter your password to scan|2|1|2",
-    "i added the numbers you asked for to the sheet|0|0|0",
-    "become a millionaire trading forex from your phone|1|0|1",
-    "the director needs gift cards for a client today|2|0|2",
-    "the vendor confirmed delivery for next tuesday|0|0|1",
-    "free vacation package for two, no strings|1|0|0",
-    "your package is held, confirm your card to release|2|1|1",
-    "the retro is moved to friday afternoon|0|0|1",
-    "our psychic has an urgent message for you|1|0|1",
-    "reset your credentials to keep email access|2|1|2",
-    "i signed off on the purchase order|0|0|0",
-    "best deals on refurbished phones this month|1|0|0",
-    "confirm the wire transfer details immediately|2|0|2",
-    "new badge photos are being taken this week|0|0|0",
-    "grow your followers overnight with our service|1|0|0",
-    "your account will be deleted unless you log in|2|1|2",
-    "please bring your laptop to the workshop|0|0|1",
-    "lowest mortgage rates in a decade, apply today|1|0|1",
-    "update your tax form with your bank information|2|1|1",
-    "the kitchen will be closed for cleaning tomorrow|0|0|0",
-    "try this fat burner recommended by doctors|1|0|0",
-    "sign in to view the encrypted message from hr|2|1|1",
-    "your shipment of monitors arrives on thursday|0|0|1",
-    "cheap insurance quotes in under a minute|1|0|0",
-    "your mfa device changed, verify your identity now|2|1|2",
-    "i booked the conference room for two hours|0|0|0",
-    "your name appeared in our prize draw list|1|0|1",
-    "finance needs your login to approve the invoice|2|1|2",
-    "the survey about the office layout closes friday|0|0|1",
-    "urgent request from the ceo, keep this confidential|2|0|2",
-    "thanks for the detailed review comments|0|0|0",
-    "the release notes are ready for your approval|0|0|1",
-    "fire drill scheduled for wednesday morning|0|0|1",
-    "i moved our one on one to next week|0|0|0",
-    "the contractor invoice matches the estimate|0|0|0",
-    "please return the loaner keyboard when done|0|0|1",
-    "the intern starts on monday, say hello|0|0|0"
+    <span class="org-string">"standup moved to 10am tomorrow|0|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"you have won a free cruise, claim your prize now|1|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"your password expires today, sign in here to keep access|2|1|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"here are the notes from monday|0|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"lose twenty pounds with this one weird trick|1|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"payroll needs you to confirm your bank details now|2|1|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"your package was delivered to the front desk|0|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"cheap watches direct from the factory today only|1|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"your account has been locked, verify your identity|2|1|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"can you review the draft before friday|0|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"make money from home working two hours a week|1|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"unusual sign in detected, confirm your credentials|2|1|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"lunch is in the kitchen if you want some|0|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"hot singles in your area want to meet you|1|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"the ceo needs you to buy gift cards urgently|2|0|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"the quarterly report is attached for your records|0|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"buy discount pills without a prescription|1|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"your mailbox is full, log in to restore delivery|2|1|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"reminder: dentist appointment on thursday|0|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"double your crypto returns guaranteed no risk|1|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"security alert: enter your code to stop the transfer|2|1|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"i pushed the fix to the branch this morning|0|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"congratulations you are our lucky visitor today|1|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"confirm your login to avoid losing your files|2|1|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"welcome to the team, here is your desk number|0|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"increase your website traffic with our seo service|1|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"update your direct deposit before the next pay run|2|1|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"the office will be closed on monday for the holiday|0|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"limited time offer on printer ink cartridges|1|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"your vpn certificate expired, reauthenticate here|2|1|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"thanks for covering my shift last week|0|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"get a free trial of our miracle supplement|1|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"hr needs your social security number to fix payroll|2|1|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"please sign the updated handbook when you have time|0|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"your car warranty is about to expire, act now|1|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"invoice overdue, sign in to the portal to pay today|2|1|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"the build is green again after the revert|0|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"earn passive income with this trading robot|1|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"verify your email password or service will stop|2|1|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"we rescheduled the client call to wednesday|0|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"exclusive investment opportunity for select clients|1|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"your two factor code is needed to complete setup|2|1|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"your expense report was approved|0|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"clearance sale everything must go this weekend|1|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"action required: reset your password within an hour|2|1|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"printer on the second floor is fixed|0|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"meet your soulmate with our matchmaking service|1|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"the finance team requests an urgent wire transfer|2|0|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"agenda for the planning meeting is attached|0|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"we can remove your debt in thirty days|1|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"click to review the shared document with your login|2|1|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"i will be out of office next week|0|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"free gift card just for taking our survey|1|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"your subscription failed, update your card details|2|1|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"the parking permit renewal form is due friday|0|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"your horoscope reveals a fortune coming soon|1|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"it support needs remote access to your machine|2|1|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"congratulations on shipping the release|0|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"bulk email software that never lands in spam|1|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"confirm your identity to release the held package|2|1|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"coffee machine is being serviced this afternoon|0|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"solar panels installed at no cost to you|1|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"your benefits enrollment requires your bank login|2|1|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"please update your timesheet by end of day|0|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"this stock is about to explode, buy before monday|1|0|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"suspicious charge detected, verify your account now|2|1|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"the design review went well, notes to follow|0|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"collect your unclaimed inheritance from abroad|1|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"sign the attached contract with your company password|2|1|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"badge access to the lab starts on monday|0|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"discount designer bags shipped worldwide|1|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"your storage quota is exceeded, log in to keep files|2|1|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"training session on the new tool is optional|0|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"work from home data entry positions open now|1|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"urgent: the director asked me to handle this quietly|2|0|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"your laptop repair is finished at the help desk|0|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"your number was selected for a cash reward|1|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"your office license expired, sign in to renew|2|1|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"the server migration is scheduled for saturday|0|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"miracle cream removes wrinkles overnight|1|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"verify your payroll account before payday|2|1|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"team photo is at noon by the entrance|0|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"wholesale electronics at unbeatable prices|1|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"we detected malware, enter your password to scan|2|1|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"i added the numbers you asked for to the sheet|0|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"become a millionaire trading forex from your phone|1|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"the director needs gift cards for a client today|2|0|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"the vendor confirmed delivery for next tuesday|0|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"free vacation package for two, no strings|1|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"your package is held, confirm your card to release|2|1|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"the retro is moved to friday afternoon|0|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"our psychic has an urgent message for you|1|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"reset your credentials to keep email access|2|1|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"i signed off on the purchase order|0|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"best deals on refurbished phones this month|1|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"confirm the wire transfer details immediately|2|0|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"new badge photos are being taken this week|0|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"grow your followers overnight with our service|1|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"your account will be deleted unless you log in|2|1|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"please bring your laptop to the workshop|0|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"lowest mortgage rates in a decade, apply today|1|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"update your tax form with your bank information|2|1|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"the kitchen will be closed for cleaning tomorrow|0|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"try this fat burner recommended by doctors|1|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"sign in to view the encrypted message from hr|2|1|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"your shipment of monitors arrives on thursday|0|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"cheap insurance quotes in under a minute|1|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"your mfa device changed, verify your identity now|2|1|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"i booked the conference room for two hours|0|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"your name appeared in our prize draw list|1|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"finance needs your login to approve the invoice|2|1|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"the survey about the office layout closes friday|0|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"urgent request from the ceo, keep this confidential|2|0|2"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"thanks for the detailed review comments|0|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"the release notes are ready for your approval|0|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"fire drill scheduled for wednesday morning|0|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"i moved our one on one to next week|0|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"the contractor invoice matches the estimate|0|0|0"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"please return the loaner keyboard when done|0|0|1"</span><span class="org-mlpl-operator">,</span>
+    <span class="org-string">"the intern starts on monday, say hello|0|0|0"</span>
   ]
 }
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-org15b5388" class="outline-3">
-<h3 id="org15b5388"><span class="section-number-3">3.3.</span> Reading a row</h3>
+<div id="outline-container-orgd727ed8" class="outline-3">
+<h3 id="orgd727ed8"><span class="section-number-3">3.3.</span> Reading a row</h3>
 <div class="outline-text-3" id="text-3-3">
 <p>
 Two accessors, so the rest of the program never splits a string again.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-mlpl">def u:td_field(row, i) {
-  "Field i of a corpus row.";
-  u:text_lg(str_split(row, "|"), i)
+<pre class="src src-mlpl">def u<span class="org-mlpl-operator">:</span>td_field(row<span class="org-mlpl-operator">,</span> i) {
+  <span class="org-string">"Field i of a corpus row."</span><span class="org-mlpl-operator">;</span>
+  u<span class="org-mlpl-operator">:</span>text_lg(str_split(row<span class="org-mlpl-operator">,</span> <span class="org-string">"|"</span>)<span class="org-mlpl-operator">,</span> i)
 }
 </pre>
 </div>
 
 <div class="org-src-container">
-<pre class="src src-mlpl">def u:td_number(row, i) {
-  "Field i of a corpus row as a number.";
-  unwrap(to_number(u:td_field(row, i)))
+<pre class="src src-mlpl">def u<span class="org-mlpl-operator">:</span>td_number(row<span class="org-mlpl-operator">,</span> i) {
+  <span class="org-string">"Field i of a corpus row as a number."</span><span class="org-mlpl-operator">;</span>
+  unwrap(to_number(u<span class="org-mlpl-operator">:</span>td_field(row<span class="org-mlpl-operator">,</span> i)))
 }
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-org3ad6777" class="outline-3">
-<h3 id="org3ad6777"><span class="section-number-3">3.4.</span> The split is a position, not a coin</h3>
+<div id="outline-container-org004d3ee" class="outline-3">
+<h3 id="org004d3ee"><span class="section-number-3">3.4.</span> The split is a position, not a coin</h3>
 <div class="outline-text-3" id="text-3-4">
 <p>
 Three of every five messages train, the fourth calibrates, the fifth tests.
@@ -591,16 +615,16 @@ number measured here can be compared with a number measured somewhere else.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-mlpl">def u:td_split(i) {
-  "Which split row i belongs to: 0 train, 1 calibration, 2 test. Position, not chance, so the splits are the same on every machine and in every language that reads this corpus.";
-  r = i - floor(i / 5) * 5;
-  if lt(r, 3) {
-    0
+<pre class="src src-mlpl">def u<span class="org-mlpl-operator">:</span>td_split(i) {
+  <span class="org-string">"Which split row i belongs to: 0 train, 1 calibration, 2 test. Position, not chance, so the splits are the same on every machine and in every language that reads this corpus."</span><span class="org-mlpl-operator">;</span>
+  r <span class="org-mlpl-operator">=</span> i <span class="org-mlpl-operator">-</span> floor(i <span class="org-mlpl-operator">/</span> <span class="org-mlpl-number">5</span>) * <span class="org-mlpl-number">5</span><span class="org-mlpl-operator">;</span>
+  if <span class="org-mlpl-builtin">lt</span>(r<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">3</span>) {
+    <span class="org-mlpl-number">0</span>
   } else {
-    if eq(r, 3) {
-      1
+    if <span class="org-mlpl-builtin">eq</span>(r<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">3</span>) {
+      <span class="org-mlpl-number">1</span>
     } else {
-      2
+      <span class="org-mlpl-number">2</span>
     }
   }
 }
@@ -608,8 +632,8 @@ number measured here can be compared with a number measured somewhere else.
 </div>
 </div>
 </div>
-<div id="outline-container-org09c38fb" class="outline-3">
-<h3 id="org09c38fb"><span class="section-number-3">3.5.</span> One split as arrays</h3>
+<div id="outline-container-orgcadbac8" class="outline-3">
+<h3 id="orgcadbac8"><span class="section-number-3">3.5.</span> One split as arrays</h3>
 <div class="outline-text-3" id="text-3-5">
 <p>
 The messages of one split as a string list, and the three label arrays beside
@@ -617,59 +641,59 @@ them. Everything after this point is arithmetic.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-mlpl">def u:td_corpus(split) {
-  "One split of the corpus: the messages as a string list, and the three label arrays.";
-  rows = u:td_rows();
-  n = list_len(rows);
-  lines = "";
-  cat = fill([0], 0);
-  cred = fill([0], 0);
-  urg = fill([0], 0);
-  i = 0;
-  while lt(i, n) {
-    row = u:text_lg(rows, i);
-    keep = eq(u:td_split(i), split);
-    lines = if keep {
-      if gt(str_len(lines), 0) {
-        str_concat(str_concat(lines, "\n"), u:td_field(row, 0))
+<pre class="src src-mlpl">def u<span class="org-mlpl-operator">:</span>td_corpus(split) {
+  <span class="org-string">"One split of the corpus: the messages as a string list, and the three label arrays."</span><span class="org-mlpl-operator">;</span>
+  rows <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>td_rows()<span class="org-mlpl-operator">;</span>
+  n <span class="org-mlpl-operator">=</span> list_len(rows)<span class="org-mlpl-operator">;</span>
+  lines <span class="org-mlpl-operator">=</span> <span class="org-string">""</span><span class="org-mlpl-operator">;</span>
+  cat <span class="org-mlpl-operator">=</span> <span class="org-mlpl-builtin">fill</span>([<span class="org-mlpl-number">0</span>]<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0</span>)<span class="org-mlpl-operator">;</span>
+  cred <span class="org-mlpl-operator">=</span> <span class="org-mlpl-builtin">fill</span>([<span class="org-mlpl-number">0</span>]<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0</span>)<span class="org-mlpl-operator">;</span>
+  urg <span class="org-mlpl-operator">=</span> <span class="org-mlpl-builtin">fill</span>([<span class="org-mlpl-number">0</span>]<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0</span>)<span class="org-mlpl-operator">;</span>
+  i <span class="org-mlpl-operator">=</span> <span class="org-mlpl-number">0</span><span class="org-mlpl-operator">;</span>
+  while <span class="org-mlpl-builtin">lt</span>(i<span class="org-mlpl-operator">,</span> n) {
+    row <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>text_lg(rows<span class="org-mlpl-operator">,</span> i)<span class="org-mlpl-operator">;</span>
+    keep <span class="org-mlpl-operator">=</span> <span class="org-mlpl-builtin">eq</span>(u<span class="org-mlpl-operator">:</span>td_split(i)<span class="org-mlpl-operator">,</span> split)<span class="org-mlpl-operator">;</span>
+    lines <span class="org-mlpl-operator">=</span> if keep {
+      if <span class="org-mlpl-builtin">gt</span>(str_len(lines)<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0</span>) {
+        str_concat(str_concat(lines<span class="org-mlpl-operator">,</span> <span class="org-string">"\n"</span>)<span class="org-mlpl-operator">,</span> u<span class="org-mlpl-operator">:</span>td_field(row<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0</span>))
       } else {
-        u:td_field(row, 0)
+        u<span class="org-mlpl-operator">:</span>td_field(row<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0</span>)
       }
     } else {
       lines
-    };
-    cat = if keep {
-      concat(cat, [u:td_number(row, 1)])
+    }<span class="org-mlpl-operator">;</span>
+    cat <span class="org-mlpl-operator">=</span> if keep {
+      concat(cat<span class="org-mlpl-operator">,</span> [u<span class="org-mlpl-operator">:</span>td_number(row<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">1</span>)])
     } else {
       cat
-    };
-    cred = if keep {
-      concat(cred, [u:td_number(row, 2)])
+    }<span class="org-mlpl-operator">;</span>
+    cred <span class="org-mlpl-operator">=</span> if keep {
+      concat(cred<span class="org-mlpl-operator">,</span> [u<span class="org-mlpl-operator">:</span>td_number(row<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">2</span>)])
     } else {
       cred
-    };
-    urg = if keep {
-      concat(urg, [u:td_number(row, 3)])
+    }<span class="org-mlpl-operator">;</span>
+    urg <span class="org-mlpl-operator">=</span> if keep {
+      concat(urg<span class="org-mlpl-operator">,</span> [u<span class="org-mlpl-operator">:</span>td_number(row<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">3</span>)])
     } else {
       urg
-    };
-    i = i + 1
-  };
-  {texts: str_split(lines, "\n"), cat: cat, cred: cred, urg: urg}
+    }<span class="org-mlpl-operator">;</span>
+    i <span class="org-mlpl-operator">=</span> i <span class="org-mlpl-operator">+</span> <span class="org-mlpl-number">1</span>
+  }<span class="org-mlpl-operator">;</span>
+  {texts<span class="org-mlpl-operator">:</span> str_split(lines<span class="org-mlpl-operator">,</span> <span class="org-string">"\n"</span>)<span class="org-mlpl-operator">,</span> cat<span class="org-mlpl-operator">:</span> cat<span class="org-mlpl-operator">,</span> cred<span class="org-mlpl-operator">:</span> cred<span class="org-mlpl-operator">,</span> urg<span class="org-mlpl-operator">:</span> urg}
 }
 </pre>
 </div>
 </div>
 </div>
 </div>
-<div id="outline-container-org5227590" class="outline-2">
-<h2 id="org5227590"><span class="section-number-2">4.</span> One state, three heads</h2>
+<div id="outline-container-org5b45823" class="outline-2">
+<h2 id="org5b45823"><span class="section-number-2">4.</span> One state, three heads</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 This is the architecture, and it is three functions long.
 </p>
 
-<pre class="example" id="orgd672eb8">
+<pre class="example" id="org93c1330">
                        +--&gt; Choice: what kind of message?
                        |
 message -&gt; encoder -&gt; h +--&gt; Noul:   does it want credentials?
@@ -677,8 +701,8 @@ message -&gt; encoder -&gt; h +--&gt; Noul:   does it want credentials?
                        +--&gt; Scale:  how urgent?
 </pre>
 </div>
-<div id="outline-container-orgdb1ff4f" class="outline-3">
-<h3 id="orgdb1ff4f"><span class="section-number-3">4.1.</span> The shared state</h3>
+<div id="outline-container-org4cddecc" class="outline-3">
+<h3 id="org4cddecc"><span class="section-number-3">4.1.</span> The shared state</h3>
 <div class="outline-text-3" id="text-4-1">
 <p>
 The mean of the embedding rows this message's known words address. One vector,
@@ -687,16 +711,16 @@ forward pass rather than three.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-mlpl">def u:td_state(ids, wmask) {
-  "The shared state: the mean of the embedding rows this message's known words address. Every head reads this one vector, which is what makes three typed questions cost one pass.";
-  reduce_add(gather_rows(td_E, ids) * wmask, 1)
+<pre class="src src-mlpl">def u<span class="org-mlpl-operator">:</span>td_state(ids<span class="org-mlpl-operator">,</span> wmask) {
+  <span class="org-string">"The shared state: the mean of the embedding rows this message's known words address. Every head reads this one vector, which is what makes three typed questions cost one pass."</span><span class="org-mlpl-operator">;</span>
+  <span class="org-mlpl-builtin">reduce_add</span>(gather_rows(td_E<span class="org-mlpl-operator">,</span> ids) * wmask<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">1</span>)
 }
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-org9e0e571" class="outline-3">
-<h3 id="org9e0e571"><span class="section-number-3">4.2.</span> What training minimizes</h3>
+<div id="outline-container-orge594e52" class="outline-3">
+<h3 id="orge594e52"><span class="section-number-3">4.2.</span> What training minimizes</h3>
 <div class="outline-text-3" id="text-4-2">
 <p>
 Three losses added: cross-entropy for the Choice, cross-entropy for the Scale,
@@ -713,18 +737,18 @@ this repository therefore takes plain arrays.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-mlpl">def u:td_loss(ids, wmask, cat, cred, urg) {
-  "What training minimizes: the Choice's cross-entropy, the Noul's binary cross-entropy, and the Scale's cross-entropy, added. Three questions, one encoder, one number to descend. The Noul labels arrive as [N, 1] so that no shape has to be asked for inside grad.";
-  h = u:td_state(ids, wmask);
-  p = sigmoid(matmul(h, td_Wn) + td_bn);
-  cross_entropy(matmul(h, td_Wc) + td_bc, cat) + cross_entropy(matmul(h, td_Ws) + td_bs, urg) + (0 - mean(cred * log(p + 0.000000001) + (1 - cred) * log(1 - p + 0.000000001)))
+<pre class="src src-mlpl">def u<span class="org-mlpl-operator">:</span>td_loss(ids<span class="org-mlpl-operator">,</span> wmask<span class="org-mlpl-operator">,</span> cat<span class="org-mlpl-operator">,</span> cred<span class="org-mlpl-operator">,</span> urg) {
+  <span class="org-string">"What training minimizes: the Choice's cross-entropy, the Noul's binary cross-entropy, and the Scale's cross-entropy, added. Three questions, one encoder, one number to descend. The Noul labels arrive as [N, 1] so that no shape has to be asked for inside grad."</span><span class="org-mlpl-operator">;</span>
+  h <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>td_state(ids<span class="org-mlpl-operator">,</span> wmask)<span class="org-mlpl-operator">;</span>
+  p <span class="org-mlpl-operator">=</span> <span class="org-mlpl-builtin">sigmoid</span>(<span class="org-mlpl-builtin">matmul</span>(h<span class="org-mlpl-operator">,</span> td_Wn) <span class="org-mlpl-operator">+</span> td_bn)<span class="org-mlpl-operator">;</span>
+  cross_entropy(<span class="org-mlpl-builtin">matmul</span>(h<span class="org-mlpl-operator">,</span> td_Wc) <span class="org-mlpl-operator">+</span> td_bc<span class="org-mlpl-operator">,</span> cat) <span class="org-mlpl-operator">+</span> cross_entropy(<span class="org-mlpl-builtin">matmul</span>(h<span class="org-mlpl-operator">,</span> td_Ws) <span class="org-mlpl-operator">+</span> td_bs<span class="org-mlpl-operator">,</span> urg) <span class="org-mlpl-operator">+</span> (<span class="org-mlpl-number">0</span> <span class="org-mlpl-operator">-</span> <span class="org-mlpl-builtin">mean</span>(cred * <span class="org-mlpl-builtin">log</span>(p <span class="org-mlpl-operator">+</span> <span class="org-mlpl-number">0.000000001</span>) <span class="org-mlpl-operator">+</span> (<span class="org-mlpl-number">1</span> <span class="org-mlpl-operator">-</span> cred) * <span class="org-mlpl-builtin">log</span>(<span class="org-mlpl-number">1</span> <span class="org-mlpl-operator">-</span> p <span class="org-mlpl-operator">+</span> <span class="org-mlpl-number">0.000000001</span>)))
 }
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-org837b6fd" class="outline-3">
-<h3 id="org837b6fd"><span class="section-number-3">4.3.</span> The training loop</h3>
+<div id="outline-container-org65d18af" class="outline-3">
+<h3 id="org65d18af"><span class="section-number-3">4.3.</span> The training loop</h3>
 <div class="outline-text-3" id="text-4-3">
 <p>
 Adam over the encoder and all three heads at once. This is the entire optimizer
@@ -733,24 +757,24 @@ operations carry the derivatives.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-mlpl">def u:td_train(ids, wmask, cat, cred, urg, steps, lr) {
-  "Adam over the encoder and all three heads at once; returns the final loss.";
-  train steps {
-    adam(u:td_loss(ids, wmask, cat, cred, urg), [td_E, td_Wc, td_bc, td_Wn, td_bn, td_Ws, td_bs], lr, 0.9, 0.999, 0.00000001)
-  };
-  u:td_loss(ids, wmask, cat, cred, urg)
+<pre class="src src-mlpl">def u<span class="org-mlpl-operator">:</span>td_train(ids<span class="org-mlpl-operator">,</span> wmask<span class="org-mlpl-operator">,</span> cat<span class="org-mlpl-operator">,</span> cred<span class="org-mlpl-operator">,</span> urg<span class="org-mlpl-operator">,</span> steps<span class="org-mlpl-operator">,</span> lr) {
+  <span class="org-string">"Adam over the encoder and all three heads at once; returns the final loss."</span><span class="org-mlpl-operator">;</span>
+  <span class="org-mlpl-keyword">train</span> steps {
+    adam(u<span class="org-mlpl-operator">:</span>td_loss(ids<span class="org-mlpl-operator">,</span> wmask<span class="org-mlpl-operator">,</span> cat<span class="org-mlpl-operator">,</span> cred<span class="org-mlpl-operator">,</span> urg)<span class="org-mlpl-operator">,</span> [td_E<span class="org-mlpl-operator">,</span> td_Wc<span class="org-mlpl-operator">,</span> td_bc<span class="org-mlpl-operator">,</span> td_Wn<span class="org-mlpl-operator">,</span> td_bn<span class="org-mlpl-operator">,</span> td_Ws<span class="org-mlpl-operator">,</span> td_bs]<span class="org-mlpl-operator">,</span> lr<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0.9</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0.999</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0.00000001</span>)
+  }<span class="org-mlpl-operator">;</span>
+  u<span class="org-mlpl-operator">:</span>td_loss(ids<span class="org-mlpl-operator">,</span> wmask<span class="org-mlpl-operator">,</span> cat<span class="org-mlpl-operator">,</span> cred<span class="org-mlpl-operator">,</span> urg)
 }
 </pre>
 </div>
 </div>
 </div>
 </div>
-<div id="outline-container-org6d2c857" class="outline-2">
-<h2 id="org6d2c857"><span class="section-number-2">5.</span> Measuring it</h2>
+<div id="outline-container-org07f59e3" class="outline-2">
+<h2 id="org07f59e3"><span class="section-number-2">5.</span> Measuring it</h2>
 <div class="outline-text-2" id="text-5">
 </div>
-<div id="outline-container-orgf80396e" class="outline-3">
-<h3 id="orgf80396e"><span class="section-number-3">5.1.</span> A head, and whether it was right</h3>
+<div id="outline-container-org7ba2155" class="outline-3">
+<h3 id="org7ba2155"><span class="section-number-3">5.1.</span> A head, and whether it was right</h3>
 <div class="outline-text-3" id="text-5-1">
 <p>
 A head is a matrix multiply and a bias. Accuracy is the share of rows whose
@@ -758,17 +782,17 @@ argmax is the labelled column.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-mlpl">def u:td_logits(h, W, b) {
-  "One head's logits over the shared state.";
-  matmul(h, W) + b
+<pre class="src src-mlpl">def u<span class="org-mlpl-operator">:</span>td_logits(h<span class="org-mlpl-operator">,</span> W<span class="org-mlpl-operator">,</span> b) {
+  <span class="org-string">"One head's logits over the shared state."</span><span class="org-mlpl-operator">;</span>
+  <span class="org-mlpl-builtin">matmul</span>(h<span class="org-mlpl-operator">,</span> W) <span class="org-mlpl-operator">+</span> b
 }
 </pre>
 </div>
 
 <div class="org-src-container">
-<pre class="src src-mlpl">def u:td_accuracy(logits, y) {
-  "Share of rows whose highest-scoring column is the labelled one.";
-  mean(eq(argmax(logits, 1), y))
+<pre class="src src-mlpl">def u<span class="org-mlpl-operator">:</span>td_accuracy(logits<span class="org-mlpl-operator">,</span> y) {
+  <span class="org-string">"Share of rows whose highest-scoring column is the labelled one."</span><span class="org-mlpl-operator">;</span>
+  <span class="org-mlpl-builtin">mean</span>(<span class="org-mlpl-builtin">eq</span>(<span class="org-mlpl-builtin">argmax</span>(logits<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">1</span>)<span class="org-mlpl-operator">,</span> y))
 }
 </pre>
 </div>
@@ -780,16 +804,16 @@ for it to do.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-mlpl">def u:td_featurize(texts, vocab) {
-  "Feature ids and pooling weights for a list of messages, against the vocabulary the training split defined. A word the training split never used contributes nothing, which is the honest thing for it to do.";
-  u:cm_featurize_vocab(texts, vocab, td_width)
+<pre class="src src-mlpl">def u<span class="org-mlpl-operator">:</span>td_featurize(texts<span class="org-mlpl-operator">,</span> vocab) {
+  <span class="org-string">"Feature ids and pooling weights for a list of messages, against the vocabulary the training split defined. A word the training split never used contributes nothing, which is the honest thing for it to do."</span><span class="org-mlpl-operator">;</span>
+  u<span class="org-mlpl-operator">:</span>cm_featurize_vocab(texts<span class="org-mlpl-operator">,</span> vocab<span class="org-mlpl-operator">,</span> td_width)
 }
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-org6f2de2b" class="outline-3">
-<h3 id="org6f2de2b"><span class="section-number-3">5.2.</span> Three ways of scoring a probability</h3>
+<div id="outline-container-org8eb793b" class="outline-3">
+<h3 id="org8eb793b"><span class="section-number-3">5.2.</span> Three ways of scoring a probability</h3>
 <div class="outline-text-3" id="text-5-2">
 <p>
 Accuracy grades only the argmax. These grade the distribution.
@@ -804,53 +828,53 @@ is fitted to minimize.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-mlpl">def u:td_brier(probs, y, k) {
-  "Mean squared error between the reported distribution and the truth: the cost of the whole distribution, not only of its argmax. Lower is better, and unlike accuracy it notices confidence.";
-  n = take(shape(probs), 0, 0);
-  onehot = eq(reshape(iota(k), [1, k]) + fill([n, k], 0), reshape(y, [n, 1]));
-  mean(reduce_add((probs - onehot) * (probs - onehot), 1))
+<pre class="src src-mlpl">def u<span class="org-mlpl-operator">:</span>td_brier(probs<span class="org-mlpl-operator">,</span> y<span class="org-mlpl-operator">,</span> k) {
+  <span class="org-string">"Mean squared error between the reported distribution and the truth: the cost of the whole distribution, not only of its argmax. Lower is better, and unlike accuracy it notices confidence."</span><span class="org-mlpl-operator">;</span>
+  n <span class="org-mlpl-operator">=</span> take(<span class="org-mlpl-builtin">shape</span>(probs)<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0</span>)<span class="org-mlpl-operator">;</span>
+  onehot <span class="org-mlpl-operator">=</span> <span class="org-mlpl-builtin">eq</span>(<span class="org-mlpl-builtin">reshape</span>(<span class="org-mlpl-builtin">iota</span>(k)<span class="org-mlpl-operator">,</span> [<span class="org-mlpl-number">1</span><span class="org-mlpl-operator">,</span> k]) <span class="org-mlpl-operator">+</span> <span class="org-mlpl-builtin">fill</span>([n<span class="org-mlpl-operator">,</span> k]<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0</span>)<span class="org-mlpl-operator">,</span> <span class="org-mlpl-builtin">reshape</span>(y<span class="org-mlpl-operator">,</span> [n<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">1</span>]))<span class="org-mlpl-operator">;</span>
+  <span class="org-mlpl-builtin">mean</span>(<span class="org-mlpl-builtin">reduce_add</span>((probs <span class="org-mlpl-operator">-</span> onehot) * (probs <span class="org-mlpl-operator">-</span> onehot)<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">1</span>))
 }
 </pre>
 </div>
 
 <div class="org-src-container">
-<pre class="src src-mlpl">def u:td_ece(probs, y, buckets) {
-  "Expected calibration error: bucket the rows by the confidence the model claimed, and average how far that claim sits from the share it actually got right. A model that says 0.9 and is right nine times in ten scores zero here however often it is wrong.";
-  conf = reduce(:max, probs, 1);
-  right = eq(argmax(probs, 1), y);
-  n = take(shape(probs), 0, 0);
-  total = 0;
-  b = 0;
-  while lt(b, buckets) {
-    lo = b / buckets;
-    hi = (b + 1) / buckets;
-    inside = ge(conf, lo) * lt(conf, hi + eq(b, buckets - 1));
-    m = reduce_add(inside);
-    total = total + if gt(m, 0) {
-      abs(reduce_add(right * inside) / m - reduce_add(conf * inside) / m) * m / n
+<pre class="src src-mlpl">def u<span class="org-mlpl-operator">:</span>td_ece(probs<span class="org-mlpl-operator">,</span> y<span class="org-mlpl-operator">,</span> buckets) {
+  <span class="org-string">"Expected calibration error: bucket the rows by the confidence the model claimed, and average how far that claim sits from the share it actually got right. A model that says 0.9 and is right nine times in ten scores zero here however often it is wrong."</span><span class="org-mlpl-operator">;</span>
+  conf <span class="org-mlpl-operator">=</span> reduce(<span class="org-mlpl-operator">:</span>max<span class="org-mlpl-operator">,</span> probs<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">1</span>)<span class="org-mlpl-operator">;</span>
+  right <span class="org-mlpl-operator">=</span> <span class="org-mlpl-builtin">eq</span>(<span class="org-mlpl-builtin">argmax</span>(probs<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">1</span>)<span class="org-mlpl-operator">,</span> y)<span class="org-mlpl-operator">;</span>
+  n <span class="org-mlpl-operator">=</span> take(<span class="org-mlpl-builtin">shape</span>(probs)<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0</span>)<span class="org-mlpl-operator">;</span>
+  total <span class="org-mlpl-operator">=</span> <span class="org-mlpl-number">0</span><span class="org-mlpl-operator">;</span>
+  b <span class="org-mlpl-operator">=</span> <span class="org-mlpl-number">0</span><span class="org-mlpl-operator">;</span>
+  while <span class="org-mlpl-builtin">lt</span>(b<span class="org-mlpl-operator">,</span> buckets) {
+    lo <span class="org-mlpl-operator">=</span> b <span class="org-mlpl-operator">/</span> buckets<span class="org-mlpl-operator">;</span>
+    hi <span class="org-mlpl-operator">=</span> (b <span class="org-mlpl-operator">+</span> <span class="org-mlpl-number">1</span>) <span class="org-mlpl-operator">/</span> buckets<span class="org-mlpl-operator">;</span>
+    inside <span class="org-mlpl-operator">=</span> ge(conf<span class="org-mlpl-operator">,</span> lo) * <span class="org-mlpl-builtin">lt</span>(conf<span class="org-mlpl-operator">,</span> hi <span class="org-mlpl-operator">+</span> <span class="org-mlpl-builtin">eq</span>(b<span class="org-mlpl-operator">,</span> buckets <span class="org-mlpl-operator">-</span> <span class="org-mlpl-number">1</span>))<span class="org-mlpl-operator">;</span>
+    m <span class="org-mlpl-operator">=</span> <span class="org-mlpl-builtin">reduce_add</span>(inside)<span class="org-mlpl-operator">;</span>
+    total <span class="org-mlpl-operator">=</span> total <span class="org-mlpl-operator">+</span> if <span class="org-mlpl-builtin">gt</span>(m<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0</span>) {
+      <span class="org-mlpl-builtin">abs</span>(<span class="org-mlpl-builtin">reduce_add</span>(right * inside) <span class="org-mlpl-operator">/</span> m <span class="org-mlpl-operator">-</span> <span class="org-mlpl-builtin">reduce_add</span>(conf * inside) <span class="org-mlpl-operator">/</span> m) * m <span class="org-mlpl-operator">/</span> n
     } else {
-      0
-    };
-    b = b + 1
-  };
+      <span class="org-mlpl-number">0</span>
+    }<span class="org-mlpl-operator">;</span>
+    b <span class="org-mlpl-operator">=</span> b <span class="org-mlpl-operator">+</span> <span class="org-mlpl-number">1</span>
+  }<span class="org-mlpl-operator">;</span>
   total
 }
 </pre>
 </div>
 
 <div class="org-src-container">
-<pre class="src src-mlpl">def u:td_nll(probs, y, k) {
-  "Mean negative log probability of the true answer: what temperature scaling is fitted to minimize.";
-  n = take(shape(probs), 0, 0);
-  onehot = eq(reshape(iota(k), [1, k]) + fill([n, k], 0), reshape(y, [n, 1]));
-  0 - mean(log(reduce_add(probs * onehot, 1) + 0.000000001))
+<pre class="src src-mlpl">def u<span class="org-mlpl-operator">:</span>td_nll(probs<span class="org-mlpl-operator">,</span> y<span class="org-mlpl-operator">,</span> k) {
+  <span class="org-string">"Mean negative log probability of the true answer: what temperature scaling is fitted to minimize."</span><span class="org-mlpl-operator">;</span>
+  n <span class="org-mlpl-operator">=</span> take(<span class="org-mlpl-builtin">shape</span>(probs)<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0</span>)<span class="org-mlpl-operator">;</span>
+  onehot <span class="org-mlpl-operator">=</span> <span class="org-mlpl-builtin">eq</span>(<span class="org-mlpl-builtin">reshape</span>(<span class="org-mlpl-builtin">iota</span>(k)<span class="org-mlpl-operator">,</span> [<span class="org-mlpl-number">1</span><span class="org-mlpl-operator">,</span> k]) <span class="org-mlpl-operator">+</span> <span class="org-mlpl-builtin">fill</span>([n<span class="org-mlpl-operator">,</span> k]<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0</span>)<span class="org-mlpl-operator">,</span> <span class="org-mlpl-builtin">reshape</span>(y<span class="org-mlpl-operator">,</span> [n<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">1</span>]))<span class="org-mlpl-operator">;</span>
+  <span class="org-mlpl-number">0</span> <span class="org-mlpl-operator">-</span> <span class="org-mlpl-builtin">mean</span>(<span class="org-mlpl-builtin">log</span>(<span class="org-mlpl-builtin">reduce_add</span>(probs * onehot<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">1</span>) <span class="org-mlpl-operator">+</span> <span class="org-mlpl-number">0.000000001</span>))
 }
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-org43c07eb" class="outline-3">
-<h3 id="org43c07eb"><span class="section-number-3">5.3.</span> Fitting one number</h3>
+<div id="outline-container-org0f17531" class="outline-3">
+<h3 id="org0f17531"><span class="section-number-3">5.3.</span> Fitting one number</h3>
 <div class="outline-text-3" id="text-5-3">
 <p>
 Temperature scaling has exactly one parameter, so it is found by scanning a grid
@@ -860,26 +884,26 @@ cannot reorder them, so no answer changes &#x2013; only what the numbers claim.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-mlpl">def u:td_best_temperature(logits, y, k) {
-  "The temperature that minimizes negative log likelihood on the calibration split, found by scanning a grid rather than by another gradient descent: one scalar, forty candidates from 0.25 to 10, and nothing to go wrong.";
-  best = 1;
-  best_nll = u:td_nll(softmax(logits, 1), y, k);
-  i = 1;
-  while lt(i, 41) {
-    t = i / 4;
-    nll = u:td_nll(softmax(logits / t, 1), y, k);
-    best = if lt(nll, best_nll) {
+<pre class="src src-mlpl">def u<span class="org-mlpl-operator">:</span>td_best_temperature(logits<span class="org-mlpl-operator">,</span> y<span class="org-mlpl-operator">,</span> k) {
+  <span class="org-string">"The temperature that minimizes negative log likelihood on the calibration split, found by scanning a grid rather than by another gradient descent: one scalar, forty candidates from 0.25 to 10, and nothing to go wrong."</span><span class="org-mlpl-operator">;</span>
+  best <span class="org-mlpl-operator">=</span> <span class="org-mlpl-number">1</span><span class="org-mlpl-operator">;</span>
+  best_nll <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>td_nll(<span class="org-mlpl-builtin">softmax</span>(logits<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">1</span>)<span class="org-mlpl-operator">,</span> y<span class="org-mlpl-operator">,</span> k)<span class="org-mlpl-operator">;</span>
+  i <span class="org-mlpl-operator">=</span> <span class="org-mlpl-number">1</span><span class="org-mlpl-operator">;</span>
+  while <span class="org-mlpl-builtin">lt</span>(i<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">41</span>) {
+    t <span class="org-mlpl-operator">=</span> i <span class="org-mlpl-operator">/</span> <span class="org-mlpl-number">4</span><span class="org-mlpl-operator">;</span>
+    nll <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>td_nll(<span class="org-mlpl-builtin">softmax</span>(logits <span class="org-mlpl-operator">/</span> t<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">1</span>)<span class="org-mlpl-operator">,</span> y<span class="org-mlpl-operator">,</span> k)<span class="org-mlpl-operator">;</span>
+    best <span class="org-mlpl-operator">=</span> if <span class="org-mlpl-builtin">lt</span>(nll<span class="org-mlpl-operator">,</span> best_nll) {
       t
     } else {
       best
-    };
-    best_nll = if lt(nll, best_nll) {
+    }<span class="org-mlpl-operator">;</span>
+    best_nll <span class="org-mlpl-operator">=</span> if <span class="org-mlpl-builtin">lt</span>(nll<span class="org-mlpl-operator">,</span> best_nll) {
       nll
     } else {
       best_nll
-    };
-    i = i + 1
-  };
+    }<span class="org-mlpl-operator">;</span>
+    i <span class="org-mlpl-operator">=</span> i <span class="org-mlpl-operator">+</span> <span class="org-mlpl-number">1</span>
+  }<span class="org-mlpl-operator">;</span>
   best
 }
 </pre>
@@ -887,12 +911,12 @@ cannot reorder them, so no answer changes &#x2013; only what the numbers claim.
 </div>
 </div>
 </div>
-<div id="outline-container-org16450d8" class="outline-2">
-<h2 id="org16450d8"><span class="section-number-2">6.</span> The program</h2>
+<div id="outline-container-org73be7d2" class="outline-2">
+<h2 id="org73be7d2"><span class="section-number-2">6.</span> The program</h2>
 <div class="outline-text-2" id="text-6">
 </div>
-<div id="outline-container-orgf333ca3" class="outline-3">
-<h3 id="orgf333ca3"><span class="section-number-3">6.1.</span> Printing a decision</h3>
+<div id="outline-container-orga221796" class="outline-3">
+<h3 id="orga221796"><span class="section-number-3">6.1.</span> Printing a decision</h3>
 <div class="outline-text-3" id="text-6-1">
 <p>
 A decision is printed as its whole distribution, because the distribution is the
@@ -900,22 +924,22 @@ product and the label is only its argmax.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-mlpl">def u:td_show_decision(d) {
-  "Print a typed decision as its label and its whole distribution, because the distribution is the product and the label is only its argmax.";
-  print("   ", d.question);
-  i = 0;
-  while lt(i, list_len(d.labels)) {
-    print("       ", u:text_lg(d.labels, i), floor(take(d.probs, 0, i) * 1000) / 1000);
-    i = i + 1
-  };
-  1
+<pre class="src src-mlpl">def u<span class="org-mlpl-operator">:</span>td_show_decision(d) {
+  <span class="org-string">"Print a typed decision as its label and its whole distribution, because the distribution is the product and the label is only its argmax."</span><span class="org-mlpl-operator">;</span>
+  print(<span class="org-string">"   "</span><span class="org-mlpl-operator">,</span> d<span class="org-mlpl-operator">.</span>question)<span class="org-mlpl-operator">;</span>
+  i <span class="org-mlpl-operator">=</span> <span class="org-mlpl-number">0</span><span class="org-mlpl-operator">;</span>
+  while <span class="org-mlpl-builtin">lt</span>(i<span class="org-mlpl-operator">,</span> list_len(d<span class="org-mlpl-operator">.</span>labels)) {
+    print(<span class="org-string">"       "</span><span class="org-mlpl-operator">,</span> u<span class="org-mlpl-operator">:</span>text_lg(d<span class="org-mlpl-operator">.</span>labels<span class="org-mlpl-operator">,</span> i)<span class="org-mlpl-operator">,</span> floor(take(d<span class="org-mlpl-operator">.</span>probs<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0</span><span class="org-mlpl-operator">,</span> i) * <span class="org-mlpl-number">1000</span>) <span class="org-mlpl-operator">/</span> <span class="org-mlpl-number">1000</span>)<span class="org-mlpl-operator">;</span>
+    i <span class="org-mlpl-operator">=</span> i <span class="org-mlpl-operator">+</span> <span class="org-mlpl-number">1</span>
+  }<span class="org-mlpl-operator">;</span>
+  <span class="org-mlpl-number">1</span>
 }
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-org66ac2c0" class="outline-3">
-<h3 id="org66ac2c0"><span class="section-number-3">6.2.</span> Stage 1: written down, not learned</h3>
+<div id="outline-container-orgb9ee494" class="outline-3">
+<h3 id="orgb9ee494"><span class="section-number-3">6.2.</span> Stage 1: written down, not learned</h3>
 <div class="outline-text-3" id="text-6-2">
 <p>
 Three logits, softmaxed over a bounded domain. No model has been trained yet;
@@ -925,20 +949,20 @@ lines of Python do, minus the language model they borrow it from.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-mlpl"># Stage 1. A typed decision is a softmax over a bounded domain. No model yet:
-# these three logits are written down, not learned. The point is only that the
-# shape of the answer is a distribution over choices the caller supplied.
-print("Stage 1: a typed decision is a distribution over a bounded domain.");
-td_hand = u:choice("what kind of message is this?", td_categories, [1.2, 2.0, 4.1]);
-td_p1 = u:td_show_decision(td_hand);
-print("    selected:", u:decision_label(td_hand), " confidence", floor(td_hand.confidence * 1000) / 1000, " margin", floor(td_hand.margin * 1000) / 1000);
-print("");
+<pre class="src src-mlpl"><span class="org-comment-delimiter"># </span><span class="org-comment">Stage 1. A typed decision is a softmax over a bounded domain. No model yet:
+</span><span class="org-comment-delimiter"># </span><span class="org-comment">these three logits are written down, not learned. The point is only that the
+</span><span class="org-comment-delimiter"># </span><span class="org-comment">shape of the answer is a distribution over choices the caller supplied.
+</span>print(<span class="org-string">"Stage 1: a typed decision is a distribution over a bounded domain."</span>)<span class="org-mlpl-operator">;</span>
+td_hand <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>choice(<span class="org-string">"what kind of message is this?"</span><span class="org-mlpl-operator">,</span> td_categories<span class="org-mlpl-operator">,</span> [<span class="org-mlpl-number">1.2</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">2.0</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">4.1</span>])<span class="org-mlpl-operator">;</span>
+td_p<span class="org-mlpl-operator">1</span> <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>td_show_decision(td_hand)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"    selected:"</span><span class="org-mlpl-operator">,</span> u<span class="org-mlpl-operator">:</span>decision_label(td_hand)<span class="org-mlpl-operator">,</span> <span class="org-string">" confidence"</span><span class="org-mlpl-operator">,</span> floor(td_hand<span class="org-mlpl-operator">.</span>confidence * <span class="org-mlpl-number">1000</span>) <span class="org-mlpl-operator">/</span> <span class="org-mlpl-number">1000</span><span class="org-mlpl-operator">,</span> <span class="org-string">" margin"</span><span class="org-mlpl-operator">,</span> floor(td_hand<span class="org-mlpl-operator">.</span>margin * <span class="org-mlpl-number">1000</span>) <span class="org-mlpl-operator">/</span> <span class="org-mlpl-number">1000</span>)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">""</span>)<span class="org-mlpl-operator">;</span>
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-org524df91" class="outline-3">
-<h3 id="org524df91"><span class="section-number-3">6.3.</span> Stage 2: the same shape, learned</h3>
+<div id="outline-container-orge8fa679" class="outline-3">
+<h3 id="orge8fa679"><span class="section-number-3">6.3.</span> Stage 2: the same shape, learned</h3>
 <div class="outline-text-3" id="text-6-3">
 <p>
 Now the probabilities come from training rather than from being written down,
@@ -946,17 +970,17 @@ which is the difference between a demonstration and a claim.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-mlpl"># Stage 2 and 3. One encoder, three heads, trained together. Stage 2 is the
-# Choice alone; stage 3 is what the same forward pass already gave us.
-td_train_set = u:td_corpus(0);
-td_cal_set = u:td_corpus(1);
-td_test_set = u:td_corpus(2);
-td_vocab = u:text_vocab(td_train_set.texts, td_width);
-td_trf = u:td_featurize(td_train_set.texts, td_vocab);
-td_calf = u:td_featurize(td_cal_set.texts, td_vocab);
-td_tef = u:td_featurize(td_test_set.texts, td_vocab);
-td_rows_n = td_vocab.size + 1;
-td_n_train = list_len(td_train_set.texts);
+<pre class="src src-mlpl"><span class="org-comment-delimiter"># </span><span class="org-comment">Stage 2 and 3. One encoder, three heads, trained together. Stage 2 is the
+</span><span class="org-comment-delimiter"># </span><span class="org-comment">Choice alone; stage 3 is what the same forward pass already gave us.
+</span>td_train_set <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>td_corpus(<span class="org-mlpl-number">0</span>)<span class="org-mlpl-operator">;</span>
+td_cal_set <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>td_corpus(<span class="org-mlpl-number">1</span>)<span class="org-mlpl-operator">;</span>
+td_test_set <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>td_corpus(<span class="org-mlpl-number">2</span>)<span class="org-mlpl-operator">;</span>
+td_vocab <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>text_vocab(td_train_set<span class="org-mlpl-operator">.</span>texts<span class="org-mlpl-operator">,</span> td_width)<span class="org-mlpl-operator">;</span>
+td_trf <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>td_featurize(td_train_set<span class="org-mlpl-operator">.</span>texts<span class="org-mlpl-operator">,</span> td_vocab)<span class="org-mlpl-operator">;</span>
+td_calf <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>td_featurize(td_cal_set<span class="org-mlpl-operator">.</span>texts<span class="org-mlpl-operator">,</span> td_vocab)<span class="org-mlpl-operator">;</span>
+td_tef <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>td_featurize(td_test_set<span class="org-mlpl-operator">.</span>texts<span class="org-mlpl-operator">,</span> td_vocab)<span class="org-mlpl-operator">;</span>
+td_rows_n <span class="org-mlpl-operator">=</span> td_vocab<span class="org-mlpl-operator">.</span>size <span class="org-mlpl-operator">+</span> <span class="org-mlpl-number">1</span><span class="org-mlpl-operator">;</span>
+td_n_train <span class="org-mlpl-operator">=</span> list_len(td_train_set<span class="org-mlpl-operator">.</span>texts)<span class="org-mlpl-operator">;</span>
 </pre>
 </div>
 
@@ -967,38 +991,38 @@ in this repository.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-mlpl">td_E = param[td_rows_n, 16];
-td_E = randn(7, [td_rows_n, 16]) * 0.1;
-td_Wc = param[16, 3];
-td_Wc = randn(8, [16, 3]) * 0.1;
-td_bc = param[3];
-td_bc = fill([3], 0);
-td_Wn = param[16, 1];
-td_Wn = randn(9, [16, 1]) * 0.1;
-td_bn = param[1];
-td_bn = fill([1], 0);
-td_Ws = param[16, 3];
-td_Ws = randn(10, [16, 3]) * 0.1;
-td_bs = param[3];
-td_bs = fill([3], 0);
+<pre class="src src-mlpl">td_E <span class="org-mlpl-operator">=</span> <span class="org-mlpl-context-keyword">param</span>[td_rows_n<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">16</span>]<span class="org-mlpl-operator">;</span>
+td_E <span class="org-mlpl-operator">=</span> <span class="org-mlpl-builtin">randn</span>(<span class="org-mlpl-number">7</span><span class="org-mlpl-operator">,</span> [td_rows_n<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">16</span>]) * <span class="org-mlpl-number">0.1</span><span class="org-mlpl-operator">;</span>
+td_Wc <span class="org-mlpl-operator">=</span> <span class="org-mlpl-context-keyword">param</span>[<span class="org-mlpl-number">16</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">3</span>]<span class="org-mlpl-operator">;</span>
+td_Wc <span class="org-mlpl-operator">=</span> <span class="org-mlpl-builtin">randn</span>(<span class="org-mlpl-number">8</span><span class="org-mlpl-operator">,</span> [<span class="org-mlpl-number">16</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">3</span>]) * <span class="org-mlpl-number">0.1</span><span class="org-mlpl-operator">;</span>
+td_bc <span class="org-mlpl-operator">=</span> <span class="org-mlpl-context-keyword">param</span>[<span class="org-mlpl-number">3</span>]<span class="org-mlpl-operator">;</span>
+td_bc <span class="org-mlpl-operator">=</span> <span class="org-mlpl-builtin">fill</span>([<span class="org-mlpl-number">3</span>]<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0</span>)<span class="org-mlpl-operator">;</span>
+td_Wn <span class="org-mlpl-operator">=</span> <span class="org-mlpl-context-keyword">param</span>[<span class="org-mlpl-number">16</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">1</span>]<span class="org-mlpl-operator">;</span>
+td_Wn <span class="org-mlpl-operator">=</span> <span class="org-mlpl-builtin">randn</span>(<span class="org-mlpl-number">9</span><span class="org-mlpl-operator">,</span> [<span class="org-mlpl-number">16</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">1</span>]) * <span class="org-mlpl-number">0.1</span><span class="org-mlpl-operator">;</span>
+td_bn <span class="org-mlpl-operator">=</span> <span class="org-mlpl-context-keyword">param</span>[<span class="org-mlpl-number">1</span>]<span class="org-mlpl-operator">;</span>
+td_bn <span class="org-mlpl-operator">=</span> <span class="org-mlpl-builtin">fill</span>([<span class="org-mlpl-number">1</span>]<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0</span>)<span class="org-mlpl-operator">;</span>
+td_Ws <span class="org-mlpl-operator">=</span> <span class="org-mlpl-context-keyword">param</span>[<span class="org-mlpl-number">16</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">3</span>]<span class="org-mlpl-operator">;</span>
+td_Ws <span class="org-mlpl-operator">=</span> <span class="org-mlpl-builtin">randn</span>(<span class="org-mlpl-number">10</span><span class="org-mlpl-operator">,</span> [<span class="org-mlpl-number">16</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">3</span>]) * <span class="org-mlpl-number">0.1</span><span class="org-mlpl-operator">;</span>
+td_bs <span class="org-mlpl-operator">=</span> <span class="org-mlpl-context-keyword">param</span>[<span class="org-mlpl-number">3</span>]<span class="org-mlpl-operator">;</span>
+td_bs <span class="org-mlpl-operator">=</span> <span class="org-mlpl-builtin">fill</span>([<span class="org-mlpl-number">3</span>]<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0</span>)<span class="org-mlpl-operator">;</span>
 </pre>
 </div>
 
 <div class="org-src-container">
-<pre class="src src-mlpl">print("Stage 2: the same shape, learned.", td_n_train, "training messages,", td_vocab.size, "known words,", td_rows_n * 16 + 16 * 7 + 7, "parameters.");
-td_final = u:td_train(td_trf.ids, td_trf.wmask, td_train_set.cat, reshape(td_train_set.cred, [td_n_train, 1]), td_train_set.urg, td_steps, td_lr);
-td_htr = u:td_state(td_trf.ids, td_trf.wmask);
-td_hte = u:td_state(td_tef.ids, td_tef.wmask);
-td_hcal = u:td_state(td_calf.ids, td_calf.wmask);
-td_cat_logits = u:td_logits(td_hte, td_Wc, td_bc);
-print("    loss", floor(td_final * 1000) / 1000, " category accuracy: train", floor(u:td_accuracy(u:td_logits(td_htr, td_Wc, td_bc), td_train_set.cat) * 1000) / 1000, " test", floor(u:td_accuracy(td_cat_logits, td_test_set.cat) * 1000) / 1000);
-print("");
+<pre class="src src-mlpl">print(<span class="org-string">"Stage 2: the same shape, learned."</span><span class="org-mlpl-operator">,</span> td_n_train<span class="org-mlpl-operator">,</span> <span class="org-string">"training messages,"</span><span class="org-mlpl-operator">,</span> td_vocab<span class="org-mlpl-operator">.</span>size<span class="org-mlpl-operator">,</span> <span class="org-string">"known words,"</span><span class="org-mlpl-operator">,</span> td_rows_n * <span class="org-mlpl-number">16</span> <span class="org-mlpl-operator">+</span> <span class="org-mlpl-number">16</span> * <span class="org-mlpl-number">7</span> <span class="org-mlpl-operator">+</span> <span class="org-mlpl-number">7</span><span class="org-mlpl-operator">,</span> <span class="org-string">"parameters."</span>)<span class="org-mlpl-operator">;</span>
+td_final <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>td_train(td_trf<span class="org-mlpl-operator">.</span>ids<span class="org-mlpl-operator">,</span> td_trf<span class="org-mlpl-operator">.</span>wmask<span class="org-mlpl-operator">,</span> td_train_set<span class="org-mlpl-operator">.</span>cat<span class="org-mlpl-operator">,</span> <span class="org-mlpl-builtin">reshape</span>(td_train_set<span class="org-mlpl-operator">.</span>cred<span class="org-mlpl-operator">,</span> [td_n_train<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">1</span>])<span class="org-mlpl-operator">,</span> td_train_set<span class="org-mlpl-operator">.</span>urg<span class="org-mlpl-operator">,</span> td_steps<span class="org-mlpl-operator">,</span> td_lr)<span class="org-mlpl-operator">;</span>
+td_htr <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>td_state(td_trf<span class="org-mlpl-operator">.</span>ids<span class="org-mlpl-operator">,</span> td_trf<span class="org-mlpl-operator">.</span>wmask)<span class="org-mlpl-operator">;</span>
+td_hte <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>td_state(td_tef<span class="org-mlpl-operator">.</span>ids<span class="org-mlpl-operator">,</span> td_tef<span class="org-mlpl-operator">.</span>wmask)<span class="org-mlpl-operator">;</span>
+td_hcal <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>td_state(td_calf<span class="org-mlpl-operator">.</span>ids<span class="org-mlpl-operator">,</span> td_calf<span class="org-mlpl-operator">.</span>wmask)<span class="org-mlpl-operator">;</span>
+td_cat_logits <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>td_logits(td_hte<span class="org-mlpl-operator">,</span> td_Wc<span class="org-mlpl-operator">,</span> td_bc)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"    loss"</span><span class="org-mlpl-operator">,</span> floor(td_final * <span class="org-mlpl-number">1000</span>) <span class="org-mlpl-operator">/</span> <span class="org-mlpl-number">1000</span><span class="org-mlpl-operator">,</span> <span class="org-string">" category accuracy: train"</span><span class="org-mlpl-operator">,</span> floor(u<span class="org-mlpl-operator">:</span>td_accuracy(u<span class="org-mlpl-operator">:</span>td_logits(td_htr<span class="org-mlpl-operator">,</span> td_Wc<span class="org-mlpl-operator">,</span> td_bc)<span class="org-mlpl-operator">,</span> td_train_set<span class="org-mlpl-operator">.</span>cat) * <span class="org-mlpl-number">1000</span>) <span class="org-mlpl-operator">/</span> <span class="org-mlpl-number">1000</span><span class="org-mlpl-operator">,</span> <span class="org-string">" test"</span><span class="org-mlpl-operator">,</span> floor(u<span class="org-mlpl-operator">:</span>td_accuracy(td_cat_logits<span class="org-mlpl-operator">,</span> td_test_set<span class="org-mlpl-operator">.</span>cat) * <span class="org-mlpl-number">1000</span>) <span class="org-mlpl-operator">/</span> <span class="org-mlpl-number">1000</span>)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">""</span>)<span class="org-mlpl-operator">;</span>
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-org0c3d0c9" class="outline-3">
-<h3 id="org0c3d0c9"><span class="section-number-3">6.4.</span> Stage 3: three decisions from one pass</h3>
+<div id="outline-container-orgf68e228" class="outline-3">
+<h3 id="orgf68e228"><span class="section-number-3">6.4.</span> Stage 3: three decisions from one pass</h3>
 <div class="outline-text-3" id="text-6-4">
 <p>
 The same forward pass has already answered all three questions. What follows the
@@ -1012,29 +1036,29 @@ program decides what to do about it.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-mlpl">print("Stage 3: one state, three typed decisions, one forward pass.");
-td_example = "payroll asks you to confirm your password on this page";
-td_exf = u:td_featurize(str_split(td_example, "\n"), td_vocab);
-td_exh = u:td_state(td_exf.ids, td_exf.wmask);
-print("   \"", td_example, "\"");
-td_kind = u:choice("what kind of message is this?", td_categories, reshape(u:td_logits(td_exh, td_Wc, td_bc), [3]));
-td_asks = u:noul("does it ask for credentials?", take(reshape(u:td_logits(td_exh, td_Wn, td_bn), [1]), 0, 0));
-td_urgency = u:scale("how urgent is it?", td_levels, reshape(u:td_logits(td_exh, td_Ws, td_bs), [3]));
-td_p2 = u:td_show_decision(td_kind);
-print("    credentials?", floor(td_asks.p * 1000) / 1000);
-td_p3 = u:td_show_decision(td_urgency);
-print("    urgency expectation", floor(td_urgency.expectation * 1000) / 1000, "on 0 low to 2 high");
-print("    all three are well-formed decisions:", u:decision_valid(td_kind) * u:decision_valid(td_asks) * u:decision_valid(td_urgency));
-print("");
-print("    the program, not the model, decides what to do:");
-print("    quarantine when phishing is at least 0.80 and credentials at least 0.90 -&gt;", ge(u:decision_prob_of(td_kind, "phishing"), 0.8) * ge(td_asks.p, 0.9));
-print("");
+<pre class="src src-mlpl">print(<span class="org-string">"Stage 3: one state, three typed decisions, one forward pass."</span>)<span class="org-mlpl-operator">;</span>
+td_example <span class="org-mlpl-operator">=</span> <span class="org-string">"payroll asks you to confirm your password on this page"</span><span class="org-mlpl-operator">;</span>
+td_exf <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>td_featurize(str_split(td_example<span class="org-mlpl-operator">,</span> <span class="org-string">"\n"</span>)<span class="org-mlpl-operator">,</span> td_vocab)<span class="org-mlpl-operator">;</span>
+td_exh <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>td_state(td_exf<span class="org-mlpl-operator">.</span>ids<span class="org-mlpl-operator">,</span> td_exf<span class="org-mlpl-operator">.</span>wmask)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"   \""</span><span class="org-mlpl-operator">,</span> td_example<span class="org-mlpl-operator">,</span> <span class="org-string">"\""</span>)<span class="org-mlpl-operator">;</span>
+td_kind <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>choice(<span class="org-string">"what kind of message is this?"</span><span class="org-mlpl-operator">,</span> td_categories<span class="org-mlpl-operator">,</span> <span class="org-mlpl-builtin">reshape</span>(u<span class="org-mlpl-operator">:</span>td_logits(td_exh<span class="org-mlpl-operator">,</span> td_Wc<span class="org-mlpl-operator">,</span> td_bc)<span class="org-mlpl-operator">,</span> [<span class="org-mlpl-number">3</span>]))<span class="org-mlpl-operator">;</span>
+td_asks <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>noul(<span class="org-string">"does it ask for credentials?"</span><span class="org-mlpl-operator">,</span> take(<span class="org-mlpl-builtin">reshape</span>(u<span class="org-mlpl-operator">:</span>td_logits(td_exh<span class="org-mlpl-operator">,</span> td_Wn<span class="org-mlpl-operator">,</span> td_bn)<span class="org-mlpl-operator">,</span> [<span class="org-mlpl-number">1</span>])<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0</span>))<span class="org-mlpl-operator">;</span>
+td_urgency <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>scale(<span class="org-string">"how urgent is it?"</span><span class="org-mlpl-operator">,</span> td_levels<span class="org-mlpl-operator">,</span> <span class="org-mlpl-builtin">reshape</span>(u<span class="org-mlpl-operator">:</span>td_logits(td_exh<span class="org-mlpl-operator">,</span> td_Ws<span class="org-mlpl-operator">,</span> td_bs)<span class="org-mlpl-operator">,</span> [<span class="org-mlpl-number">3</span>]))<span class="org-mlpl-operator">;</span>
+td_p<span class="org-mlpl-operator">2</span> <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>td_show_decision(td_kind)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"    credentials?"</span><span class="org-mlpl-operator">,</span> floor(td_asks<span class="org-mlpl-operator">.</span>p * <span class="org-mlpl-number">1000</span>) <span class="org-mlpl-operator">/</span> <span class="org-mlpl-number">1000</span>)<span class="org-mlpl-operator">;</span>
+td_p<span class="org-mlpl-operator">3</span> <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>td_show_decision(td_urgency)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"    urgency expectation"</span><span class="org-mlpl-operator">,</span> floor(td_urgency<span class="org-mlpl-operator">.</span>expectation * <span class="org-mlpl-number">1000</span>) <span class="org-mlpl-operator">/</span> <span class="org-mlpl-number">1000</span><span class="org-mlpl-operator">,</span> <span class="org-string">"on 0 low to 2 high"</span>)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"    all three are well-formed decisions:"</span><span class="org-mlpl-operator">,</span> u<span class="org-mlpl-operator">:</span>decision_valid(td_kind) * u<span class="org-mlpl-operator">:</span>decision_valid(td_asks) * u<span class="org-mlpl-operator">:</span>decision_valid(td_urgency))<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">""</span>)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"    the program, not the model, decides what to do:"</span>)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"    quarantine when phishing is at least 0.80 and credentials at least 0.90 -&gt;"</span><span class="org-mlpl-operator">,</span> ge(u<span class="org-mlpl-operator">:</span>decision_prob_of(td_kind<span class="org-mlpl-operator">,</span> <span class="org-string">"phishing"</span>)<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0.8</span>) * ge(td_asks<span class="org-mlpl-operator">.</span>p<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0.9</span>))<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">""</span>)<span class="org-mlpl-operator">;</span>
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-org4b131c8" class="outline-3">
-<h3 id="org4b131c8"><span class="section-number-3">6.5.</span> Stage 4: classification is not calibration</h3>
+<div id="outline-container-orgd3defe8" class="outline-3">
+<h3 id="orgd3defe8"><span class="section-number-3">6.5.</span> Stage 4: classification is not calibration</h3>
 <div class="outline-text-3" id="text-6-5">
 <p>
 This is the stage a repurposed chat model cannot honestly claim, and the one the
@@ -1050,37 +1074,37 @@ without changing a single answer.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-mlpl">print("Stage 4: classification is not calibration.");
-td_cal_logits = u:td_logits(td_hcal, td_Wc, td_bc);
-td_t = u:td_best_temperature(td_cal_logits, td_cal_set.cat, 3);
-td_raw = softmax(td_cat_logits, 1);
-td_cooled = softmax(td_cat_logits / td_t, 1);
-print("    temperature fitted on", list_len(td_cal_set.texts), "calibration messages:", td_t);
-print("    on the", list_len(td_test_set.texts), "test messages the model has never seen:");
-print("                     accuracy   mean confidence   Brier    ECE");
-print("    as reported     ", floor(u:td_accuracy(td_cat_logits, td_test_set.cat) * 1000) / 1000, "     ", floor(mean(reduce(:max, td_raw, 1)) * 1000) / 1000, "          ", floor(u:td_brier(td_raw, td_test_set.cat, 3) * 1000) / 1000, "  ", floor(u:td_ece(td_raw, td_test_set.cat, 4) * 1000) / 1000);
-print("    after cooling   ", floor(u:td_accuracy(td_cooled, td_test_set.cat) * 1000) / 1000, "     ", floor(mean(reduce(:max, td_cooled, 1)) * 1000) / 1000, "          ", floor(u:td_brier(td_cooled, td_test_set.cat, 3) * 1000) / 1000, "  ", floor(u:td_ece(td_cooled, td_test_set.cat, 4) * 1000) / 1000);
-print("");
-print("    Temperature scaling changes no answer -- accuracy is identical, because");
-print("    dividing every logit by one number cannot reorder them. What it changes");
-print("    is what the numbers claim, and that is the part a program acts on.");
-print("");
-print("    The other two heads, on the same test messages:");
-print("       credentials? accuracy", floor(mean(eq(ge(sigmoid(u:td_logits(td_hte, td_Wn, td_bn)), 0.5), reshape(td_test_set.cred, [list_len(td_test_set.texts), 1]))) * 1000) / 1000);
-print("       urgency      accuracy", floor(u:td_accuracy(u:td_logits(td_hte, td_Ws, td_bs), td_test_set.urg) * 1000) / 1000);
-print("");
-print("Twenty-four test messages cannot pin an ECE to the third decimal; what this");
-print("stage shows is the procedure, and that the model was overconfident before it.");
-print("")
+<pre class="src src-mlpl">print(<span class="org-string">"Stage 4: classification is not calibration."</span>)<span class="org-mlpl-operator">;</span>
+td_cal_logits <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>td_logits(td_hcal<span class="org-mlpl-operator">,</span> td_Wc<span class="org-mlpl-operator">,</span> td_bc)<span class="org-mlpl-operator">;</span>
+td_t <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>td_best_temperature(td_cal_logits<span class="org-mlpl-operator">,</span> td_cal_set<span class="org-mlpl-operator">.</span>cat<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">3</span>)<span class="org-mlpl-operator">;</span>
+td_raw <span class="org-mlpl-operator">=</span> <span class="org-mlpl-builtin">softmax</span>(td_cat_logits<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">1</span>)<span class="org-mlpl-operator">;</span>
+td_cooled <span class="org-mlpl-operator">=</span> <span class="org-mlpl-builtin">softmax</span>(td_cat_logits <span class="org-mlpl-operator">/</span> td_t<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">1</span>)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"    temperature fitted on"</span><span class="org-mlpl-operator">,</span> list_len(td_cal_set<span class="org-mlpl-operator">.</span>texts)<span class="org-mlpl-operator">,</span> <span class="org-string">"calibration messages:"</span><span class="org-mlpl-operator">,</span> td_t)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"    on the"</span><span class="org-mlpl-operator">,</span> list_len(td_test_set<span class="org-mlpl-operator">.</span>texts)<span class="org-mlpl-operator">,</span> <span class="org-string">"test messages the model has never seen:"</span>)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"                     accuracy   mean confidence   Brier    ECE"</span>)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"    as reported     "</span><span class="org-mlpl-operator">,</span> floor(u<span class="org-mlpl-operator">:</span>td_accuracy(td_cat_logits<span class="org-mlpl-operator">,</span> td_test_set<span class="org-mlpl-operator">.</span>cat) * <span class="org-mlpl-number">1000</span>) <span class="org-mlpl-operator">/</span> <span class="org-mlpl-number">1000</span><span class="org-mlpl-operator">,</span> <span class="org-string">"     "</span><span class="org-mlpl-operator">,</span> floor(<span class="org-mlpl-builtin">mean</span>(reduce(<span class="org-mlpl-operator">:</span>max<span class="org-mlpl-operator">,</span> td_raw<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">1</span>)) * <span class="org-mlpl-number">1000</span>) <span class="org-mlpl-operator">/</span> <span class="org-mlpl-number">1000</span><span class="org-mlpl-operator">,</span> <span class="org-string">"          "</span><span class="org-mlpl-operator">,</span> floor(u<span class="org-mlpl-operator">:</span>td_brier(td_raw<span class="org-mlpl-operator">,</span> td_test_set<span class="org-mlpl-operator">.</span>cat<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">3</span>) * <span class="org-mlpl-number">1000</span>) <span class="org-mlpl-operator">/</span> <span class="org-mlpl-number">1000</span><span class="org-mlpl-operator">,</span> <span class="org-string">"  "</span><span class="org-mlpl-operator">,</span> floor(u<span class="org-mlpl-operator">:</span>td_ece(td_raw<span class="org-mlpl-operator">,</span> td_test_set<span class="org-mlpl-operator">.</span>cat<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">4</span>) * <span class="org-mlpl-number">1000</span>) <span class="org-mlpl-operator">/</span> <span class="org-mlpl-number">1000</span>)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"    after cooling   "</span><span class="org-mlpl-operator">,</span> floor(u<span class="org-mlpl-operator">:</span>td_accuracy(td_cooled<span class="org-mlpl-operator">,</span> td_test_set<span class="org-mlpl-operator">.</span>cat) * <span class="org-mlpl-number">1000</span>) <span class="org-mlpl-operator">/</span> <span class="org-mlpl-number">1000</span><span class="org-mlpl-operator">,</span> <span class="org-string">"     "</span><span class="org-mlpl-operator">,</span> floor(<span class="org-mlpl-builtin">mean</span>(reduce(<span class="org-mlpl-operator">:</span>max<span class="org-mlpl-operator">,</span> td_cooled<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">1</span>)) * <span class="org-mlpl-number">1000</span>) <span class="org-mlpl-operator">/</span> <span class="org-mlpl-number">1000</span><span class="org-mlpl-operator">,</span> <span class="org-string">"          "</span><span class="org-mlpl-operator">,</span> floor(u<span class="org-mlpl-operator">:</span>td_brier(td_cooled<span class="org-mlpl-operator">,</span> td_test_set<span class="org-mlpl-operator">.</span>cat<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">3</span>) * <span class="org-mlpl-number">1000</span>) <span class="org-mlpl-operator">/</span> <span class="org-mlpl-number">1000</span><span class="org-mlpl-operator">,</span> <span class="org-string">"  "</span><span class="org-mlpl-operator">,</span> floor(u<span class="org-mlpl-operator">:</span>td_ece(td_cooled<span class="org-mlpl-operator">,</span> td_test_set<span class="org-mlpl-operator">.</span>cat<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">4</span>) * <span class="org-mlpl-number">1000</span>) <span class="org-mlpl-operator">/</span> <span class="org-mlpl-number">1000</span>)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">""</span>)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"    Temperature scaling changes no answer -- accuracy is identical, because"</span>)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"    dividing every logit by one number cannot reorder them. What it changes"</span>)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"    is what the numbers claim, and that is the part a program acts on."</span>)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">""</span>)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"    The other two heads, on the same test messages:"</span>)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"       credentials? accuracy"</span><span class="org-mlpl-operator">,</span> floor(<span class="org-mlpl-builtin">mean</span>(<span class="org-mlpl-builtin">eq</span>(ge(<span class="org-mlpl-builtin">sigmoid</span>(u<span class="org-mlpl-operator">:</span>td_logits(td_hte<span class="org-mlpl-operator">,</span> td_Wn<span class="org-mlpl-operator">,</span> td_bn))<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0.5</span>)<span class="org-mlpl-operator">,</span> <span class="org-mlpl-builtin">reshape</span>(td_test_set<span class="org-mlpl-operator">.</span>cred<span class="org-mlpl-operator">,</span> [list_len(td_test_set<span class="org-mlpl-operator">.</span>texts)<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">1</span>]))) * <span class="org-mlpl-number">1000</span>) <span class="org-mlpl-operator">/</span> <span class="org-mlpl-number">1000</span>)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"       urgency      accuracy"</span><span class="org-mlpl-operator">,</span> floor(u<span class="org-mlpl-operator">:</span>td_accuracy(u<span class="org-mlpl-operator">:</span>td_logits(td_hte<span class="org-mlpl-operator">,</span> td_Ws<span class="org-mlpl-operator">,</span> td_bs)<span class="org-mlpl-operator">,</span> td_test_set<span class="org-mlpl-operator">.</span>urg) * <span class="org-mlpl-number">1000</span>) <span class="org-mlpl-operator">/</span> <span class="org-mlpl-number">1000</span>)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">""</span>)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"Twenty-four test messages cannot pin an ECE to the third decimal; what this"</span>)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"stage shows is the procedure, and that the model was overconfident before it."</span>)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">""</span>)
 </pre>
 </div>
 </div>
 </div>
 </div>
-<div id="outline-container-orgc6f93eb" class="outline-2">
-<h2 id="orgc6f93eb"><span class="section-number-2">7.</span> Running it</h2>
+<div id="outline-container-org8fd1212" class="outline-2">
+<h2 id="org8fd1212"><span class="section-number-2">7.</span> Running it</h2>
 <div class="outline-text-2" id="text-7">
-<pre class="example" id="org528908e">
+<pre class="example" id="orgf15e916">
 just typed-decisions          # run it here, about three seconds
 </pre>
 
@@ -1099,8 +1123,8 @@ nothing installed.
 </p>
 </div>
 </div>
-<div id="outline-container-org0218524" class="outline-2">
-<h2 id="org0218524"><span class="section-number-2">8.</span> What the four stages were for</h2>
+<div id="outline-container-orgf843461" class="outline-2">
+<h2 id="orgf843461"><span class="section-number-2">8.</span> What the four stages were for</h2>
 <div class="outline-text-2" id="text-8">
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 

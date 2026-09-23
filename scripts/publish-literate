@@ -7,6 +7,9 @@ emacs=${EMACS:-}
 [ -n "$emacs" ] || ! command -v emacs >/dev/null 2>&1 || emacs=emacs
 [ -n "$emacs" ] || [ ! -x /Applications/Emacs.app/Contents/MacOS/Emacs ] || emacs=/Applications/Emacs.app/Contents/MacOS/Emacs
 [ -n "$emacs" ] || { echo "no Emacs found (set EMACS to its path)" >&2; exit 1; }
+# sw-MLPL's Emacs support, for the MLPL major mode htmlize colours from.
+elisp=${MLPL_ELISP:-$repo_root/../sw-mlpl/elisp}
+
 work="$repo_root/tmp/publish-literate.$$"
 rm -rf "$work"; mkdir -p "$work"
 trap 'rm -rf "$work"' EXIT HUP INT TERM
@@ -24,7 +27,7 @@ export_one() {
     out=$2
     name=$(basename "$org" .org)
     cp "$org" "$work/$name.org"
-    "$emacs" --batch -l org --eval "(progn (setq org-export-time-stamp-file nil org-html-validation-link nil org-export-with-broken-links 'mark org-confirm-babel-evaluate nil) (find-file \"$work/$name.org\") (org-html-export-to-html))" >/dev/null 2>&1 || { echo "org-html-export-to-html failed for $name.org" >&2; exit 1; }
+    "$emacs" -Q --batch -l "$repo_root/scripts/publish-literate.el" "$work/$name.org" "$elisp" >/dev/null 2>&1 || { echo "org-html-export-to-html failed for $name.org" >&2; exit 1; }
     [ -s "$work/$name.html" ] || { echo "export of $name.org wrote nothing" >&2; exit 1; }
     cp "$work/$name.html" "$out"
     echo "wrote $out ($(wc -c < "$out" | tr -d ' ') bytes)"

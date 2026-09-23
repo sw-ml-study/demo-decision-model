@@ -5,6 +5,30 @@
 #+property: header-args:mlpl :results output :exports code :eval no-export
 #+property: header-args:emacs-lisp :eval no-export
 #+options: toc:2 num:t timestamp:nil ^:{}
+#+HTML_HEAD: <style>
+#+HTML_HEAD: /* Colour for the MLPL blocks. htmlize turns the faces sw-MLPL's major mode
+#+HTML_HEAD:    applies into these class names; batch Emacs has no display and so no
+#+HTML_HEAD:    colours of its own, which is why they are chosen here. */
+#+HTML_HEAD: pre.src, pre.example { background: #fafafa; border: 1px solid #e4e4e7; border-radius: 6px; line-height: 1.45; }
+#+HTML_HEAD: .org-mlpl-keyword, .org-mlpl-context-keyword, .org-keyword { color: #8250df; font-weight: 600; }
+#+HTML_HEAD: .org-mlpl-builtin { color: #0550ae; }
+#+HTML_HEAD: .org-mlpl-number, .org-constant { color: #953800; }
+#+HTML_HEAD: .org-string { color: #0a7d55; }
+#+HTML_HEAD: .org-comment, .org-comment-delimiter { color: #6a737d; font-style: italic; }
+#+HTML_HEAD: .org-mlpl-operator { color: #57606a; }
+#+HTML_HEAD: .org-warning { color: #b35900; }
+#+HTML_HEAD: @media (prefers-color-scheme: dark) {
+#+HTML_HEAD:   body { background: #0d1117; color: #c9d1d9; }
+#+HTML_HEAD:   a { color: #79c0ff; }
+#+HTML_HEAD:   pre.src, pre.example { background: #161b22; border-color: #30363d; color: #c9d1d9; }
+#+HTML_HEAD:   .org-mlpl-keyword, .org-mlpl-context-keyword, .org-keyword { color: #d2a8ff; }
+#+HTML_HEAD:   .org-mlpl-builtin { color: #79c0ff; }
+#+HTML_HEAD:   .org-mlpl-number, .org-constant { color: #ffa657; }
+#+HTML_HEAD:   .org-string { color: #7ee2b8; }
+#+HTML_HEAD:   .org-comment, .org-comment-delimiter { color: #8b949e; }
+#+HTML_HEAD:   .org-mlpl-operator { color: #8b949e; }
+#+HTML_HEAD: }
+#+HTML_HEAD: </style>
 
 * How to read and run this document
 
