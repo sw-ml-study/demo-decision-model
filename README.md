@@ -356,6 +356,44 @@ funds before close of business"* it answers **legitimate at 0.999**, because the
 only word it recognized was "the". Twelve training messages buy exactly that
 much, and the gate fails if that line ever stops appearing.
 
+### Is a trained model even worth it? We measured instead of arguing
+
+Comparing our line count against "25 lines of Python that calls an LLM" is
+apples to oranges: that program does inference only, over a model trained on the
+whole internet. So the same 24 held-out messages were put through local models
+by the same bounded-choice method (first-token `top_logprobs` renormalized over
+the legal answers — no generation), with [`scripts/llm-baseline`](scripts/llm-baseline)
+and every per-message row committed in
+[`llm-baseline.tsv`](demos/typed-decisions/llm-baseline.tsv):
+
+| | accuracy | Brier | ECE | legal-token mass | per decision |
+|---|---|---|---|---|---|
+| qwen3:0.6b, zero-shot | 0.458 | 0.687 | 0.110 | 0.99 | 0.23 s |
+| qwen3:0.6b, six examples | 0.500 | 0.739 | 0.268 | **0.34** | 0.17 s |
+| llama3.2:3b, zero-shot | **0.792** | 0.326 | **0.006** | 0.99 | 0.33 s |
+| gemma4:31b, zero-shot | **1.000** | 0.015 | 0.021 | 1.00 | 1.24 s |
+| this repository's model, calibrated | 0.750 | 0.404 | 0.097 | n/a | microseconds |
+
+**A 3B model beats it untrained, and a 31B model gets every message right.** If
+your categories are spam and phishing, a pretrained model already knows those
+words — use one. This model's remaining advantages are 11,655 parameters against
+three billion, microseconds against a third of a second, weights you can print,
+and an answer domain named in data rather than inferred from the tokens `leg`,
+`sp` and `ph`.
+
+Two findings outrank the accuracy column. Adding six examples to the prompt
+pushed qwen3:0.6b's probability mass **off the legal answers** — only 34% of its
+first-token distribution could begin a legal word, and the reported confidence
+is then computed from a third of the distribution. That is precisely the
+objection raised under the original post, and a three-column head cannot have
+it. And llama3.2:3b is better calibrated *out of the box* (ECE 0.006) than this
+model is *after* temperature scaling (0.097).
+
+Where a trained typed decision model does earn its place is where no pretrained
+model has the knowledge: [model 4](docs/experiments/RC01-rule-choice.md) chooses
+among the 35 decomposition rules of a 1966 script — an answer set that exists in
+no pretraining corpus.
+
 ### Start here: typed decisions, the hello world
 
 If you want the idea without the ELIZA machinery,

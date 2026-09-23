@@ -70,6 +70,10 @@ scorer-score:
 eliza-train:
     ./scripts/run-eliza-train
 
+# Score local LLMs on the same held-out messages, by the same bounded-choice method (needs ollama).
+llm-baseline:
+    ./scripts/llm-baseline
+
 # Run the concise hello: the short annotated program, over the corpus it is given.
 concise-hello:
     ../sw-mlpl/target/release/mlpl-repl --source-dir . -f demos/typed-decisions/concise-hello.mlpl -- demos/typed-decisions/messages.json

@@ -316,12 +316,20 @@ honest ceiling of a small corpus.
 *The comparison is unfair: their twenty-five lines answer any question you can
 phrase; yours answers three it was trained for.*
 
-That is the real asymmetry, and it cuts against this page. A pretrained model
-carries knowledge about the world; this one carries knowledge about twelve
-sentences. What this page claims is narrower: that the *decision* half -- taking
-state in and returning bounded, typed, inspectable probabilities -- does not
-require a language model at all, and reads more directly when written
-as itself.
+Correct, and the asymmetry cuts against this page. It has also been measured
+rather than argued: [[file:typed-decisions.html][the four-stage document]] runs the same 24 held-out
+messages through local models by the same bounded-choice method, and a
+three-billion-parameter model answers them better with no training at all
+(0.792 against 0.750), while a thirty-one-billion one gets all 24 right. If
+your categories are spam and phishing, a pretrained model already knows those
+words and you should use one.
+
+What a trained typed decision model has instead is 11,655 parameters against
+three billion, a decision in microseconds rather than a third of a second,
+weights you can print, and an answer domain named in a data file. Where it
+actually earns its place is a question no pretrained model has seen -- choosing
+among the 35 decomposition rules of a 1966 script, say, rather than among words
+the internet has discussed at length.
 
 *How do I know the numbers on this page are real?*
 

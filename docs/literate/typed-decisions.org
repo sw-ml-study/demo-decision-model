@@ -758,6 +758,63 @@ and a label set from one hand flatter any model trained on them. Model 4
 elsewhere in this repository exists precisely to remove that joint, by taking
 its labels from a program written in 1966 by someone else.
 
+* Is this a fair comparison? No -- so here is the measured one
+
+The honest objection to everything above is that it compares two different
+jobs. The Python program does /inference only/, over a model somebody else
+trained on the whole internet; it works on any question you can phrase and
+needed no corpus. This one trains from nothing on 120 hand-written messages and
+answers the three questions it was built for. Counting lines between them
+settles nothing.
+
+The comparison that does settle something is to give both the same task. These
+are the same 24 held-out messages this document scores its own model on,
+answered by local models through the same bounded-choice method -- the first
+token's ~top_logprobs~, renormalized over the legal answers, nothing generated
+-- which is the method the Python post uses. ~scripts/llm-baseline~ runs it and
+writes every per-message row to ~demos/typed-decisions/llm-baseline.tsv~.
+
+| what | accuracy | Brier | ECE | mean confidence | legal-token mass | per decision |
+|---+---+---+---+---+---+---|
+| qwen3:0.6b, zero-shot | 0.458 | 0.687 | 0.110 | 0.568 | 0.99 | 0.23 s |
+| qwen3:0.6b, six examples | 0.500 | 0.739 | 0.268 | 0.670 | *0.34* | 0.17 s |
+| llama3.2:3b, zero-shot | *0.792* | 0.326 | *0.006* | 0.795 | 0.99 | 0.33 s |
+| llama3.2:3b, six examples | 0.750 | 0.293 | 0.080 | 0.830 | 0.67 | 0.23 s |
+| gemma4:31b, zero-shot | *1.000* | 0.015 | 0.021 | 0.979 | 1.00 | 1.24 s |
+| this model, calibrated | 0.750 | 0.404 | 0.097 | 0.652 | not applicable | microseconds |
+
+*A three-billion-parameter model beats this one without being trained at all,
+and a thirty-one-billion one gets every message right.* That is the result, it
+is not close, and no amount of framing improves it. If your categories are
+spam and phishing, a pretrained model already knows what those words mean, and
+you should use one.
+
+What this model has instead is size and provenance: 11,655 parameters against
+three billion, a decision in microseconds rather than a third of a second,
+weights you can print, and an answer domain that is named in a data file rather
+than inferred from the tokens ~leg~, ~sp~ and ~ph~. Whether that is worth 0.04
+of accuracy depends entirely on what you are building.
+
+Two things in that table are worth more than the accuracy column:
+
+- *The few-shot rows show the failure the discussion under that post kept
+  raising.* Adding six examples to the prompt pushed qwen3:0.6b's probability
+  mass off the legal answers entirely -- only 34% of its first-token
+  distribution was on a word that could begin "legitimate", "spam" or
+  "phishing". Renormalizing what is left produces confident numbers computed
+  from a third of the distribution. A head with three columns cannot do this;
+  there is nowhere else for the mass to go.
+- *llama3.2:3b is better calibrated out of the box than this model is after
+  calibration* (ECE 0.006 against 0.097). Pretraining buys calibration as well
+  as knowledge, which is a genuinely uncomfortable result for a page whose last
+  stage is about calibration, and it is here rather than omitted.
+
+The place a trained typed decision model earns its keep is where no pretrained
+model has the knowledge: [[https://github.com/sw-ml-study/demo-decision-model/blob/main/docs/experiments/RC01-rule-choice.md][model 4]] in this repository chooses among the 35
+decomposition rules of a 1966 script, an answer set that exists nowhere in any
+pretraining corpus. Spam and phishing was the wrong task to prove anything
+with, and running the baseline is how that became visible.
+
 * What a sceptical reader will ask
 
 *Twenty-four test messages is nothing.*
@@ -779,6 +836,12 @@ correct shape, at a size too small to be comfortable.
 
 Yes. Seventy-two messages and two hundred Adam steps with no regularization will
 do that, which is why nothing here is measured on the training split.
+
+*Would a pretrained LLM just do this better?*
+
+On this task, yes -- measured above, in the same document: 0.792 for a 3B model
+that never saw the training split, 1.000 for a 31B one, against 0.750 here. The
+answer is in the page rather than left for a reader to discover.
 
 *A mean-pooled bag of words is not an interesting model.*
 

@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+"""Score a local LLM on exactly the messages typed-decisions.mlpl is scored on.
+
+The comparison this settles is the one a reader asks first: a repurposed
+language model needs no training at all, so is the trained model worth having?
+Both sides answer the same 24 held-out messages, and both answer by the same
+bounded-choice method -- the first token's `top_logprobs`, renormalized over the
+legal answer set, with nothing generated. That is the method the widely-shared
+Python demo uses, and the method this repository's own rules require.
+
+Three arms, because a weak prompt against a small model would be a strawman:
+
+  zero-shot   the instruction alone
+  few-shot    six examples, two per class, drawn from the *training* split the
+              MLPL model learned from, so neither side sees the test messages
+  large       the same zero-shot prompt against a much larger local model
+
+Reports accuracy, Brier, expected calibration error, mean confidence, the share
+of probability mass the legal tokens carried (the failure mode the discussion
+under that post kept raising), and seconds per decision.
+
+usage: llm-baseline [--model M] [--large M] [--out FILE]
+       requires a local Ollama on :11434
+"""
+
+import argparse
+import json
+import re
+import sys
+import time
+import urllib.error
+import urllib.request
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+CORPUS = ROOT / "demos/typed-decisions/typed-decisions.mlpl"
+CLASSES = ["legitimate", "spam", "phishing"]
+OLLAMA = "http://localhost:11434/api/generate"
+
+
+def corpus():
+    """The 120 messages and their labels, read out of the program's own source.
+
+    The split rule is the program's: three of every five train, the fourth
+    calibrates, the fifth tests. Duplicated here on purpose -- if it ever drifts
+    from the MLPL, the counts asserted below stop matching.
+    """
+    rows = re.findall(r'^    "(.*)\|(\d)\|(\d)\|(\d)",?$', CORPUS.read_text(), re.M)
+    if len(rows) != 120:
+        sys.exit(f"expected 120 corpus rows in {CORPUS}, found {len(rows)}")
+    train, test = [], []
+    for i, (text, cat, _cred, _urg) in enumerate(rows):
+        (test if i % 5 == 4 else train if i % 5 < 3 else []).append((text, int(cat)))
+    return train, test
+
+
+def prompt(message, shots):
+    lines = ["Classify the message as legitimate, spam, or phishing."]
+    for text, label in shots:
+        lines.append(f"Message: {text}\nAnswer: {CLASSES[label]}")
+    lines.append(f"Message: {message}\nAnswer with one word.\nAnswer:")
+    return "\n".join(lines)
+
+
+def ask(model, text, shots):
+    """First-token distribution over the legal answers, and the mass they held."""
+    body = {
+        "model": model,
+        "prompt": prompt(text, shots),
+        "stream": False,
+        "think": False,
+        "options": {"num_predict": 1, "temperature": 0},
+        "logprobs": True,
+        "top_logprobs": 20,
+    }
+    req = urllib.request.Request(
+        OLLAMA, json.dumps(body).encode(), {"Content-Type": "application/json"}
+    )
+    with urllib.request.urlopen(req, timeout=300) as r:
+        d = json.load(r)
+    tops = d["logprobs"][0]["top_logprobs"]
+    # A class's score is the best token that could begin its name. Everything
+    # else in the top 20 is mass the legal set did not hold.
+    best = [None] * len(CLASSES)
+    legal_mass, total_mass = 0.0, 0.0
+    for t in tops:
+        tok = t["token"].strip().lower()
+        p = pow(2.718281828459045, t["logprob"])
+        total_mass += p
+        hit = next((i for i, c in enumerate(CLASSES) if tok and c.startswith(tok)), None)
+        if hit is None:
+            continue
+        legal_mass += p
+        if best[hit] is None or t["logprob"] > best[hit]:
+            best[hit] = t["logprob"]
+    floor = min([v for v in best if v is not None], default=-20.0) - 10.0
+    logits = [v if v is not None else floor for v in best]
+    m = max(logits)
+    exp = [pow(2.718281828459045, v - m) for v in logits]
+    s = sum(exp)
+    return [e / s for e in exp], (legal_mass / total_mass if total_mass else 0.0)
+
+
+def score(rows):
+    """Accuracy, Brier, ECE (4 buckets) and mean confidence over scored rows."""
+    n = len(rows)
+    right = sum(1 for p, y in rows if p.index(max(p)) == y)
+    brier = sum(sum((pi - (1.0 if i == y else 0.0)) ** 2 for i, pi in enumerate(p)) for p, y in rows) / n
+    conf = sum(max(p) for p, _ in rows) / n
+    ece = 0.0
+    for b in range(4):
+        lo, hi = b / 4, (b + 1) / 4
+        bucket = [(p, y) for p, y in rows if lo <= max(p) < hi or (b == 3 and max(p) == 1.0)]
+        if bucket:
+            acc = sum(1 for p, y in bucket if p.index(max(p)) == y) / len(bucket)
+            avg = sum(max(p) for p, _ in bucket) / len(bucket)
+            ece += abs(acc - avg) * len(bucket) / n
+    return {"n": n, "accuracy": right / n, "brier": brier, "ece": ece, "confidence": conf}
+
+
+def run(model, test, shots, label, out):
+    rows, masses, t0 = [], [], time.time()
+    for text, y in test:
+        try:
+            p, mass = ask(model, text, shots)
+        except (urllib.error.URLError, KeyError, IndexError) as e:
+            sys.exit(f"{model}: {e} (is ollama running, and does it support logprobs?)")
+        rows.append((p, y))
+        masses.append(mass)
+        out.write(
+            f"{label}\t{model}\t{CLASSES[y]}\t{CLASSES[p.index(max(p))]}\t"
+            + "\t".join(f"{x:.4f}" for x in p)
+            + f"\t{mass:.4f}\t{text}\n"
+        )
+    s = score(rows)
+    s["seconds_per_decision"] = (time.time() - t0) / len(test)
+    s["legal_mass"] = sum(masses) / len(masses)
+    s["arm"] = label
+    s["model"] = model
+    return s
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--models", default="qwen3:0.6b,llama3.2:3b", help="comma separated; each runs zero-shot and few-shot")
+    ap.add_argument("--large", default="gemma4:31b-mlx", help="one more model, zero-shot only")
+    ap.add_argument("--out", default=str(ROOT / "demos/typed-decisions/llm-baseline.tsv"))
+    a = ap.parse_args()
+    train, test = corpus()
+    shots = [t for label in range(3) for t in [x for x in train if x[1] == label][:2]]
+    results = []
+    with open(a.out, "w") as out:
+        out.write("arm\tmodel\ttruth\tpredicted\tp_legitimate\tp_spam\tp_phishing\tlegal_mass\tmessage\n")
+        for model in a.models.split(","):
+            results.append(run(model, test, [], "zero-shot", out))
+            results.append(run(model, test, shots, "few-shot", out))
+        if a.large:
+            results.append(run(a.large, test, [], "zero-shot", out))
+    print(f"{len(test)} held-out messages, the same ones typed-decisions.mlpl is scored on\n")
+    print(f"{'arm':<16} {'model':<16} {'acc':>6} {'Brier':>7} {'ECE':>6} {'conf':>6} {'legal':>6} {'s/decision':>11}")
+    for r in results:
+        print(
+            f"{r['arm']:<16} {r['model']:<16} {r['accuracy']:>6.3f} {r['brier']:>7.3f} "
+            f"{r['ece']:>6.3f} {r['confidence']:>6.3f} {r['legal_mass']:>6.3f} {r['seconds_per_decision']:>11.2f}"
+        )
+    print(f"\nper-message rows written to {a.out}")
+
+
+if __name__ == "__main__":
+    main()

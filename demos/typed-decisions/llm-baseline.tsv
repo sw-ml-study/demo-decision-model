@@ -1,0 +1,121 @@
+arm	model	truth	predicted	p_legitimate	p_spam	p_phishing	legal_mass	message
+zero-shot	qwen3:0.6b	spam	legitimate	0.8249	0.0522	0.1229	0.9960	lose twenty pounds with this one weird trick
+zero-shot	qwen3:0.6b	legitimate	phishing	0.1235	0.3691	0.5074	0.9800	can you review the draft before friday
+zero-shot	qwen3:0.6b	phishing	phishing	0.4286	0.0991	0.4723	0.9960	the ceo needs you to buy gift cards urgently
+zero-shot	qwen3:0.6b	spam	phishing	0.3299	0.2204	0.4497	0.9889	double your crypto returns guaranteed no risk
+zero-shot	qwen3:0.6b	legitimate	legitimate	0.6003	0.1244	0.2754	0.9920	welcome to the team, here is your desk number
+zero-shot	qwen3:0.6b	phishing	legitimate	0.4373	0.3314	0.2312	0.9946	your vpn certificate expired, reauthenticate here
+zero-shot	qwen3:0.6b	spam	legitimate	0.6007	0.1680	0.2313	0.9945	your car warranty is about to expire, act now
+zero-shot	qwen3:0.6b	legitimate	legitimate	0.7399	0.1246	0.1355	0.9929	we rescheduled the client call to wednesday
+zero-shot	qwen3:0.6b	phishing	phishing	0.3539	0.1473	0.4988	0.9863	action required: reset your password within an hour
+zero-shot	qwen3:0.6b	spam	legitimate	0.4261	0.1800	0.3939	0.9849	we can remove your debt in thirty days
+zero-shot	qwen3:0.6b	legitimate	legitimate	0.6884	0.1135	0.1981	0.9946	the parking permit renewal form is due friday
+zero-shot	qwen3:0.6b	phishing	legitimate	0.3967	0.2087	0.3946	0.9954	confirm your identity to release the held package
+zero-shot	qwen3:0.6b	spam	phishing	0.4247	0.1453	0.4300	0.9859	this stock is about to explode, buy before monday
+zero-shot	qwen3:0.6b	legitimate	legitimate	0.8035	0.0383	0.1582	0.9942	badge access to the lab starts on monday
+zero-shot	qwen3:0.6b	phishing	legitimate	0.6649	0.1278	0.2073	0.9883	urgent: the director asked me to handle this quietly
+zero-shot	qwen3:0.6b	spam	phishing	0.2420	0.2975	0.4605	0.9939	miracle cream removes wrinkles overnight
+zero-shot	qwen3:0.6b	legitimate	legitimate	0.4054	0.2707	0.3240	0.9937	i added the numbers you asked for to the sheet
+zero-shot	qwen3:0.6b	phishing	legitimate	0.5313	0.2472	0.2216	0.9915	your package is held, confirm your card to release
+zero-shot	qwen3:0.6b	spam	legitimate	0.7639	0.0745	0.1616	0.9713	best deals on refurbished phones this month
+zero-shot	qwen3:0.6b	legitimate	legitimate	0.6525	0.2362	0.1113	0.9957	please bring your laptop to the workshop
+zero-shot	qwen3:0.6b	phishing	phishing	0.3729	0.0959	0.5312	0.9888	sign in to view the encrypted message from hr
+zero-shot	qwen3:0.6b	spam	legitimate	0.4047	0.2367	0.3586	0.9949	your name appeared in our prize draw list
+zero-shot	qwen3:0.6b	legitimate	legitimate	0.8939	0.0750	0.0311	0.9942	the release notes are ready for your approval
+zero-shot	qwen3:0.6b	legitimate	legitimate	0.4543	0.2662	0.2795	0.9845	the intern starts on monday, say hello
+few-shot	qwen3:0.6b	spam	spam	0.3747	0.4851	0.1402	0.0718	lose twenty pounds with this one weird trick
+few-shot	qwen3:0.6b	legitimate	phishing	0.0447	0.2000	0.7553	0.1042	can you review the draft before friday
+few-shot	qwen3:0.6b	phishing	phishing	0.0636	0.1401	0.7963	0.6844	the ceo needs you to buy gift cards urgently
+few-shot	qwen3:0.6b	spam	legitimate	0.7885	0.1795	0.0319	0.2552	double your crypto returns guaranteed no risk
+few-shot	qwen3:0.6b	legitimate	legitimate	0.7441	0.0900	0.1659	0.1706	welcome to the team, here is your desk number
+few-shot	qwen3:0.6b	phishing	legitimate	0.6307	0.2576	0.1116	0.1675	your vpn certificate expired, reauthenticate here
+few-shot	qwen3:0.6b	spam	legitimate	0.6584	0.1973	0.1443	0.5678	your car warranty is about to expire, act now
+few-shot	qwen3:0.6b	legitimate	phishing	0.0477	0.2499	0.7024	0.1432	we rescheduled the client call to wednesday
+few-shot	qwen3:0.6b	phishing	phishing	0.1705	0.3741	0.4554	0.3447	action required: reset your password within an hour
+few-shot	qwen3:0.6b	spam	legitimate	0.5348	0.2716	0.1936	0.3148	we can remove your debt in thirty days
+few-shot	qwen3:0.6b	legitimate	legitimate	0.3973	0.2515	0.3512	0.6444	the parking permit renewal form is due friday
+few-shot	qwen3:0.6b	phishing	legitimate	0.8045	0.1165	0.0790	0.1364	confirm your identity to release the held package
+few-shot	qwen3:0.6b	spam	phishing	0.0989	0.4149	0.4862	0.4371	this stock is about to explode, buy before monday
+few-shot	qwen3:0.6b	legitimate	legitimate	0.7095	0.1001	0.1904	0.3355	badge access to the lab starts on monday
+few-shot	qwen3:0.6b	phishing	phishing	0.0273	0.1031	0.8696	0.2624	urgent: the director asked me to handle this quietly
+few-shot	qwen3:0.6b	spam	legitimate	0.6340	0.2952	0.0708	0.7140	miracle cream removes wrinkles overnight
+few-shot	qwen3:0.6b	legitimate	legitimate	0.7674	0.1966	0.0360	0.3176	i added the numbers you asked for to the sheet
+few-shot	qwen3:0.6b	phishing	legitimate	0.9486	0.0514	0.0000	0.0736	your package is held, confirm your card to release
+few-shot	qwen3:0.6b	spam	legitimate	0.5866	0.3537	0.0596	0.2682	best deals on refurbished phones this month
+few-shot	qwen3:0.6b	legitimate	legitimate	0.8540	0.1014	0.0445	0.1686	please bring your laptop to the workshop
+few-shot	qwen3:0.6b	phishing	phishing	0.3130	0.1750	0.5121	0.6410	sign in to view the encrypted message from hr
+few-shot	qwen3:0.6b	spam	legitimate	0.8961	0.0817	0.0222	0.2293	your name appeared in our prize draw list
+few-shot	qwen3:0.6b	legitimate	legitimate	0.5219	0.2257	0.2524	0.8575	the release notes are ready for your approval
+few-shot	qwen3:0.6b	legitimate	legitimate	0.5302	0.1701	0.2997	0.1409	the intern starts on monday, say hello
+zero-shot	llama3.2:3b	spam	spam	0.0001	0.9941	0.0058	0.9980	lose twenty pounds with this one weird trick
+zero-shot	llama3.2:3b	legitimate	legitimate	0.9540	0.0454	0.0006	0.9780	can you review the draft before friday
+zero-shot	llama3.2:3b	phishing	spam	0.0001	0.6709	0.3289	0.9978	the ceo needs you to buy gift cards urgently
+zero-shot	llama3.2:3b	spam	spam	0.0000	0.9784	0.0216	0.9978	double your crypto returns guaranteed no risk
+zero-shot	llama3.2:3b	legitimate	legitimate	0.8647	0.1228	0.0125	0.9885	welcome to the team, here is your desk number
+zero-shot	llama3.2:3b	phishing	phishing	0.0006	0.4122	0.5872	0.9961	your vpn certificate expired, reauthenticate here
+zero-shot	llama3.2:3b	spam	spam	0.0004	0.9740	0.0256	0.9975	your car warranty is about to expire, act now
+zero-shot	llama3.2:3b	legitimate	legitimate	0.9645	0.0295	0.0059	0.9762	we rescheduled the client call to wednesday
+zero-shot	llama3.2:3b	phishing	phishing	0.0025	0.4538	0.5437	0.9942	action required: reset your password within an hour
+zero-shot	llama3.2:3b	spam	spam	0.0015	0.8552	0.1434	0.9891	we can remove your debt in thirty days
+zero-shot	llama3.2:3b	legitimate	spam	0.2084	0.6641	0.1276	0.9941	the parking permit renewal form is due friday
+zero-shot	llama3.2:3b	phishing	phishing	0.0026	0.4554	0.5419	0.9912	confirm your identity to release the held package
+zero-shot	llama3.2:3b	spam	spam	0.0001	0.9744	0.0255	0.9946	this stock is about to explode, buy before monday
+zero-shot	llama3.2:3b	legitimate	legitimate	0.8408	0.1426	0.0166	0.9898	badge access to the lab starts on monday
+zero-shot	llama3.2:3b	phishing	phishing	0.0049	0.4135	0.5816	0.9904	urgent: the director asked me to handle this quietly
+zero-shot	llama3.2:3b	spam	spam	0.0005	0.9913	0.0082	0.9969	miracle cream removes wrinkles overnight
+zero-shot	llama3.2:3b	legitimate	legitimate	0.6063	0.3008	0.0929	0.9035	i added the numbers you asked for to the sheet
+zero-shot	llama3.2:3b	phishing	spam	0.0013	0.7456	0.2531	0.9926	your package is held, confirm your card to release
+zero-shot	llama3.2:3b	spam	spam	0.0026	0.9966	0.0008	0.9937	best deals on refurbished phones this month
+zero-shot	llama3.2:3b	legitimate	spam	0.2179	0.6595	0.1226	0.9835	please bring your laptop to the workshop
+zero-shot	llama3.2:3b	phishing	phishing	0.0024	0.3712	0.6264	0.9935	sign in to view the encrypted message from hr
+zero-shot	llama3.2:3b	spam	spam	0.1305	0.7325	0.1370	0.9880	your name appeared in our prize draw list
+zero-shot	llama3.2:3b	legitimate	legitimate	0.9343	0.0446	0.0211	0.9859	the release notes are ready for your approval
+zero-shot	llama3.2:3b	legitimate	spam	0.1469	0.7930	0.0601	0.9879	the intern starts on monday, say hello
+few-shot	llama3.2:3b	spam	spam	0.1309	0.8383	0.0308	0.5926	lose twenty pounds with this one weird trick
+few-shot	llama3.2:3b	legitimate	legitimate	0.8539	0.1461	0.0000	0.7929	can you review the draft before friday
+few-shot	llama3.2:3b	phishing	spam	0.1214	0.5763	0.3023	0.3384	the ceo needs you to buy gift cards urgently
+few-shot	llama3.2:3b	spam	spam	0.0081	0.9919	0.0000	0.4278	double your crypto returns guaranteed no risk
+few-shot	llama3.2:3b	legitimate	legitimate	0.9999	0.0000	0.0000	0.7150	welcome to the team, here is your desk number
+few-shot	llama3.2:3b	phishing	legitimate	0.5409	0.0843	0.3748	0.5960	your vpn certificate expired, reauthenticate here
+few-shot	llama3.2:3b	spam	spam	0.0281	0.9333	0.0386	0.6797	your car warranty is about to expire, act now
+few-shot	llama3.2:3b	legitimate	legitimate	0.9999	0.0000	0.0000	0.8545	we rescheduled the client call to wednesday
+few-shot	llama3.2:3b	phishing	phishing	0.1970	0.0514	0.7517	0.2025	action required: reset your password within an hour
+few-shot	llama3.2:3b	spam	spam	0.4764	0.5235	0.0000	0.5339	we can remove your debt in thirty days
+few-shot	llama3.2:3b	legitimate	legitimate	0.9811	0.0189	0.0000	0.8461	the parking permit renewal form is due friday
+few-shot	llama3.2:3b	phishing	legitimate	0.5150	0.1817	0.3033	0.8344	confirm your identity to release the held package
+few-shot	llama3.2:3b	spam	spam	0.0000	0.9999	0.0000	0.4581	this stock is about to explode, buy before monday
+few-shot	llama3.2:3b	legitimate	legitimate	0.9781	0.0219	0.0000	0.6471	badge access to the lab starts on monday
+few-shot	llama3.2:3b	phishing	legitimate	0.8065	0.1667	0.0268	0.7582	urgent: the director asked me to handle this quietly
+few-shot	llama3.2:3b	spam	spam	0.0210	0.9647	0.0142	0.6942	miracle cream removes wrinkles overnight
+few-shot	llama3.2:3b	legitimate	legitimate	0.8461	0.1382	0.0157	0.8039	i added the numbers you asked for to the sheet
+few-shot	llama3.2:3b	phishing	phishing	0.2893	0.1440	0.5666	0.7900	your package is held, confirm your card to release
+few-shot	llama3.2:3b	spam	legitimate	0.5360	0.4640	0.0000	0.8276	best deals on refurbished phones this month
+few-shot	llama3.2:3b	legitimate	legitimate	0.9741	0.0259	0.0000	0.6490	please bring your laptop to the workshop
+few-shot	llama3.2:3b	phishing	phishing	0.0353	0.0328	0.9318	0.9620	sign in to view the encrypted message from hr
+few-shot	llama3.2:3b	spam	legitimate	0.8659	0.1262	0.0079	0.7903	your name appeared in our prize draw list
+few-shot	llama3.2:3b	legitimate	legitimate	0.9999	0.0000	0.0000	0.5017	the release notes are ready for your approval
+few-shot	llama3.2:3b	legitimate	legitimate	0.9446	0.0554	0.0000	0.8312	the intern starts on monday, say hello
+zero-shot	gemma4:31b-mlx	spam	spam	0.0000	1.0000	0.0000	1.0000	lose twenty pounds with this one weird trick
+zero-shot	gemma4:31b-mlx	legitimate	legitimate	0.9999	0.0000	0.0000	1.0000	can you review the draft before friday
+zero-shot	gemma4:31b-mlx	phishing	phishing	0.0000	0.0000	0.9999	1.0000	the ceo needs you to buy gift cards urgently
+zero-shot	gemma4:31b-mlx	spam	spam	0.0000	0.9046	0.0953	1.0000	double your crypto returns guaranteed no risk
+zero-shot	gemma4:31b-mlx	legitimate	legitimate	0.9999	0.0000	0.0000	1.0000	welcome to the team, here is your desk number
+zero-shot	gemma4:31b-mlx	phishing	phishing	0.0000	0.0000	0.9999	1.0000	your vpn certificate expired, reauthenticate here
+zero-shot	gemma4:31b-mlx	spam	spam	0.0000	0.9988	0.0012	1.0000	your car warranty is about to expire, act now
+zero-shot	gemma4:31b-mlx	legitimate	legitimate	0.9999	0.0000	0.0000	1.0000	we rescheduled the client call to wednesday
+zero-shot	gemma4:31b-mlx	phishing	phishing	0.0000	0.0000	1.0000	1.0000	action required: reset your password within an hour
+zero-shot	gemma4:31b-mlx	spam	spam	0.0000	0.9999	0.0001	1.0000	we can remove your debt in thirty days
+zero-shot	gemma4:31b-mlx	legitimate	legitimate	0.9999	0.0000	0.0000	1.0000	the parking permit renewal form is due friday
+zero-shot	gemma4:31b-mlx	phishing	phishing	0.0000	0.0000	1.0000	1.0000	confirm your identity to release the held package
+zero-shot	gemma4:31b-mlx	spam	spam	0.0000	1.0000	0.0000	1.0000	this stock is about to explode, buy before monday
+zero-shot	gemma4:31b-mlx	legitimate	legitimate	0.9999	0.0000	0.0000	1.0000	badge access to the lab starts on monday
+zero-shot	gemma4:31b-mlx	phishing	phishing	0.0000	0.0000	1.0000	1.0000	urgent: the director asked me to handle this quietly
+zero-shot	gemma4:31b-mlx	spam	spam	0.0000	1.0000	0.0000	1.0000	miracle cream removes wrinkles overnight
+zero-shot	gemma4:31b-mlx	legitimate	legitimate	0.9999	0.0000	0.0000	1.0000	i added the numbers you asked for to the sheet
+zero-shot	gemma4:31b-mlx	phishing	phishing	0.0000	0.0000	0.9999	1.0000	your package is held, confirm your card to release
+zero-shot	gemma4:31b-mlx	spam	spam	0.0000	1.0000	0.0000	1.0000	best deals on refurbished phones this month
+zero-shot	gemma4:31b-mlx	legitimate	legitimate	0.9999	0.0000	0.0000	1.0000	please bring your laptop to the workshop
+zero-shot	gemma4:31b-mlx	phishing	phishing	0.0000	0.0000	1.0000	1.0000	sign in to view the encrypted message from hr
+zero-shot	gemma4:31b-mlx	spam	spam	0.0000	0.5927	0.4073	1.0000	your name appeared in our prize draw list
+zero-shot	gemma4:31b-mlx	legitimate	legitimate	1.0000	0.0000	0.0000	1.0000	the release notes are ready for your approval
+zero-shot	gemma4:31b-mlx	legitimate	legitimate	0.9999	0.0000	0.0000	1.0000	the intern starts on monday, say hello
