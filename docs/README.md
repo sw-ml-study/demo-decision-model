@@ -15,6 +15,10 @@ function with a free deterministic oracle, not the point.
 
 ## Literate reading
 
+- [`literate/concise-hello.org`](literate/concise-hello.org) — the short one:
+  a typed decision model in 36 annotated lines, trained on a corpus passed in
+  on the command line, written against the widely-shared "Jev in 25 lines of
+  Python" and counting honestly what each program stands on.
 - [`literate/typed-decisions.org`](literate/typed-decisions.org) — the hello
   world: one state, three typed heads and a calibration measurement, over
   message triage rather than ELIZA, in four stages. Start here. Published

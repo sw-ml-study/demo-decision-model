@@ -73,7 +73,10 @@ text = pathlib.Path(org).read_text()
 blocks = re.findall(r"#\+begin_src mlpl :tangle no :exports both\n(.*?)\n#\+end_src\n\n#\+RESULTS:\n(.*?)\n\n", text, re.S)
 name = pathlib.Path(org).stem
 if not blocks:
-    print(f"no runnable primer blocks found in {name}.org", file=sys.stderr); sys.exit(1)
+    # A document may be all tangled source: the program it tangles is run by
+    # its own gate check, which is a stronger claim than a recorded block.
+    print(f"literate: {name}.org has no primer blocks; its tangled source is checked instead")
+    sys.exit(0)
 bad = 0
 for i, (body, result) in enumerate(blocks, 1):
     if result.startswith("#+begin_example"):

@@ -60,7 +60,9 @@ pub fn footer(props: &FooterProps) -> Html {
                 <a href="typed-decisions.html">{ "Typed decisions: the hello world" }</a>
                 { " — one state, three typed heads and a calibration measurement, in a literate document you can run ("}
                 <a href="typed-decisions.mlpl" download={"typed-decisions.mlpl"}>{ "the program" }</a>
-                { ")." }
+                { "), or " }
+                <a href="concise-hello.html">{ "the same thing in thirty-six lines" }</a>
+                { "." }
             </p>
             <p>
                 <a href="literate.html">{ "How the MLPL code works — the literate document" }</a>

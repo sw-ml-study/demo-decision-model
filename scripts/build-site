@@ -42,9 +42,11 @@ fi
 "$repo_root/scripts/bundle-program" "$repo_root/demos/eliza/browser.mlpl" "$out/demo01-train.mlpl" >/dev/null
 "$repo_root/scripts/bundle-program" "$repo_root/demos/typed-decisions/typed-decisions.mlpl" "$out/typed-decisions.mlpl" >/dev/null
 
-if [ -f "$repo_root/docs/literate/typed-decisions.html" ]; then
-    cp "$repo_root/docs/literate/typed-decisions.html" "$out/typed-decisions.html"
-fi
+for page in typed-decisions concise-hello; do
+    if [ -f "$repo_root/docs/literate/$page.html" ]; then
+        cp "$repo_root/docs/literate/$page.html" "$out/$page.html"
+    fi
+done
 printf '{"host":"%s","sha":"%s","timestamp":"%s"}\n' \
     "$TDM_BUILD_HOST" "$TDM_BUILD_SHA" "$TDM_BUILD_TIME" > "$out/build-info.json"
 

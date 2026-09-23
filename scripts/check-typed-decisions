@@ -35,4 +35,18 @@ if [ "$fail" -ne 0 ]; then
     sed -n '/Stage 2/,$p' "$work/out.txt" >&2
     exit 1
 fi
+# The concise version is not browser-safe on purpose: its corpus is passed in,
+# which means read_text and args. It is run here the way its document says to.
+if ! "$mlpl" --source-dir "$repo_root" "$repo_root/demos/typed-decisions/concise-hello.mlpl" -- "$repo_root/demos/typed-decisions/messages.json" > "$work/concise.txt" 2>&1; then
+    echo "concise-hello failed to run:" >&2
+    tail -5 "$work/concise.txt" >&2
+    exit 1
+fi
+grep -q "kind         phishing 0.999" "$work/concise.txt" || {
+    echo "concise-hello no longer reaches its measured answer:" >&2
+    cat "$work/concise.txt" >&2
+    exit 1
+}
+
 echo "PASS typed decisions (self-contained, host-call free, reproduces its measured run)"
+echo "PASS concise hello (trains from a corpus passed in, reproduces its measured answer)"

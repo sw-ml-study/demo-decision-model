@@ -286,6 +286,30 @@ Actions workflow; CI builds nothing. The footer names the source commit it was
 built from, the host, and the time, and marks a build from uncommitted source
 as `-dirty`.
 
+### The short version: 36 lines
+
+If you have seen the widely-shared **"Jev in 25 lines of Python"** and want the
+same thing with the model in your hands,
+**[The concise hello](https://sw-ml-study.github.io/demo-decision-model/concise-hello.html)**
+is 36 annotated lines that train a typed decision model and then answer three
+bounded questions about a sentence it never saw. Inference is five of them:
+
+```
+h    = mean of the embedding rows this message's known words address
+kind = softmax(apply(os_kind, h))        -- Choice over three categories
+asks = sigmoid(apply(os_asks, h))        -- Noul: does it want credentials?
+urg  = softmax(apply(os_urgency, h))     -- Scale over three levels
+                                         -- and no token was generated
+```
+
+Counting honestly: 25 Python lines sit on a 0.6B-parameter download, a
+tokenizer and the corpus they were trained on, and must smuggle the three
+choices in as the tokens `A`, `B` and `C`. These 36 sit on `matmul`, `softmax`,
+`cross_entropy` and `adam`; the corpus is a JSON file passed in on the command
+line, and the answer's domain is named in it. Eleven of the 36 are the training
+loop and the loss — the part the shorter program does not have, because it
+borrows a model instead of fitting one.
+
 ### Start here: typed decisions, the hello world
 
 If you want the idea without the ELIZA machinery,

@@ -1,0 +1,526 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The concise hello: a typed decision model in thirty-six lines</title>
+<meta name="author" content="Michael A Wright" />
+<meta name="generator" content="Org Mode" />
+<style type="text/css">
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<style>
+/* Colour for the MLPL blocks. htmlize turns the faces sw-MLPL's major mode
+applies into these class names; batch Emacs has no display and so no
+colours of its own, which is why they are chosen here. */
+pre.src, pre.example { background: #fafafa; border: 1px solid #e4e4e7; border-radius: 6px; line-height: 1.45; }
+.org-mlpl-keyword, .org-mlpl-context-keyword, .org-keyword { color: #8250df; font-weight: 600; }
+.org-mlpl-builtin { color: #0550ae; }
+.org-mlpl-number, .org-constant { color: #953800; }
+.org-string { color: #0a7d55; }
+.org-comment, .org-comment-delimiter { color: #6a737d; font-style: italic; }
+.org-mlpl-operator { color: #57606a; }
+.org-warning { color: #b35900; }
+@media (prefers-color-scheme: dark) {
+body { background: #0d1117; color: #c9d1d9; }
+a { color: #79c0ff; }
+pre.src, pre.example { background: #161b22; border-color: #30363d; color: #c9d1d9; }
+.org-mlpl-keyword, .org-mlpl-context-keyword, .org-keyword { color: #d2a8ff; }
+.org-mlpl-builtin { color: #79c0ff; }
+.org-mlpl-number, .org-constant { color: #ffa657; }
+.org-string { color: #7ee2b8; }
+.org-comment, .org-comment-delimiter { color: #8b949e; }
+.org-mlpl-operator { color: #8b949e; }
+}
+</style>
+</head>
+<body>
+<div id="content" class="content">
+<h1 class="title">The concise hello: a typed decision model in thirty-six lines
+<br />
+<span class="subtitle">what "Jev in 25 lines of Python" looks like when the model is yours</span>
+</h1>
+<p style="margin:0 0 1em 0">
+<a href="https://sw-ml-study.github.io/demo-decision-model/">Live demo</a> ·
+<a href="https://github.com/sw-ml-study/demo-decision-model">Repository</a> ·
+<a href="typed-decisions.html">The same model, in four measured stages</a>
+</p>
+<div id="outline-container-org764a475" class="outline-2">
+<h2 id="org764a475">The program this answers</h2>
+<div class="outline-text-2" id="text-org764a475">
+<p>
+A widely-shared post shows a "typed decision model" in about twenty-five lines
+of Python. Its shape is:
+</p>
+
+<pre class="example" id="orgaf13546">
+prompt -&gt; a pretrained causal language model
+       -&gt; the logits at one position
+       -&gt; keep the three that correspond to the tokens A, B and C
+       -&gt; softmax those three
+       -&gt; a probability per choice, with no token generated
+</pre>
+
+<p>
+It is a good demonstration and the arithmetic is right. What the line count
+leaves out is everything underneath: a 0.6B-parameter model to download, a
+tokenizer, a runtime to host them, and the pretraining corpus that made those
+logits mean anything. The three choices also have to be smuggled in as the
+tokens <code>A</code>, <code>B</code> and <code>C</code>, which is why practitioners in the thread report having
+to permute the letters and to check how much probability mass the allowed tokens
+hold: the model is being asked a question in a vocabulary that was never about
+this question.
+</p>
+</div>
+</div>
+<div id="outline-container-org3da9257" class="outline-2">
+<h2 id="org3da9257">The same shape, when the model is yours</h2>
+<div class="outline-text-2" id="text-org3da9257">
+<p>
+Here the model is the arrays this file declares, and the answer's domain is
+named in the data &#x2013; column 0 <i>is</i> phishing. There is no tokenizer to mislead
+and no letters to permute. Inference is five lines:
+</p>
+
+<pre class="example" id="orga4c5031">
+h    = mean of the embedding rows this message's known words address
+kind = softmax(apply(os_kind, h))        -- Choice over three categories
+asks = sigmoid(apply(os_asks, h))        -- Noul: does it want credentials?
+urg  = softmax(apply(os_urgency, h))     -- Scale over three levels
+                                         -- and no token was generated
+</pre>
+
+<p>
+Everything else in the file is the part the Python version cannot do at all:
+train the thing.
+</p>
+</div>
+</div>
+<div id="outline-container-org5c5970a" class="outline-2">
+<h2 id="org5c5970a">The corpus it is given</h2>
+<div class="outline-text-2" id="text-org5c5970a">
+<p>
+Twelve messages and their three labels. It is a separate file, passed in on the
+command line, because the program this is measured against does not carry a
+corpus either &#x2013; what it carries instead is a pretrained model that already saw
+one. Tangling this document writes it:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-json">{
+  "kinds": ["phishing", "legitimate", "spam"],
+  "levels": ["low", "medium", "high"],
+  "texts": [
+    "your password expires today, sign in here",
+    "payroll needs your bank details now",
+    "verify your account or it will be locked",
+    "confirm your login to keep your files",
+    "the standup moved to ten tomorrow",
+    "here are the notes from monday",
+    "your package was delivered downstairs",
+    "can you review the draft by friday",
+    "you have won a free cruise today",
+    "cheap watches direct from the factory",
+    "lose twenty pounds with this trick",
+    "make money from home this week"
+  ],
+  "kind":        [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2],
+  "credentials": [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+  "urgency":     [2, 2, 2, 2, 1, 0, 0, 1, 0, 0, 0, 0]
+}
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org2190e64" class="outline-2">
+<h2 id="org2190e64">The program, annotated</h2>
+<div class="outline-text-2" id="text-org2190e64">
+<p>
+The module comment, and the one include. Everything the program borrows is in
+that line: a featurizer, and the typed-decision contract it pulls in behind it.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-mlpl"><span class="org-comment-delimiter"># </span><span class="org-comment">The whole idea on one screen, annotated in docs/literate/concise-hello.org: a typed decision model that trains itself, then answers three bounded questions about a sentence it has never seen. The comparison it exists for is the widely-shared "Jev in 25 lines of Python", whose twenty-five lines sit on top of a downloaded language model and its tokenizer; there is nothing underneath this one but the arrays it declares. The corpus is not in the file -- it is passed in on the command line, the way that program's pretraining data is not counted either: mlpl-repl concise-hello.mlpl -- demos/typed-decisions/messages.json. The longer demos/typed-decisions/typed-decisions.mlpl is this program plus what a claim needs: a hundred and twenty messages, held-out splits, and calibration.
+</span>include <span class="org-string">"../../lib/choice_model.mlpl"</span><span class="org-mlpl-operator">;</span>
+</pre>
+</div>
+
+<p>
+The first line is the whole of the data handling: the corpus arrives as a path
+on the command line, and <code>parse_json</code> turns it into arrays. Nothing about the
+messages is written into this file.
+</p>
+
+<p>
+The four bindings after it exist because of a language rule worth knowing: a
+record field may not be read inside <code>grad</code>, so anything the loss touches is
+pulled out into a plain array first. (One call deep, the interpreter used to
+report that the loss did not depend on the parameter; it now names the field,
+a fix that landed upstream while this was being written.)
+</p>
+
+<p>
+Then the model: one embedding, and three heads built with the Model DSL's
+<code>linear</code>, which carries its own initialization and bias. Eight dimensions of
+state, three columns for the Choice, one for the Noul, three for the Scale.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-mlpl">os_data <span class="org-mlpl-operator">=</span> unwrap(parse_json(unwrap(read_text(unwrap(list_get(args()<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0</span>))))))<span class="org-mlpl-operator">;</span>
+os_vocab <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>text_vocab(os_data<span class="org-mlpl-operator">.</span>texts<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">12</span>)<span class="org-mlpl-operator">;</span>
+os_f <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>cm_featurize_vocab(os_data<span class="org-mlpl-operator">.</span>texts<span class="org-mlpl-operator">,</span> os_vocab<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">12</span>)<span class="org-mlpl-operator">;</span>
+os_ids <span class="org-mlpl-operator">=</span> os_f<span class="org-mlpl-operator">.</span>ids<span class="org-mlpl-operator">;</span>
+os_wm <span class="org-mlpl-operator">=</span> os_f<span class="org-mlpl-operator">.</span>wmask<span class="org-mlpl-operator">;</span>
+os_cred <span class="org-mlpl-operator">=</span> <span class="org-mlpl-builtin">reshape</span>(os_data<span class="org-mlpl-operator">.</span>credentials<span class="org-mlpl-operator">,</span> [list_len(os_data<span class="org-mlpl-operator">.</span>texts)<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">1</span>])<span class="org-mlpl-operator">;</span>
+os_y <span class="org-mlpl-operator">=</span> os_data<span class="org-mlpl-operator">.</span>kind<span class="org-mlpl-operator">;</span>
+os_u <span class="org-mlpl-operator">=</span> os_data<span class="org-mlpl-operator">.</span>urgency<span class="org-mlpl-operator">;</span>
+os_E <span class="org-mlpl-operator">=</span> <span class="org-mlpl-context-keyword">param</span>[os_vocab<span class="org-mlpl-operator">.</span>size <span class="org-mlpl-operator">+</span> <span class="org-mlpl-number">1</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">8</span>]<span class="org-mlpl-operator">;</span>
+os_E <span class="org-mlpl-operator">=</span> <span class="org-mlpl-builtin">randn</span>(<span class="org-mlpl-number">3</span><span class="org-mlpl-operator">,</span> [os_vocab<span class="org-mlpl-operator">.</span>size <span class="org-mlpl-operator">+</span> <span class="org-mlpl-number">1</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">8</span>]) * <span class="org-mlpl-number">0.1</span><span class="org-mlpl-operator">;</span>
+os_kind <span class="org-mlpl-operator">=</span> linear(<span class="org-mlpl-number">8</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">3</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">4</span>)<span class="org-mlpl-operator">;</span>
+os_asks <span class="org-mlpl-operator">=</span> linear(<span class="org-mlpl-number">8</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">1</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">5</span>)<span class="org-mlpl-operator">;</span>
+os_urgency <span class="org-mlpl-operator">=</span> linear(<span class="org-mlpl-number">8</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">3</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">6</span>)<span class="org-mlpl-operator">;</span>
+</pre>
+</div>
+
+<p>
+The encoder, entire. Look up a row per known word, take their mean.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-mlpl">def u<span class="org-mlpl-operator">:</span>os_state(ids<span class="org-mlpl-operator">,</span> wmask) {
+  <span class="org-string">"The shared state: the mean of the embedding rows this message's known words address."</span><span class="org-mlpl-operator">;</span>
+  <span class="org-mlpl-builtin">reduce_add</span>(gather_rows(os_E<span class="org-mlpl-operator">,</span> ids) * wmask<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">1</span>)
+}
+</pre>
+</div>
+
+<p>
+The loss adds one term per question, and the encoder underneath is pulled by
+all three at once &#x2013; which is what makes it a shared representation rather than
+three private ones.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-mlpl">def u<span class="org-mlpl-operator">:</span>os_loss(ids<span class="org-mlpl-operator">,</span> wmask<span class="org-mlpl-operator">,</span> cat<span class="org-mlpl-operator">,</span> cred<span class="org-mlpl-operator">,</span> urg) {
+  <span class="org-string">"Cross-entropy for the Choice, binary cross-entropy for the Noul, cross-entropy for the Scale, added: three questions, one encoder, one number to descend."</span><span class="org-mlpl-operator">;</span>
+  h <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>os_state(ids<span class="org-mlpl-operator">,</span> wmask)<span class="org-mlpl-operator">;</span>
+  p <span class="org-mlpl-operator">=</span> <span class="org-mlpl-builtin">sigmoid</span>(apply(os_asks<span class="org-mlpl-operator">,</span> h))<span class="org-mlpl-operator">;</span>
+  cross_entropy(apply(os_kind<span class="org-mlpl-operator">,</span> h)<span class="org-mlpl-operator">,</span> cat) <span class="org-mlpl-operator">+</span> cross_entropy(apply(os_urgency<span class="org-mlpl-operator">,</span> h)<span class="org-mlpl-operator">,</span> urg) <span class="org-mlpl-operator">+</span> (<span class="org-mlpl-number">0</span> <span class="org-mlpl-operator">-</span> <span class="org-mlpl-builtin">mean</span>(cred * <span class="org-mlpl-builtin">log</span>(p <span class="org-mlpl-operator">+</span> <span class="org-mlpl-number">0.000000001</span>) <span class="org-mlpl-operator">+</span> (<span class="org-mlpl-number">1</span> <span class="org-mlpl-operator">-</span> cred) * <span class="org-mlpl-builtin">log</span>(<span class="org-mlpl-number">1</span> <span class="org-mlpl-operator">-</span> p <span class="org-mlpl-operator">+</span> <span class="org-mlpl-number">0.000000001</span>)))
+}
+</pre>
+</div>
+
+<p>
+Three hundred Adam steps, about two tenths of a second. With twelve messages it
+memorizes them completely, which is a real defect and the reason the
+<a href="typed-decisions.html">four-stage document</a> exists: there the same architecture trains on 120 messages,
+is measured on messages it never saw, and is then calibrated, because a model
+this sure of itself is not reporting probabilities yet.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-mlpl"><span class="org-mlpl-keyword">train</span> <span class="org-mlpl-number">300</span> {
+  adam(u<span class="org-mlpl-operator">:</span>os_loss(os_ids<span class="org-mlpl-operator">,</span> os_wm<span class="org-mlpl-operator">,</span> os_y<span class="org-mlpl-operator">,</span> os_cred<span class="org-mlpl-operator">,</span> os_u)<span class="org-mlpl-operator">,</span> [os_E<span class="org-mlpl-operator">,</span> os_kind<span class="org-mlpl-operator">,</span> os_asks<span class="org-mlpl-operator">,</span> os_urgency]<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0.1</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0.9</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0.999</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0.00000001</span>)
+}<span class="org-mlpl-operator">;</span>
+</pre>
+</div>
+
+<p>
+Inference, on a sentence that is not in the corpus. Each head's logits become a
+typed decision through <a href="https://github.com/sw-ml-study/demo-decision-model/blob/main/lib/decision.mlpl">lib/decision.mlpl</a>: a Choice carries a distribution, a
+selection, a confidence and a margin; a Noul carries one probability; a Scale
+carries an expectation over ordered levels. The labels come from the data file,
+so the answer's domain is named in the corpus rather than encoded as letters of
+the alphabet.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-mlpl">os_message <span class="org-mlpl-operator">=</span> <span class="org-string">"hr asks you to confirm your password"</span><span class="org-mlpl-operator">;</span>
+os_new <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>cm_featurize_vocab(str_split(os_message<span class="org-mlpl-operator">,</span> <span class="org-string">"\n"</span>)<span class="org-mlpl-operator">,</span> os_vocab<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">12</span>)<span class="org-mlpl-operator">;</span>
+os_h <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>os_state(os_new<span class="org-mlpl-operator">.</span>ids<span class="org-mlpl-operator">,</span> os_new<span class="org-mlpl-operator">.</span>wmask)<span class="org-mlpl-operator">;</span>
+os_a <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>choice(<span class="org-string">"what kind of message is this?"</span><span class="org-mlpl-operator">,</span> os_data<span class="org-mlpl-operator">.</span>kinds<span class="org-mlpl-operator">,</span> <span class="org-mlpl-builtin">reshape</span>(apply(os_kind<span class="org-mlpl-operator">,</span> os_h)<span class="org-mlpl-operator">,</span> [<span class="org-mlpl-number">3</span>]))<span class="org-mlpl-operator">;</span>
+os_b <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>noul(<span class="org-string">"does it ask for credentials?"</span><span class="org-mlpl-operator">,</span> take(<span class="org-mlpl-builtin">reshape</span>(apply(os_asks<span class="org-mlpl-operator">,</span> os_h)<span class="org-mlpl-operator">,</span> [<span class="org-mlpl-number">1</span>])<span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0</span><span class="org-mlpl-operator">,</span> <span class="org-mlpl-number">0</span>))<span class="org-mlpl-operator">;</span>
+os_c <span class="org-mlpl-operator">=</span> u<span class="org-mlpl-operator">:</span>scale(<span class="org-string">"how urgent is it?"</span><span class="org-mlpl-operator">,</span> os_data<span class="org-mlpl-operator">.</span>levels<span class="org-mlpl-operator">,</span> <span class="org-mlpl-builtin">reshape</span>(apply(os_urgency<span class="org-mlpl-operator">,</span> os_h)<span class="org-mlpl-operator">,</span> [<span class="org-mlpl-number">3</span>]))<span class="org-mlpl-operator">;</span>
+print(os_message)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"  kind        "</span><span class="org-mlpl-operator">,</span> u<span class="org-mlpl-operator">:</span>decision_label(os_a)<span class="org-mlpl-operator">,</span> floor(os_a<span class="org-mlpl-operator">.</span>confidence * <span class="org-mlpl-number">1000</span>) <span class="org-mlpl-operator">/</span> <span class="org-mlpl-number">1000</span>)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"  credentials "</span><span class="org-mlpl-operator">,</span> floor(os_b<span class="org-mlpl-operator">.</span>p * <span class="org-mlpl-number">1000</span>) <span class="org-mlpl-operator">/</span> <span class="org-mlpl-number">1000</span>)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">"  urgency     "</span><span class="org-mlpl-operator">,</span> u<span class="org-mlpl-operator">:</span>decision_label(os_c)<span class="org-mlpl-operator">,</span> <span class="org-string">" expectation"</span><span class="org-mlpl-operator">,</span> floor(os_c<span class="org-mlpl-operator">.</span>expectation * <span class="org-mlpl-number">1000</span>) <span class="org-mlpl-operator">/</span> <span class="org-mlpl-number">1000</span>)<span class="org-mlpl-operator">;</span>
+print(<span class="org-string">""</span>)
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org146a45f" class="outline-2">
+<h2 id="org146a45f">What it prints</h2>
+<div class="outline-text-2" id="text-org146a45f">
+<pre class="example" id="orge442bf6">
+$ mlpl-repl demos/typed-decisions/concise-hello.mlpl -- demos/typed-decisions/messages.json
+
+hr asks you to confirm your password
+  kind         phishing 0.999
+  credentials  0.999
+  urgency      high  expectation 1.999
+</pre>
+
+<p>
+That sentence is not in the corpus; "password" and "confirm" are, and for a
+model this size that is enough. The 0.999 is exactly the overconfidence twelve
+training examples should produce, and believing it is the mistake the
+<a href="typed-decisions.html">four-stage document</a> spends its last stage measuring and correcting.
+</p>
+</div>
+</div>
+<div id="outline-container-orgb7dd15b" class="outline-2">
+<h2 id="orgb7dd15b">Counting honestly</h2>
+<div class="outline-text-2" id="text-orgb7dd15b">
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">&#xa0;</th>
+<th scope="col" class="org-left">lines of code</th>
+<th scope="col" class="org-left">its data</th>
+<th scope="col" class="org-left">what holds it up</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">the Python version</td>
+<td class="org-left">~25</td>
+<td class="org-left">none in the program; it does not train</td>
+<td class="org-left">a 0.6B-parameter model, a tokenizer, a runtime, and the corpus they were trained on</td>
+</tr>
+
+<tr>
+<td class="org-left">this</td>
+<td class="org-left">36</td>
+<td class="org-left">a JSON file, passed in</td>
+<td class="org-left">nothing: <code>matmul</code>, <code>softmax</code>, <code>cross_entropy</code>, <code>adam</code></td>
+</tr>
+</tbody>
+</table>
+
+<p>
+Thirty-six against twenty-five is not a win and is not meant to be one. Eleven
+of those lines are the training loop and the loss &#x2013; the part the shorter
+program does not have, because it borrows a model instead of fitting one. What
+the comparison is actually about is what the two programs <i>are</i>: one reads a
+pretrained model's opinion about three token ids, the other is a decision model
+you trained, whose every parameter you can print, and whose answer domain is
+written down rather than spelled <code>A</code>, <code>B</code>, <code>C</code>.
+</p>
+</div>
+</div>
+<div id="outline-container-org7b55033" class="outline-2">
+<h2 id="org7b55033">Where to go next</h2>
+<div class="outline-text-2" id="text-org7b55033">
+<ul class="org-ul">
+<li><a href="typed-decisions.html">Typed decisions: the hello world</a> &#x2013; the same three heads over 120 messages,
+with held-out splits and a calibration measurement.</li>
+<li><a href="https://sw-ml-study.github.io/demo-decision-model/">The live demo</a> &#x2013; the full model, in your browser, with the trace open.</li>
+<li><a href="https://github.com/sw-ml-study/demo-decision-model">The repository</a>; this document's source is
+<a href="https://github.com/sw-ml-study/demo-decision-model/blob/main/docs/literate/concise-hello.org">docs/literate/concise-hello.org</a>, and it tangles both
+<a href="https://github.com/sw-ml-study/demo-decision-model/blob/main/demos/typed-decisions/concise-hello.mlpl">concise-hello.mlpl</a> and its corpus byte for byte.</li>
+</ul>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Michael A Wright</p>
+</div>
+</body>
+</html>
