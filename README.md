@@ -30,6 +30,42 @@ architecture, training algorithm, and weights are not public. Where we reproduce
 something, we reproduce the stated contract and the calibration objective, and
 we say which numbers are theirs and which are ours.
 
+## Where to start, and how the pieces link
+
+Everything published lives at one URL, and each page links to the others:
+
+```text
+                     Live demo  (the full model, chat + trace)
+                         │  footer links all three documents
+        ┌────────────────┼────────────────┐
+        ▼                ▼                ▼
+ concise-hello.html  typed-decisions  literate.html
+  36 lines, one      .html            the whole repository's
+  annotated program  the same three   MLPL, function by
+        │            heads over a     function
+        │            real corpus, in         ▲
+        │            four stages             │
+        └────────────►   │   ◄───────────────┘
+            every page carries the same nav bar
+```
+
+| Page | What it is | Runs where |
+|---|---|---|
+| [Live demo](https://sw-ml-study.github.io/demo-decision-model/) | the trained model, chat with a trace view | your browser |
+| [The concise hello](https://sw-ml-study.github.io/demo-decision-model/concise-hello.html) | a typed decision model in 36 annotated lines, corpus passed in | locally: [`concise-hello.mlpl`](https://sw-ml-study.github.io/demo-decision-model/concise-hello.mlpl) + [`messages.json`](https://sw-ml-study.github.io/demo-decision-model/messages.json) |
+| [The hello world](https://sw-ml-study.github.io/demo-decision-model/typed-decisions.html) | the same three heads over 120 messages, in four stages, ending in calibration | locally, or in [sw-MLPL's Live Editor](https://sw-ml-study.github.io/sw-mlpl/) from [`typed-decisions.mlpl`](https://sw-ml-study.github.io/demo-decision-model/typed-decisions.mlpl) |
+| [The full model](https://sw-ml-study.github.io/demo-decision-model/literate.html) | every library and demo source, split at function boundaries | it *is* the repository's sources |
+| [`demo01-train.mlpl`](https://sw-ml-study.github.io/demo-decision-model/demo01-train.mlpl) | demo 01's first model, training from random weights | the Live Editor |
+
+In the repository the same set is: [`docs/literate/*.org`](docs/literate) (the
+documents), [`demos/typed-decisions/`](demos/typed-decisions) and
+[`demos/eliza/`](demos/eliza) (what they tangle and describe), and
+[`pages/`](pages) (the built site, committed and published unchanged).
+
+Each document tangles its program byte for byte, `just check` proves it, and
+the gate runs each program and pins the numbers its prose quotes — so no page
+here can describe code that does not exist or numbers it did not produce.
+
 ## What is on the slide
 
 **ELIZA is demo 01, not the point.** It is a forcing function: the smallest

@@ -32,12 +32,15 @@
 * What this is
 
 #+begin_export html
-<p style="margin:0 0 1em 0">
+<nav style="margin:0 0 1.5em 0; padding:0.6em 0; border-bottom:1px solid #d0d7de; font-size:0.95em">
 <a href="https://sw-ml-study.github.io/demo-decision-model/">Live demo</a> ·
-<a href="https://github.com/sw-ml-study/demo-decision-model">Repository</a> ·
-<a href="literate.html">The full model, read as a literate program</a>
-</p>
+<a href="concise-hello.html">The concise hello (36 lines)</a> ·
+<a href="typed-decisions.html">The hello world (four stages)</a> ·
+<a href="literate.html">The full model</a> ·
+<a href="https://github.com/sw-ml-study/demo-decision-model">Repository</a>
+</nav>
 #+end_export
+
 
 A typed decision model small enough to read in one sitting. It takes a short
 message and answers three bounded questions about it at once:
@@ -60,6 +63,11 @@ none of which are published; a softmax over three columns is not Jev. What is
 reproducible is the /contract/ -- unstructured state in, bounded typed decisions
 out, probabilities visible, code owning the branch -- and that contract is what
 this document builds, in four stages.
+
+Shorter still: [[file:concise-hello.html][the concise hello]] is the same three heads in 36 annotated
+lines, written against the widely-shared "Jev in 25 lines of Python". This
+document is that program plus what a claim needs -- a real corpus, held-out
+splits, and a calibration measurement.
 
 The full model is [[https://github.com/sw-ml-study/demo-decision-model][the rest of this repository]]: the same three primitives, trained
 on labels a 1966 program wrote, with the policy and memory a conversation needs.

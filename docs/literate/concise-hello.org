@@ -4,6 +4,16 @@
 #+startup: showall
 #+property: header-args:mlpl :results output :exports code :eval no-export
 #+options: toc:nil num:nil timestamp:nil ^:{}
+
+#+begin_export html
+<nav style="margin:0 0 1.5em 0; padding:0.6em 0; border-bottom:1px solid #d0d7de; font-size:0.95em">
+<a href="https://sw-ml-study.github.io/demo-decision-model/">Live demo</a> ·
+<a href="concise-hello.html">The concise hello (36 lines)</a> ·
+<a href="typed-decisions.html">The hello world (four stages)</a> ·
+<a href="literate.html">The full model</a> ·
+<a href="https://github.com/sw-ml-study/demo-decision-model">Repository</a>
+</nav>
+#+end_export
 #+HTML_HEAD: <style>
 #+HTML_HEAD: /* Colour for the MLPL blocks. htmlize turns the faces sw-MLPL's major mode
 #+HTML_HEAD:    applies into these class names; batch Emacs has no display and so no
@@ -29,13 +39,6 @@
 #+HTML_HEAD: }
 #+HTML_HEAD: </style>
 
-#+begin_export html
-<p style="margin:0 0 1em 0">
-<a href="https://sw-ml-study.github.io/demo-decision-model/">Live demo</a> ·
-<a href="https://github.com/sw-ml-study/demo-decision-model">Repository</a> ·
-<a href="typed-decisions.html">The same model, in four measured stages</a>
-</p>
-#+end_export
 
 * The program this answers
 
@@ -201,6 +204,21 @@ print("  credentials ", floor(os_b.p * 1000) / 1000);
 print("  urgency     ", u:decision_label(os_c), " expectation", floor(os_c.expectation * 1000) / 1000);
 print("")
 #+end_src
+
+* Running it
+
+Both files are published beside this page: [[https://sw-ml-study.github.io/demo-decision-model/concise-hello.mlpl][concise-hello.mlpl]] and
+[[https://sw-ml-study.github.io/demo-decision-model/messages.json][messages.json]]. With sw-MLPL's interpreter on your path:
+
+#+begin_example
+mlpl-repl concise-hello.mlpl -- messages.json
+#+end_example
+
+In the repository it is ~just concise-hello~. Unlike [[file:typed-decisions.html][the four-stage program]], it
+will not run in a browser: a corpus passed in means ~read_text~ and ~args~, and
+the Live Editor has no file system. That is the trade this document chose --
+the program carries no data, and pays for it by needing somewhere to read it
+from.
 
 * What it prints
 

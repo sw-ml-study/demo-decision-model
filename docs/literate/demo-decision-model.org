@@ -32,7 +32,22 @@
 
 * How to read and run this document
 
+#+begin_export html
+<nav style="margin:0 0 1.5em 0; padding:0.6em 0; border-bottom:1px solid #d0d7de; font-size:0.95em">
+<a href="https://sw-ml-study.github.io/demo-decision-model/">Live demo</a> ·
+<a href="concise-hello.html">The concise hello (36 lines)</a> ·
+<a href="typed-decisions.html">The hello world (four stages)</a> ·
+<a href="literate.html">The full model</a> ·
+<a href="https://github.com/sw-ml-study/demo-decision-model">Repository</a>
+</nav>
+#+end_export
+
 The source of this page is [[https://github.com/sw-ml-study/demo-decision-model/blob/main/docs/literate/demo-decision-model.org][docs/literate/demo-decision-model.org]] in the repository; GitHub renders it too, and Emacs can run it.
+
+If this is your first page here, start with [[file:concise-hello.html][the concise hello]] (a typed
+decision model in 36 annotated lines) or [[file:typed-decisions.html][the hello world]] (the same three
+heads over a real corpus, with a calibration measurement). This document is the
+whole repository's model, which is a longer read.
 
 This is the repository's model, in the order a reader should meet it: first a
 primer of small, self-contained MLPL blocks you can run, each beside the number

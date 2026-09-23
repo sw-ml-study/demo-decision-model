@@ -42,6 +42,11 @@ fi
 "$repo_root/scripts/bundle-program" "$repo_root/demos/eliza/browser.mlpl" "$out/demo01-train.mlpl" >/dev/null
 "$repo_root/scripts/bundle-program" "$repo_root/demos/typed-decisions/typed-decisions.mlpl" "$out/typed-decisions.mlpl" >/dev/null
 
+# The concise program is not self-contained on purpose -- its corpus is passed
+# in -- so it and its corpus are published as they are, to be run locally.
+cp "$repo_root/demos/typed-decisions/concise-hello.mlpl" "$out/concise-hello.mlpl"
+cp "$repo_root/demos/typed-decisions/messages.json" "$out/messages.json"
+
 for page in typed-decisions concise-hello; do
     if [ -f "$repo_root/docs/literate/$page.html" ]; then
         cp "$repo_root/docs/literate/$page.html" "$out/$page.html"
