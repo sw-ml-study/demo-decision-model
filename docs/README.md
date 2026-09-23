@@ -33,6 +33,9 @@ function with a free deterministic oracle, not the point.
 - [`reference/downstream-requests.md`](reference/downstream-requests.md) — what
   projects that depend on this one have asked for, what was delivered, and
   where the answer is.
+- [`reference/superseded-steps.md`](reference/superseded-steps.md) — steps the
+  plan queued that later work answered by another route, and what was given up
+  by taking it.
 
 ## Implementation
 
