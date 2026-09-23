@@ -1,0 +1,9 @@
+number = 23
+slug = "llm-head-to-head"
+status = "completed"
+description = "Answer the apples-to-oranges criticism with a measurement instead of prose. R..."
+role = "production"
+context_files = []
+created_at = "2026-09-23T12:37:13"
+completed_at = "2026-09-23T13:11:15"
+commits = ["d2be4a72a4503454e08da10a49ccf084dcf39ceb"]
