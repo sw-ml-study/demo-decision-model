@@ -31,14 +31,16 @@ train 300 {
   adam(u:os_loss(os_ids, os_wm, os_y, os_cred, os_u), [os_E, os_kind, os_asks, os_urgency], 0.1, 0.9, 0.999, 0.00000001)
 };
 
-os_message = "hr asks you to confirm your password";
-os_new = u:cm_featurize_vocab(str_split(os_message, "\n"), os_vocab, 12);
-os_h = u:os_state(os_new.ids, os_new.wmask);
-os_a = u:choice("what kind of message is this?", os_data.kinds, reshape(apply(os_kind, os_h), [3]));
-os_b = u:noul("does it ask for credentials?", take(reshape(apply(os_asks, os_h), [1]), 0, 0));
-os_c = u:scale("how urgent is it?", os_data.levels, reshape(apply(os_urgency, os_h), [3]));
-print(os_message);
-print("  kind        ", u:decision_label(os_a), floor(os_a.confidence * 1000) / 1000);
-print("  credentials ", floor(os_b.p * 1000) / 1000);
-print("  urgency     ", u:decision_label(os_c), " expectation", floor(os_c.expectation * 1000) / 1000);
+os_probes = str_split("hr asks you to confirm your password|please re-enter your credentials to avoid suspension|your mailbox is full, log in to restore delivery|the invoice you requested is attached|can we move tomorrow's standup|urgent: wire the funds before close of business", "|");
+os_i = 0;
+while lt(os_i, list_len(os_probes)) {
+  os_m = u:text_lg(os_probes, os_i);
+  os_new = u:cm_featurize_vocab(str_split(os_m, "\n"), os_vocab, 12);
+  os_h = u:os_state(os_new.ids, os_new.wmask);
+  os_a = u:choice("what kind of message is this?", os_data.kinds, reshape(apply(os_kind, os_h), [3]));
+  os_b = u:noul("does it ask for credentials?", take(reshape(apply(os_asks, os_h), [1]), 0, 0));
+  os_c = u:scale("how urgent is it?", os_data.levels, reshape(apply(os_urgency, os_h), [3]));
+  print(take(os_new.counts, 0, 0), "known ", u:decision_label(os_a), floor(os_a.confidence * 1000) / 1000, " credentials", floor(os_b.p * 1000) / 1000, " urgency", u:decision_label(os_c), " <-", os_m);
+  os_i = os_i + 1
+};
 print("")
