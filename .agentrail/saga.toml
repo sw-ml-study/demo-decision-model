@@ -1,6 +1,6 @@
 name = "typed-decision-model-foundation"
 status = "active"
-current_step = 22
+current_step = 23
 created_at = "2026-09-18T16:42:45"
 plan_file = ".agentrail/plan.md"
 retroactive = false

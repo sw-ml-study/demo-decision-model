@@ -1,0 +1,1 @@
+Write the concise counterpart to the four-stage hello world: a short annotated program in its own literate document, answering the widely-shared 'Jev in 25 lines of Python' directly. The corpus is passed in rather than carried, the heads use the Model DSL, and the document counts honestly what each program stands on.
