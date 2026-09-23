@@ -1,8 +1,9 @@
 number = 18
 slug = "train-in-browser"
-status = "pending"
+status = "completed"
 description = "User request: demo training in the browser without dragging sw-MLPL into this..."
 role = "production"
 context_files = []
 created_at = "2026-09-20T19:46:58"
-commits = []
+completed_at = "2026-09-22T18:58:20"
+commits = ["67c2bdb33303bc76da78b1254d7bb0b45960ba28"]
