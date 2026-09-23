@@ -223,20 +223,22 @@ pre.src, pre.example { background: #161b22; border-color: #30363d; color: #c9d1d
 <br />
 <span class="subtitle">what "Jev in 25 lines of Python" looks like when the model is yours</span>
 </h1>
-<p style="margin:0 0 1em 0">
+<nav style="margin:0 0 1.5em 0; padding:0.6em 0; border-bottom:1px solid #d0d7de; font-size:0.95em">
 <a href="https://sw-ml-study.github.io/demo-decision-model/">Live demo</a> ·
-<a href="https://github.com/sw-ml-study/demo-decision-model">Repository</a> ·
-<a href="typed-decisions.html">The same model, in four measured stages</a>
-</p>
-<div id="outline-container-org764a475" class="outline-2">
-<h2 id="org764a475">The program this answers</h2>
-<div class="outline-text-2" id="text-org764a475">
+<a href="concise-hello.html">The concise hello (36 lines)</a> ·
+<a href="typed-decisions.html">The hello world (four stages)</a> ·
+<a href="literate.html">The full model</a> ·
+<a href="https://github.com/sw-ml-study/demo-decision-model">Repository</a>
+</nav>
+<div id="outline-container-org15fac20" class="outline-2">
+<h2 id="org15fac20">The program this answers</h2>
+<div class="outline-text-2" id="text-org15fac20">
 <p>
 A widely-shared post shows a "typed decision model" in about twenty-five lines
 of Python. Its shape is:
 </p>
 
-<pre class="example" id="orgaf13546">
+<pre class="example" id="orgdc4ed41">
 prompt -&gt; a pretrained causal language model
        -&gt; the logits at one position
        -&gt; keep the three that correspond to the tokens A, B and C
@@ -256,16 +258,16 @@ this question.
 </p>
 </div>
 </div>
-<div id="outline-container-org3da9257" class="outline-2">
-<h2 id="org3da9257">The same shape, when the model is yours</h2>
-<div class="outline-text-2" id="text-org3da9257">
+<div id="outline-container-orgac2a3a2" class="outline-2">
+<h2 id="orgac2a3a2">The same shape, when the model is yours</h2>
+<div class="outline-text-2" id="text-orgac2a3a2">
 <p>
 Here the model is the arrays this file declares, and the answer's domain is
 named in the data &#x2013; column 0 <i>is</i> phishing. There is no tokenizer to mislead
 and no letters to permute. Inference is five lines:
 </p>
 
-<pre class="example" id="orga4c5031">
+<pre class="example" id="orge23a002">
 h    = mean of the embedding rows this message's known words address
 kind = softmax(apply(os_kind, h))        -- Choice over three categories
 asks = sigmoid(apply(os_asks, h))        -- Noul: does it want credentials?
@@ -279,9 +281,9 @@ train the thing.
 </p>
 </div>
 </div>
-<div id="outline-container-org5c5970a" class="outline-2">
-<h2 id="org5c5970a">The corpus it is given</h2>
-<div class="outline-text-2" id="text-org5c5970a">
+<div id="outline-container-orgb9c4ff3" class="outline-2">
+<h2 id="orgb9c4ff3">The corpus it is given</h2>
+<div class="outline-text-2" id="text-orgb9c4ff3">
 <p>
 Twelve messages and their three labels. It is a separate file, passed in on the
 command line, because the program this is measured against does not carry a
@@ -315,9 +317,9 @@ one. Tangling this document writes it:
 </div>
 </div>
 </div>
-<div id="outline-container-org2190e64" class="outline-2">
-<h2 id="org2190e64">The program, annotated</h2>
-<div class="outline-text-2" id="text-org2190e64">
+<div id="outline-container-orgd32129c" class="outline-2">
+<h2 id="orgd32129c">The program, annotated</h2>
+<div class="outline-text-2" id="text-orgd32129c">
 <p>
 The module comment, and the one include. Everything the program borrows is in
 that line: a featurizer, and the typed-decision contract it pulls in behind it.
@@ -434,10 +436,31 @@ print(<span class="org-string">""</span>)
 </div>
 </div>
 </div>
-<div id="outline-container-org146a45f" class="outline-2">
-<h2 id="org146a45f">What it prints</h2>
-<div class="outline-text-2" id="text-org146a45f">
-<pre class="example" id="orge442bf6">
+<div id="outline-container-orge7e1c71" class="outline-2">
+<h2 id="orge7e1c71">Running it</h2>
+<div class="outline-text-2" id="text-orge7e1c71">
+<p>
+Both files are published beside this page: <a href="https://sw-ml-study.github.io/demo-decision-model/concise-hello.mlpl">concise-hello.mlpl</a> and
+<a href="https://sw-ml-study.github.io/demo-decision-model/messages.json">messages.json</a>. With sw-MLPL's interpreter on your path:
+</p>
+
+<pre class="example" id="orgafc92c3">
+mlpl-repl concise-hello.mlpl -- messages.json
+</pre>
+
+<p>
+In the repository it is <code>just concise-hello</code>. Unlike <a href="typed-decisions.html">the four-stage program</a>, it
+will not run in a browser: a corpus passed in means <code>read_text</code> and <code>args</code>, and
+the Live Editor has no file system. That is the trade this document chose &#x2013;
+the program carries no data, and pays for it by needing somewhere to read it
+from.
+</p>
+</div>
+</div>
+<div id="outline-container-org42eb58c" class="outline-2">
+<h2 id="org42eb58c">What it prints</h2>
+<div class="outline-text-2" id="text-org42eb58c">
+<pre class="example" id="org3e47a7d">
 $ mlpl-repl demos/typed-decisions/concise-hello.mlpl -- demos/typed-decisions/messages.json
 
 hr asks you to confirm your password
@@ -454,9 +477,9 @@ training examples should produce, and believing it is the mistake the
 </p>
 </div>
 </div>
-<div id="outline-container-orgb7dd15b" class="outline-2">
-<h2 id="orgb7dd15b">Counting honestly</h2>
-<div class="outline-text-2" id="text-orgb7dd15b">
+<div id="outline-container-orgfc59fd2" class="outline-2">
+<h2 id="orgfc59fd2">Counting honestly</h2>
+<div class="outline-text-2" id="text-orgfc59fd2">
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
 
@@ -505,9 +528,9 @@ written down rather than spelled <code>A</code>, <code>B</code>, <code>C</code>.
 </p>
 </div>
 </div>
-<div id="outline-container-org7b55033" class="outline-2">
-<h2 id="org7b55033">Where to go next</h2>
-<div class="outline-text-2" id="text-org7b55033">
+<div id="outline-container-org444fba3" class="outline-2">
+<h2 id="org444fba3">Where to go next</h2>
+<div class="outline-text-2" id="text-org444fba3">
 <ul class="org-ul">
 <li><a href="typed-decisions.html">Typed decisions: the hello world</a> &#x2013; the same three heads over 120 messages,
 with held-out splits and a calibration measurement.</li>

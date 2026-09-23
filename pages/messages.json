@@ -1,0 +1,21 @@
+{
+  "kinds": ["phishing", "legitimate", "spam"],
+  "levels": ["low", "medium", "high"],
+  "texts": [
+    "your password expires today, sign in here",
+    "payroll needs your bank details now",
+    "verify your account or it will be locked",
+    "confirm your login to keep your files",
+    "the standup moved to ten tomorrow",
+    "here are the notes from monday",
+    "your package was delivered downstairs",
+    "can you review the draft by friday",
+    "you have won a free cruise today",
+    "cheap watches direct from the factory",
+    "lose twenty pounds with this trick",
+    "make money from home this week"
+  ],
+  "kind":        [0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2],
+  "credentials": [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+  "urgency":     [2, 2, 2, 2, 1, 0, 0, 1, 0, 0, 0, 0]
+}
