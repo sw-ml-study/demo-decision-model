@@ -1,0 +1,38 @@
+#!/bin/sh
+# The hello-world demo: it must tangle, flatten to one self-contained file with
+# no host call reachable, run with no source directory at all, and still reach
+# the numbers it was measured at. Run rather than trusted, because every number
+# in docs/literate/typed-decisions.org is a claim about this program's output.
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+mlpl=$("$repo_root/scripts/select-mlpl")
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT HUP INT TERM
+
+"$repo_root/scripts/bundle-program" "$repo_root/demos/typed-decisions/typed-decisions.mlpl" "$work/program.mlpl" >/dev/null
+
+if ! "$mlpl" "$work/program.mlpl" > "$work/out.txt" 2>&1; then
+    echo "typed-decisions failed to run standalone:" >&2
+    tail -5 "$work/out.txt" >&2
+    exit 1
+fi
+
+fail=0
+require() {
+    grep -q "$1" "$work/out.txt" || { echo "typed-decisions: missing $2" >&2; fail=1; }
+}
+# The measured run, pinned line by line: the Choice is learned, all three heads
+# answer, and cooling the logits leaves accuracy alone while it fixes the claim.
+require "category accuracy: train 1  test 0.75" "the measured category accuracy"
+require "as reported      0.75       0.912" "the reported confidence before calibration"
+require "after cooling    0.75       0.652" "the confidence after calibration"
+require "credentials? accuracy 0.875" "the Noul head's accuracy"
+require "urgency      accuracy 0.708" "the Scale head's accuracy"
+require "all three are well-formed decisions: 1" "the contract check"
+
+if [ "$fail" -ne 0 ]; then
+    sed -n '/Stage 2/,$p' "$work/out.txt" >&2
+    exit 1
+fi
+echo "PASS typed decisions (self-contained, host-call free, reproduces its measured run)"

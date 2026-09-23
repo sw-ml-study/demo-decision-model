@@ -15,6 +15,11 @@ function with a free deterministic oracle, not the point.
 
 ## Literate reading
 
+- [`literate/typed-decisions.org`](literate/typed-decisions.org) — the hello
+  world: one state, three typed heads and a calibration measurement, over
+  message triage rather than ELIZA, in four stages. Start here. Published
+  beside the live demo as `typed-decisions.html`, and self-contained enough to
+  run in a browser.
 - [`literate/demo-decision-model.org`](literate/demo-decision-model.org) — the
   model read as a literate program: a six-block runnable primer, then every
   library and demo source split at function boundaries. It tangles back to the

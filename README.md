@@ -286,6 +286,39 @@ Actions workflow; CI builds nothing. The footer names the source commit it was
 built from, the host, and the time, and marks a build from uncommitted source
 as `-dirty`.
 
+### Start here: typed decisions, the hello world
+
+If you want the idea without the ELIZA machinery,
+**[Typed decisions: the hello world](https://sw-ml-study.github.io/demo-decision-model/typed-decisions.html)**
+is a literate document that builds one in four stages over message triage:
+
+```
+"payroll asks you to confirm your password on this page"
+
+  what kind of message?      legitimate .000  spam .000  phishing .999
+  does it want credentials?  .973
+  how urgent?                low .000  medium .000  high .999
+```
+
+One shared state, three typed heads, one forward pass — and no token generated
+to produce any of it. The four stages are: a typed decision is a distribution
+over a domain the caller supplies; those probabilities can be *learned*, from a
+corpus printed in the document; one state answers several typed questions at
+once while ordinary code owns the branch; and — the stage a repurposed chat
+model cannot honestly claim — **classification is not calibration**: on 24
+held-out messages the model was wrong by 0.162 of expected calibration error
+before one fitted scalar brought it to 0.097, without changing a single answer.
+
+The document tangles [`demos/typed-decisions/typed-decisions.mlpl`](demos/typed-decisions/typed-decisions.mlpl)
+byte for byte, the gate runs it and pins every number in the prose, and the
+program is self-contained — corpus included, no IO — so it also runs in
+[sw-MLPL's Live Editor](https://sw-ml-study.github.io/sw-mlpl/) from
+[its download](https://sw-ml-study.github.io/demo-decision-model/typed-decisions.mlpl).
+
+It is a *Jev-like interface demonstration only*: Jev's architecture, parallel
+sampler and calibration training are unpublished, and a softmax over three
+columns is not Jev. What is reproducible is the contract.
+
 ### Train one yourself, in the browser, with nothing installed
 
 The live demo runs a model that was trained here. If you want to watch one

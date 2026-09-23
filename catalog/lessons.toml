@@ -110,3 +110,17 @@ memory = "79,905 parameters: a 2,401 x 32 shared text embedding read by inputs, 
 speed = "minibatches of 256 with the cards re-encoded every step; 674 steps (21 epochs) in 5 min. Snapshots measured at 0 s, 10 s, 1 min, 5 min."
 quality = "Two questions (which of 51 DOCTOR rules answers; which of four Noul cards is true) answered by one set of weights. On cards that trained: 85.3% over the full 51-card field, against model 4's fixed head at 86.1% on the same rows -- generality costs about a point. On twelve rules held out of training entirely (479 rows): 0.4% in the full field, 36.5% in a five-card field with trained distractors, 18.6% against equally untrained ones, which is chance. Plain inner product scored 0.0% held out (trained cards accumulate magnitude); tying the card projection to the state projection gave 0.6% held out and cost 15 points on seen cards. A lower bound in an unfriendly regime: an ELIZA rule card shares little but function words with an input."
 status = "accepted"
+
+[[lesson]]
+id = "TD01"
+slug = "typed-decisions"
+title = "The hello world: one state, three typed heads, and the difference between a classifier and a calibrated one"
+source = "demos/typed-decisions/typed-decisions.mlpl"
+library = ["lib/decision.mlpl", "lib/choice_model.mlpl"]
+test = ["scripts/check-typed-decisions", "scripts/check-tangle"]
+fixture = "docs/literate/typed-decisions.org"
+implementation = "from-scratch"
+memory = "11,655 parameters: a 721 x 16 vocabulary embedding shared by every head, a 16 x 3 Choice head, a 16 x 1 Noul head and a 16 x 3 Scale head. The bundled self-contained program, corpus included, is 41,872 bytes."
+speed = "200 Adam steps over 72 messages, about 3 s wall on an M1 Max; all three decisions come from one forward pass over one pooled state."
+quality = "On 24 held-out messages: category 0.750 (majority class 0.375), credentials 0.875, urgency 0.708. Calibration is the point of the lesson: as reported the model claims 0.912 mean confidence while being right 0.750 of the time (Brier 0.426, ECE 0.162); one temperature fitted on a separate 24-message calibration split (5.75) leaves every answer unchanged and brings the claim to 0.652 (Brier 0.404, ECE 0.097). Twenty-four messages cannot pin an ECE to the third decimal, and the document says so where it prints it."
+status = "accepted"

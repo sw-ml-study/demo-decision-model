@@ -1,0 +1,486 @@
+read https://news.ycombinator.com/item?id=49812769 and the linked-to content and consider my similar projects 
+sw-ml-study/demo-decision-model and 
+sw-ml-study/moe-microscope and suggest how I can make a concise Jev-like demo in sw-mlpl.  References: 
+sw-ml-study/sw-mlpland 
+softwarewrighter/microgpt-mlpl-- idiomatic mlpl should be able to implement Jev-like typed decision model concisely with performance.
+
+You want a small, idiomatic sw-MLPL demo that captures the useful Jev idea without pretending to reproduce Jev’s unpublished internals: unstructured state in, bounded typed decisions out, probabilities visible, code owns the branch. Given what you already have in demo-decision-model, moe-microscope, and microgpt-mlpl, I think this can be much smaller and sharper than another standalone framework.
+
+The key observation
+
+The HN-linked “Jev in 25 lines of Python” is essentially:
+
+prompt
+  -> ordinary small causal LM
+  -> take logits at one position
+  -> select logits for A/B/C
+  -> softmax only those logits
+  -> probabilities over bounded choices
+
+The example uses Qwen3-0.6B and gets:
+
+Legitimate  .031
+Spam        .084
+Phishing    .885
+
+without generating a token at all.
+
+That is an excellent teaching demo, but it leaves out the important Jev distinction: TypeSafe says Jev is specifically trained/post-trained for calibrated decisions, parallel typed outputs, and non-generative operation. Its RLCD training procedure and architecture are not public.
+
+Your demo-decision-model already makes this distinction correctly: it explicitly says it reproduces the contract and calibration objective, not Jev's unpublished architecture. More importantly, it already demonstrates the deeper idea better than the 25-line Python example: code owns thresholds, strings, memory, and side effects, while the model supplies bounded probabilistic judgments.
+
+So I would not build another large Jev-inspired project.
+
+I would add a tiny MLPL artifact whose purpose is:
+
+Show that “typed decision” is just a natural MLPL computation.
+
+Proposed demo: jev-like.mlpl
+
+I would aim for ~20–35 substantive MLPL lines.
+
+The conceptual pipeline should be just:
+
+state
+  ↓
+features / embedding
+  ↓
+decision head
+  ↓
+logits
+  ↓
+softmax
+  ↓
+typed result
+
+No token sampling. No generation loop. No decoder. No agent.
+
+The demo should start with Choice, because it exposes the idea most clearly.
+
+Something structurally like this:
+
+choices = ["legitimate", "spam", "phishing"]
+
+x = encode("Payroll asks for your password on a non-company sign-in page.")
+
+logits = x @ W + b
+p = softmax(logits)
+
+decision = choices[argmax(p)]
+
+print(decision)
+print(p)
+
+The exact syntax obviously needs to match current MLPL facilities, but that is the level of abstraction I would target.
+
+The important point is that in MLPL this should look like the mathematics rather than framework plumbing.
+
+Conceptually:
+
+$$ z = xW+b $$ $$ p_i = \frac{e^{z_i}}{\sum_j e^{z_j}} $$ $$ choice=\operatorname{argmax}(p) $$
+
+That is the entire inference mechanism for a fixed-head decision model.
+
+And unlike the HN example, you're not abusing next-token probabilities from a chat model.
+
+But make it actually Jev-like: three heads, one state
+
+The smallest compelling version should probably be slightly more ambitious.
+
+Jev exposes three useful shapes:
+
+Choice — distribution over alternatives
+Noul — probability of yes/no
+Score — ordered rating
+
+TypeSafe emphasizes that multiple questions are evaluated from the same input state rather than autoregressively generating answers.
+
+Your demo-decision-model already has exactly the right architecture for this idea: one pooled representation feeding a Choice head and several Noul heads.
+
+So the killer MLPL demonstration would be:
+
+                       +--> Choice: category
+                       |
+text -> encoder -> h --+--> Noul: suspicious?
+                       |
+                       +--> Scale: urgency
+
+Conceptually:
+
+h = encode(state)
+
+category = softmax(h @ W_category + b_category)
+suspicious = sigmoid(h @ w_suspicious + b_suspicious)
+urgency = softmax(h @ W_urgency + b_urgency)
+
+Then ordinary code interprets them.
+
+category:
+  legitimate  .02
+  spam        .07
+  phishing    .91
+
+suspicious:
+  true        .97
+
+urgency:
+  low         .01
+  medium      .13
+  high        .86
+
+That is much closer to the actual System-One programming model than the HN article while still being tiny.
+
+Why MLPL is unusually well suited to this
+
+This is where I think the demonstration becomes valuable for sw-MLPL itself.
+
+The HN implementation needs Python + NumPy + llama.cpp + GGUF + tokenizer handling + token IDs because it starts from an autoregressive LM.
+
+MLPL can express a purpose-built decision model directly.
+
+Your language already has native:
+
+arrays
+broadcasting
+matmul
+softmax
+cross_entropy
+autograd
+Adam
+Model DSL
+WASM execution
+MLX/CUDA backends
+
+And microgpt-mlpl demonstrates why that matters: its idiomatic version shrinks an entire GPT to 48 lines, because MLPL's array operations and Model DSL eliminate the scalar/autograd machinery. In your measured result that version is also faster than the scalar Rust implementation.
+
+The same effect should be even stronger here.
+
+A decision model is a much more natural array-language workload than GPT.
+
+I would build the demonstration in four increasingly-real versions
+
+Not four large programs—four tiny stages in one literate demo.
+
+1. Pure math: no learned model
+
+Start with logits directly:
+
+logits = [1.2, 2.0, 4.1]
+p = softmax(logits)
+
+Output:
+
+legitimate  0.046
+spam        0.102
+phishing    0.852
+
+Purpose:
+
+A typed decision is a probability distribution over a finite domain.
+
+Maybe 5–8 lines.
+
+2. Learned Choice
+
+Then:
+
+features -> linear -> softmax
+
+Train on a tiny corpus.
+
+model = linear(features, 3, seed)
+
+repeat 200 {
+    logits = model(X)
+    loss = cross_entropy(logits, y)
+    adam(...)
+}
+
+Now the probabilities came from training rather than being invented.
+
+That distinction is important.
+
+3. Shared representation + typed heads
+
+Then make the MLPL idiom explicit:
+
+h = encoder(X)
+
+route    = softmax(h @ Wr + br)
+question = sigmoid(h @ Wq + bq)
+risk     = softmax(h @ Ws + bs)
+
+One computation of h.
+
+Three decisions.
+
+This is the point where the diagram becomes:
+
+                 ┌─ route ─────── Choice
+state → encoder ─┼─ question? ─── Noul
+                 └─ risk ──────── Scale
+
+This directly connects to what you've already implemented in demo-decision-model.
+
+4. Calibration experiment
+
+This is the stage the 25-line Python demo cannot honestly claim.
+
+Take a held-out set and bucket predictions:
+
+confidence    predicted correct
+0.5–0.6       54%
+0.6–0.7       63%
+0.7–0.8       74%
+0.8–0.9       81%
+0.9–1.0       92%
+
+Then show an ECE/Brier score before and after temperature scaling.
+
+Something like:
+
+p_raw = softmax(logits)
+p_cal = softmax(logits / temperature)
+
+This is pedagogically powerful because:
+
+classification ≠ calibration
+
+and HN commenters immediately identified exactly that issue. Several specifically point out that extracting normalized choice logits does not automatically make those numbers calibrated probabilities.
+
+Your current demo-decision-model has already observed the problem empirically: early models can be highly confident while wrong off-distribution.
+
+That gives you actual evidence rather than marketing.
+
+The compact MLPL version I would strive for
+
+Ignoring data loading and reporting, I think the essential learned model should read approximately like this:
+
+# state representation
+h = mean(embedding(tokens, vocab, dim), 0)
+
+# typed heads
+choice_p = softmax(h @ choice_W + choice_b)
+question_p = sigmoid(h @ question_W + question_b)
+risk_p = softmax(h @ risk_W + risk_b)
+
+# typed answers
+choice = choices[argmax(choice_p)]
+question = question_p >= 0.5
+risk = sum(risk_p * [1, 2, 3])
+
+print(choice)
+print(choice_p)
+print(question_p)
+print(risk)
+
+Even better if the Model DSL lets this collapse further.
+
+The MLPL teaching point becomes:
+
+There is no decoding loop because there is nothing to decode.
+
+That is the line I would put prominently in the demo.
+
+Do not use A/B/C internally if you can avoid it
+
+One interesting point from the HN discussion is that using next-token labels such as A, B, C introduces tokenization and positional biases. One commenter reports needing permutations of A/B assignments and checking that the allowed-token probability mass dominates the distribution.
+
+That's another reason your MLPL version can be cleaner.
+
+Instead of:
+
+token A → phishing
+token B → spam
+token C → legitimate
+
+your head literally means:
+
+column 0 → legitimate
+column 1 → spam
+column 2 → phishing
+
+There is no tokenizer-level ambiguity.
+
+That is a genuine advantage of the dedicated decision model.
+
+Connect the three repositories explicitly
+
+I would make the relationship:
+
+microgpt-mlpl
+    |
+    |  "how compactly can MLPL express generation?"
+    v
+autoregressive GPT
+
+demo-decision-model
+    |
+    |  "what happens if the model decides instead of talks?"
+    v
+trained typed-decision system
+
+moe-microscope
+    |
+    |  "how can capacity/routing/recurrence/memory
+    |   improve or scale the representation?"
+    v
+experimental decision architecture
+
+And the new tiny example sits between the first two:
+
+                 jev-like.mlpl
+                       |
+        ┌──────────────┴──────────────┐
+        v                             v
+microgpt-mlpl                demo-decision-model
+generative model             full decision experiment
+
+In other words:
+
+jev-like.mlpl should be the “Hello World” of demo-decision-model.
+
+Not another research project.
+
+Then use moe-microscope to ask the interesting architecture question
+
+Once that tiny baseline exists, moe-microscope gives you a very interesting next experiment:
+
+                  ┌─ expert: routing
+                  ├─ expert: sentiment
+encoder -> router ├─ expert: risk
+                  └─ expert: intent
+                           ↓
+                     typed heads
+
+But I would resist putting MoE into the concise demo.
+
+First establish:
+
+dense encoder
+     ↓
+shared h
+     ↓
+typed heads
+
+Then compare:
+
+dense
+vs
+MoE
+vs
+recurrent
+vs
+Engram
+vs
+MoE + recurrence
+
+using exactly the same typed-decision benchmark.
+
+That would bridge demo-decision-model and moe-microscope in a way that produces useful measurements.
+
+One benchmark could unify the work
+
+For each architecture measure:
+
+Property	Why
+accuracy	basic correctness
+NLL	probability quality
+Brier score	calibration
+ECE	calibration error
+parameters stored	capacity
+parameters activated	sparse efficiency
+latency	System-One goal
+bytes of weights	deployment
+OOD abstention	automation safety
+
+Then architectures become experimentally comparable:
+
+linear
+MLP
+tiny transformer
+recurrent
+MoE
+MoE + recurrence
+MoE + Engram
+
+This is much more interesting than simply asking whether an MoE has lower language-model loss.
+
+An especially good live-demo visualization
+
+I would make the MLPL playground show exactly one horizontal pipeline:
+
+"Payroll asks for your password..."
+          │
+          ▼
+   [state vector h]
+    .17 -.42 .91 ...
+      │    │    │
+      │    │    └──────────────┐
+      │    └─────────┐         │
+      ▼              ▼         ▼
+   CATEGORY       SUSPICIOUS   RISK
+  ┌──────────┐      0.97      ┌────────┐
+  │ legit .02│                │ low .01│
+  │ spam  .07│                │ med .13│
+  │ phish .91│                │ high.86│
+  └──────────┘                └────────┘
+         │
+         ▼
+ ordinary program:
+ if phishing > .8 && suspicious > .9
+     quarantine()
+
+And next to it show the actual MLPL lines responsible for each arrow.
+
+That feels very aligned with the “microscope” philosophy of your projects.
+
+One important terminology adjustment
+
+I'd call the demo something like:
+
+typed-decisions.mlpl
+
+rather than jev.mlpl.
+
+Inside the prose:
+
+“Jev-like interface demonstration.”
+
+Because TypeSafe explicitly says Jev includes a new architecture, parallel sampler, and RLCD calibration training. Those internals have not been published, so a simple softmax classifier is not literally Jev.
+
+The NobodyWho post itself acknowledges this distinction despite the intentionally provocative “There. That's Jev.” framing.
+
+Your existing README already gets this nuance right.
+
+The strongest possible concise demo
+
+If I were reducing the idea to one MLPL lesson, I would make the entire thesis:
+
+LLM
+state → transformer → token → token → token → ... → parse output
+
+TDM
+state → encoder → [probabilities]
+                     │
+                     ▼
+                    code
+
+And underneath:
+
+h = encoder(state)
+
+kind = softmax(h @ W_kind)
+risk = softmax(h @ W_risk)
+ask  = sigmoid(h @ W_question)
+
+Three lines are essentially the architecture.
+
+Then:
+
+Generation is not suppressed.
+Generation is absent.
+
+That, to me, is the concise sw-MLPL demonstration worth building.
+
+And it dovetails extremely well with your existing work: microgpt-mlpl demonstrates that MLPL can express a GPT unusually compactly; this demo would demonstrate that when the task is actually decision-making, MLPL can express the much smaller computation directly instead of pretending every ML problem is text generation.

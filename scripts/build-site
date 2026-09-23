@@ -40,6 +40,11 @@ fi
 # The self-contained training program the page offers for sw-MLPL's Live
 # Editor: one file, no includes, no host calls (the bundler proves it).
 "$repo_root/scripts/bundle-program" "$repo_root/demos/eliza/browser.mlpl" "$out/demo01-train.mlpl" >/dev/null
+"$repo_root/scripts/bundle-program" "$repo_root/demos/typed-decisions/typed-decisions.mlpl" "$out/typed-decisions.mlpl" >/dev/null
+
+if [ -f "$repo_root/docs/literate/typed-decisions.html" ]; then
+    cp "$repo_root/docs/literate/typed-decisions.html" "$out/typed-decisions.html"
+fi
 printf '{"host":"%s","sha":"%s","timestamp":"%s"}\n' \
     "$TDM_BUILD_HOST" "$TDM_BUILD_SHA" "$TDM_BUILD_TIME" > "$out/build-info.json"
 

@@ -1,0 +1,729 @@
+#+title: Typed decisions: the hello world
+#+subtitle: one state, three typed heads, and the difference between a classifier and a calibrated one
+#+author: Michael A Wright
+#+startup: showall
+#+property: header-args:mlpl :results output :exports code :eval no-export
+#+options: toc:2 num:t timestamp:nil ^:{}
+
+* What this is
+
+#+begin_export html
+<p style="margin:0 0 1em 0">
+<a href="https://sw-ml-study.github.io/demo-decision-model/">Live demo</a> ·
+<a href="https://github.com/sw-ml-study/demo-decision-model">Repository</a> ·
+<a href="literate.html">The full model, read as a literate program</a>
+</p>
+#+end_export
+
+A typed decision model small enough to read in one sitting. It takes a short
+message and answers three bounded questions about it at once:
+
+#+begin_example
+"payroll asks you to confirm your password on this page"
+
+  what kind of message?      legitimate .000  spam .000  phishing .999
+  does it want credentials?  .973
+  how urgent?                low .000  medium .000  high .999
+#+end_example
+
+No token was generated to produce that. There is no decoding loop because there
+is nothing to decode: the model reports probabilities over domains the caller
+supplied, and ordinary code decides what to do about them.
+
+This is a *Jev-like interface demonstration*, and nothing more. TypeSafe's Jev
+has an architecture, a parallel sampler and a calibration training procedure,
+none of which are published; a softmax over three columns is not Jev. What is
+reproducible is the /contract/ -- unstructured state in, bounded typed decisions
+out, probabilities visible, code owning the branch -- and that contract is what
+this document builds, in four stages.
+
+The full model is [[https://github.com/sw-ml-study/demo-decision-model][the rest of this repository]]: the same three primitives, trained
+on labels a 1966 program wrote, with the policy and memory a conversation needs.
+You can [[https://sw-ml-study.github.io/demo-decision-model/][talk to it in your browser]], watch it decide turn by turn with the trace
+open, and read [[file:literate.html][its own literate document]]. This page is where to start.
+
+* A typed decision is a distribution
+
+Before any model exists, the shape of the answer can be shown on its own. These
+blocks run as written -- the recorded results underneath them are checked by the
+gate, so they cannot drift away from what the interpreter actually prints.
+
+#+begin_src mlpl :tangle no :exports both
+include "lib/decision.mlpl";
+d = u:choice("what kind of message is this?", ["legitimate", "spam", "phishing"], [1.2, 2.0, 4.1]);
+print("probs      ", d.probs);
+print("selected   ", u:decision_label(d));
+print("confidence ", d.confidence);
+print("margin     ", d.margin);
+u:decision_valid(d)
+#+end_src
+
+#+RESULTS:
+: probs       0.046729656971488995 0.1039987641644621 0.8492715788640489
+: selected    phishing
+: confidence  0.8492715788640489
+: margin      0.7452728146995868
+: 1
+
+Three logits become a distribution, an answer, a confidence and a margin, and
+the last line is the validator agreeing that what came back is a well-formed
+decision rather than a bag of numbers. The
+labels were supplied by the caller at the call site, so the same weights can be
+asked about a set they were never trained on -- which is the whole subject of
+[[file:../experiments/DC01-dynamic-choice-sets.md][DC01]], and a measurement with a sobering result.
+
+A Noul is the same object with one probability, carried as a two-label
+distribution so that one validator and one renderer serve all three kinds:
+
+#+begin_src mlpl :tangle no :exports both
+include "lib/decision.mlpl";
+n = u:noul("does it ask for credentials?", 2.1);
+print("p          ", n.p);
+print("selected   ", u:decision_label(n));
+n.probs
+#+end_src
+
+#+RESULTS:
+: p           0.8909031788043871
+: selected    true
+: 0.10909682119561293 0.8909031788043871
+
+And a Scale is a Choice whose labels are ordered, which is what makes its
+expectation meaningful:
+
+#+begin_src mlpl :tangle no :exports both
+include "lib/decision.mlpl";
+s = u:scale("how urgent is it?", ["low", "medium", "high"], [0.1, 1.0, 3.2]);
+print("probs      ", s.probs);
+print("expectation", s.expectation);
+u:decision_label(s)
+#+end_src
+
+#+RESULTS:
+: probs       0.03897487596434636 0.09586272617886252 0.865162397856791
+: expectation 1.8261875218924446
+: high
+
+Everything after this point is the same three shapes, with the numbers learned
+instead of written down.
+
+* The program, in order
+
+The module comment says what the file is for, and the two includes are the only
+things it borrows: the typed-decision contract, and the featurizer that turns a
+message into the rows of an embedding it may read.
+
+#+begin_src mlpl :tangle ../../demos/typed-decisions/typed-decisions.mlpl
+# The hello world of this repository: a typed decision model small enough to read in one sitting, over messages rather than therapy. One shared state feeds three typed heads -- a Choice over three categories, a Noul asking whether the message wants your credentials, and a Scale of urgency -- trained together on the messages whose index is not held out, calibrated on the next fifth, and measured on the last fifth, which it never saw. There is no decoding loop because there is nothing to decode: the model reports probabilities over bounded domains and ordinary code decides what to do about them. Jev-like in interface only: Jev's architecture and its calibration training are unpublished, and nothing here reproduces them. Self-contained by design -- the corpus is in the file and there is no IO -- so the same program runs in a browser.
+include "../../lib/decision.mlpl";
+include "../../lib/choice_model.mlpl";
+#+end_src
+
+** The whole configuration
+
+Sixteen features per message, sixteen dimensions of state, two hundred Adam
+steps. The label sets are ordinary lists, and they are the model's output domain
+in the most literal sense: column 0 /is/ legitimate. There is no tokenizer
+mapping ~A~, ~B~, ~C~ onto classes, and so no tokenizer bias to correct for.
+
+#+begin_src mlpl :tangle ../../demos/typed-decisions/typed-decisions.mlpl
+td_width = 16;
+td_dim = 16;
+td_lr = 0.05;
+td_steps = 200;
+td_categories = ["legitimate", "spam", "phishing"];
+td_levels = ["low", "medium", "high"];
+#+end_src
+
+** The corpus, in full
+
+One hundred and twenty short messages, each with three labels. It is printed
+here in full because a demo whose data you cannot read is not a demo: every
+number further down is a claim about exactly these sentences, and you can check
+whether the labels are fair before you believe any of it.
+
+Three labels per message, because the same message is three questions at once:
+what kind of thing it is, whether it wants your credentials, and how much of a
+hurry it is in.
+
+#+begin_src mlpl :tangle ../../demos/typed-decisions/typed-decisions.mlpl
+def u:td_rows() {
+  "The corpus, one message per line as text|category|credentials|urgency: category 0 legitimate, 1 spam, 2 phishing; credentials 1 when the message asks for a password, a code, or bank details; urgency 0 low, 1 medium, 2 high. Hand-written for this demo, and printed here in full because a demo whose data you cannot read is not a demo.";
+  [
+    "standup moved to 10am tomorrow|0|0|1",
+    "you have won a free cruise, claim your prize now|1|0|0",
+    "your password expires today, sign in here to keep access|2|1|2",
+    "here are the notes from monday|0|0|0",
+    "lose twenty pounds with this one weird trick|1|0|0",
+    "payroll needs you to confirm your bank details now|2|1|2",
+    "your package was delivered to the front desk|0|0|0",
+    "cheap watches direct from the factory today only|1|0|0",
+    "your account has been locked, verify your identity|2|1|2",
+    "can you review the draft before friday|0|0|1",
+    "make money from home working two hours a week|1|0|1",
+    "unusual sign in detected, confirm your credentials|2|1|2",
+    "lunch is in the kitchen if you want some|0|0|0",
+    "hot singles in your area want to meet you|1|0|0",
+    "the ceo needs you to buy gift cards urgently|2|0|2",
+    "the quarterly report is attached for your records|0|0|0",
+    "buy discount pills without a prescription|1|0|0",
+    "your mailbox is full, log in to restore delivery|2|1|1",
+    "reminder: dentist appointment on thursday|0|0|1",
+    "double your crypto returns guaranteed no risk|1|0|1",
+    "security alert: enter your code to stop the transfer|2|1|2",
+    "i pushed the fix to the branch this morning|0|0|0",
+    "congratulations you are our lucky visitor today|1|0|0",
+    "confirm your login to avoid losing your files|2|1|2",
+    "welcome to the team, here is your desk number|0|0|0",
+    "increase your website traffic with our seo service|1|0|0",
+    "update your direct deposit before the next pay run|2|1|2",
+    "the office will be closed on monday for the holiday|0|0|1",
+    "limited time offer on printer ink cartridges|1|0|1",
+    "your vpn certificate expired, reauthenticate here|2|1|1",
+    "thanks for covering my shift last week|0|0|0",
+    "get a free trial of our miracle supplement|1|0|0",
+    "hr needs your social security number to fix payroll|2|1|2",
+    "please sign the updated handbook when you have time|0|0|1",
+    "your car warranty is about to expire, act now|1|0|1",
+    "invoice overdue, sign in to the portal to pay today|2|1|2",
+    "the build is green again after the revert|0|0|0",
+    "earn passive income with this trading robot|1|0|1",
+    "verify your email password or service will stop|2|1|2",
+    "we rescheduled the client call to wednesday|0|0|1",
+    "exclusive investment opportunity for select clients|1|0|1",
+    "your two factor code is needed to complete setup|2|1|2",
+    "your expense report was approved|0|0|0",
+    "clearance sale everything must go this weekend|1|0|1",
+    "action required: reset your password within an hour|2|1|2",
+    "printer on the second floor is fixed|0|0|0",
+    "meet your soulmate with our matchmaking service|1|0|0",
+    "the finance team requests an urgent wire transfer|2|0|2",
+    "agenda for the planning meeting is attached|0|0|1",
+    "we can remove your debt in thirty days|1|0|1",
+    "click to review the shared document with your login|2|1|1",
+    "i will be out of office next week|0|0|0",
+    "free gift card just for taking our survey|1|0|0",
+    "your subscription failed, update your card details|2|1|1",
+    "the parking permit renewal form is due friday|0|0|1",
+    "your horoscope reveals a fortune coming soon|1|0|0",
+    "it support needs remote access to your machine|2|1|1",
+    "congratulations on shipping the release|0|0|0",
+    "bulk email software that never lands in spam|1|0|0",
+    "confirm your identity to release the held package|2|1|1",
+    "coffee machine is being serviced this afternoon|0|0|0",
+    "solar panels installed at no cost to you|1|0|0",
+    "your benefits enrollment requires your bank login|2|1|2",
+    "please update your timesheet by end of day|0|0|1",
+    "this stock is about to explode, buy before monday|1|0|2",
+    "suspicious charge detected, verify your account now|2|1|2",
+    "the design review went well, notes to follow|0|0|0",
+    "collect your unclaimed inheritance from abroad|1|0|1",
+    "sign the attached contract with your company password|2|1|1",
+    "badge access to the lab starts on monday|0|0|1",
+    "discount designer bags shipped worldwide|1|0|0",
+    "your storage quota is exceeded, log in to keep files|2|1|1",
+    "training session on the new tool is optional|0|0|0",
+    "work from home data entry positions open now|1|0|1",
+    "urgent: the director asked me to handle this quietly|2|0|2",
+    "your laptop repair is finished at the help desk|0|0|1",
+    "your number was selected for a cash reward|1|0|1",
+    "your office license expired, sign in to renew|2|1|1",
+    "the server migration is scheduled for saturday|0|0|1",
+    "miracle cream removes wrinkles overnight|1|0|0",
+    "verify your payroll account before payday|2|1|2",
+    "team photo is at noon by the entrance|0|0|0",
+    "wholesale electronics at unbeatable prices|1|0|0",
+    "we detected malware, enter your password to scan|2|1|2",
+    "i added the numbers you asked for to the sheet|0|0|0",
+    "become a millionaire trading forex from your phone|1|0|1",
+    "the director needs gift cards for a client today|2|0|2",
+    "the vendor confirmed delivery for next tuesday|0|0|1",
+    "free vacation package for two, no strings|1|0|0",
+    "your package is held, confirm your card to release|2|1|1",
+    "the retro is moved to friday afternoon|0|0|1",
+    "our psychic has an urgent message for you|1|0|1",
+    "reset your credentials to keep email access|2|1|2",
+    "i signed off on the purchase order|0|0|0",
+    "best deals on refurbished phones this month|1|0|0",
+    "confirm the wire transfer details immediately|2|0|2",
+    "new badge photos are being taken this week|0|0|0",
+    "grow your followers overnight with our service|1|0|0",
+    "your account will be deleted unless you log in|2|1|2",
+    "please bring your laptop to the workshop|0|0|1",
+    "lowest mortgage rates in a decade, apply today|1|0|1",
+    "update your tax form with your bank information|2|1|1",
+    "the kitchen will be closed for cleaning tomorrow|0|0|0",
+    "try this fat burner recommended by doctors|1|0|0",
+    "sign in to view the encrypted message from hr|2|1|1",
+    "your shipment of monitors arrives on thursday|0|0|1",
+    "cheap insurance quotes in under a minute|1|0|0",
+    "your mfa device changed, verify your identity now|2|1|2",
+    "i booked the conference room for two hours|0|0|0",
+    "your name appeared in our prize draw list|1|0|1",
+    "finance needs your login to approve the invoice|2|1|2",
+    "the survey about the office layout closes friday|0|0|1",
+    "urgent request from the ceo, keep this confidential|2|0|2",
+    "thanks for the detailed review comments|0|0|0",
+    "the release notes are ready for your approval|0|0|1",
+    "fire drill scheduled for wednesday morning|0|0|1",
+    "i moved our one on one to next week|0|0|0",
+    "the contractor invoice matches the estimate|0|0|0",
+    "please return the loaner keyboard when done|0|0|1",
+    "the intern starts on monday, say hello|0|0|0"
+  ]
+}
+#+end_src
+
+** Reading a row
+
+Two accessors, so the rest of the program never splits a string again.
+
+#+begin_src mlpl :tangle ../../demos/typed-decisions/typed-decisions.mlpl
+def u:td_field(row, i) {
+  "Field i of a corpus row.";
+  u:text_lg(str_split(row, "|"), i)
+}
+#+end_src
+
+#+begin_src mlpl :tangle ../../demos/typed-decisions/typed-decisions.mlpl
+def u:td_number(row, i) {
+  "Field i of a corpus row as a number.";
+  unwrap(to_number(u:td_field(row, i)))
+}
+#+end_src
+
+** The split is a position, not a coin
+
+Three of every five messages train, the fourth calibrates, the fifth tests.
+Deciding by position rather than by chance means the three splits are the same
+on every machine, in every language that reads this corpus, forever -- so a
+number measured here can be compared with a number measured somewhere else.
+
+#+begin_src mlpl :tangle ../../demos/typed-decisions/typed-decisions.mlpl
+def u:td_split(i) {
+  "Which split row i belongs to: 0 train, 1 calibration, 2 test. Position, not chance, so the splits are the same on every machine and in every language that reads this corpus.";
+  r = i - floor(i / 5) * 5;
+  if lt(r, 3) {
+    0
+  } else {
+    if eq(r, 3) {
+      1
+    } else {
+      2
+    }
+  }
+}
+#+end_src
+
+** One split as arrays
+
+The messages of one split as a string list, and the three label arrays beside
+them. Everything after this point is arithmetic.
+
+#+begin_src mlpl :tangle ../../demos/typed-decisions/typed-decisions.mlpl
+def u:td_corpus(split) {
+  "One split of the corpus: the messages as a string list, and the three label arrays.";
+  rows = u:td_rows();
+  n = list_len(rows);
+  lines = "";
+  cat = fill([0], 0);
+  cred = fill([0], 0);
+  urg = fill([0], 0);
+  i = 0;
+  while lt(i, n) {
+    row = u:text_lg(rows, i);
+    keep = eq(u:td_split(i), split);
+    lines = if keep {
+      if gt(str_len(lines), 0) {
+        str_concat(str_concat(lines, "\n"), u:td_field(row, 0))
+      } else {
+        u:td_field(row, 0)
+      }
+    } else {
+      lines
+    };
+    cat = if keep {
+      concat(cat, [u:td_number(row, 1)])
+    } else {
+      cat
+    };
+    cred = if keep {
+      concat(cred, [u:td_number(row, 2)])
+    } else {
+      cred
+    };
+    urg = if keep {
+      concat(urg, [u:td_number(row, 3)])
+    } else {
+      urg
+    };
+    i = i + 1
+  };
+  {texts: str_split(lines, "\n"), cat: cat, cred: cred, urg: urg}
+}
+#+end_src
+
+* One state, three heads
+
+This is the architecture, and it is three functions long.
+
+#+begin_example
+                       +--> Choice: what kind of message?
+                       |
+message -> encoder -> h +--> Noul:   does it want credentials?
+                       |
+                       +--> Scale:  how urgent?
+#+end_example
+
+** The shared state
+
+The mean of the embedding rows this message's known words address. One vector,
+computed once. Three heads read it, which is why three typed questions cost one
+forward pass rather than three.
+
+#+begin_src mlpl :tangle ../../demos/typed-decisions/typed-decisions.mlpl
+def u:td_state(ids, wmask) {
+  "The shared state: the mean of the embedding rows this message's known words address. Every head reads this one vector, which is what makes three typed questions cost one pass.";
+  reduce_add(gather_rows(td_E, ids) * wmask, 1)
+}
+#+end_src
+
+** What training minimizes
+
+Three losses added: cross-entropy for the Choice, cross-entropy for the Scale,
+and binary cross-entropy for the Noul, composed from ~log~ and ~sigmoid~ because
+there is no binary cross-entropy builtin. One number to descend, and the encoder
+underneath is pulled by all three at once.
+
+The Noul labels arrive already shaped ~[N, 1]~ for a reason that is a language
+finding rather than a design choice: ~shape~ may not be called inside ~grad~,
+and neither may a record field be read there. Every differentiated function in
+this repository therefore takes plain arrays.
+
+#+begin_src mlpl :tangle ../../demos/typed-decisions/typed-decisions.mlpl
+def u:td_loss(ids, wmask, cat, cred, urg) {
+  "What training minimizes: the Choice's cross-entropy, the Noul's binary cross-entropy, and the Scale's cross-entropy, added. Three questions, one encoder, one number to descend. The Noul labels arrive as [N, 1] so that no shape has to be asked for inside grad.";
+  h = u:td_state(ids, wmask);
+  p = sigmoid(matmul(h, td_Wn) + td_bn);
+  cross_entropy(matmul(h, td_Wc) + td_bc, cat) + cross_entropy(matmul(h, td_Ws) + td_bs, urg) + (0 - mean(cred * log(p + 0.000000001) + (1 - cred) * log(1 - p + 0.000000001)))
+}
+#+end_src
+
+** The training loop
+
+Adam over the encoder and all three heads at once. This is the entire optimizer
+call; there is no scalar autograd machinery to write, because the array
+operations carry the derivatives.
+
+#+begin_src mlpl :tangle ../../demos/typed-decisions/typed-decisions.mlpl
+def u:td_train(ids, wmask, cat, cred, urg, steps, lr) {
+  "Adam over the encoder and all three heads at once; returns the final loss.";
+  train steps {
+    adam(u:td_loss(ids, wmask, cat, cred, urg), [td_E, td_Wc, td_bc, td_Wn, td_bn, td_Ws, td_bs], lr, 0.9, 0.999, 0.00000001)
+  };
+  u:td_loss(ids, wmask, cat, cred, urg)
+}
+#+end_src
+
+* Measuring it
+
+** A head, and whether it was right
+
+A head is a matrix multiply and a bias. Accuracy is the share of rows whose
+argmax is the labelled column.
+
+#+begin_src mlpl :tangle ../../demos/typed-decisions/typed-decisions.mlpl
+def u:td_logits(h, W, b) {
+  "One head's logits over the shared state.";
+  matmul(h, W) + b
+}
+#+end_src
+
+#+begin_src mlpl :tangle ../../demos/typed-decisions/typed-decisions.mlpl
+def u:td_accuracy(logits, y) {
+  "Share of rows whose highest-scoring column is the labelled one.";
+  mean(eq(argmax(logits, 1), y))
+}
+#+end_src
+
+Features against the vocabulary the /training/ split defined. A word that only
+ever appears in a test message contributes nothing, which is the honest thing
+for it to do.
+
+#+begin_src mlpl :tangle ../../demos/typed-decisions/typed-decisions.mlpl
+def u:td_featurize(texts, vocab) {
+  "Feature ids and pooling weights for a list of messages, against the vocabulary the training split defined. A word the training split never used contributes nothing, which is the honest thing for it to do.";
+  u:cm_featurize_vocab(texts, vocab, td_width)
+}
+#+end_src
+
+** Three ways of scoring a probability
+
+Accuracy grades only the argmax. These grade the distribution.
+
+The Brier score is the mean squared distance between the reported distribution
+and the truth. Expected calibration error buckets the rows by the confidence the
+model claimed and asks, within each bucket, how far that claim sat from the
+share it actually got right. Negative log likelihood is what temperature scaling
+is fitted to minimize.
+
+#+begin_src mlpl :tangle ../../demos/typed-decisions/typed-decisions.mlpl
+def u:td_brier(probs, y, k) {
+  "Mean squared error between the reported distribution and the truth: the cost of the whole distribution, not only of its argmax. Lower is better, and unlike accuracy it notices confidence.";
+  n = take(shape(probs), 0, 0);
+  onehot = eq(reshape(iota(k), [1, k]) + fill([n, k], 0), reshape(y, [n, 1]));
+  mean(reduce_add((probs - onehot) * (probs - onehot), 1))
+}
+#+end_src
+
+#+begin_src mlpl :tangle ../../demos/typed-decisions/typed-decisions.mlpl
+def u:td_ece(probs, y, buckets) {
+  "Expected calibration error: bucket the rows by the confidence the model claimed, and average how far that claim sits from the share it actually got right. A model that says 0.9 and is right nine times in ten scores zero here however often it is wrong.";
+  conf = reduce(:max, probs, 1);
+  right = eq(argmax(probs, 1), y);
+  n = take(shape(probs), 0, 0);
+  total = 0;
+  b = 0;
+  while lt(b, buckets) {
+    lo = b / buckets;
+    hi = (b + 1) / buckets;
+    inside = ge(conf, lo) * lt(conf, hi + eq(b, buckets - 1));
+    m = reduce_add(inside);
+    total = total + if gt(m, 0) {
+      abs(reduce_add(right * inside) / m - reduce_add(conf * inside) / m) * m / n
+    } else {
+      0
+    };
+    b = b + 1
+  };
+  total
+}
+#+end_src
+
+#+begin_src mlpl :tangle ../../demos/typed-decisions/typed-decisions.mlpl
+def u:td_nll(probs, y, k) {
+  "Mean negative log probability of the true answer: what temperature scaling is fitted to minimize.";
+  n = take(shape(probs), 0, 0);
+  onehot = eq(reshape(iota(k), [1, k]) + fill([n, k], 0), reshape(y, [n, 1]));
+  0 - mean(log(reduce_add(probs * onehot, 1) + 0.000000001))
+}
+#+end_src
+
+** Fitting one number
+
+Temperature scaling has exactly one parameter, so it is found by scanning a grid
+rather than by another gradient descent: forty candidates, on the calibration
+split, never on the test split. Dividing every logit by one positive number
+cannot reorder them, so no answer changes -- only what the numbers claim.
+
+#+begin_src mlpl :tangle ../../demos/typed-decisions/typed-decisions.mlpl
+def u:td_best_temperature(logits, y, k) {
+  "The temperature that minimizes negative log likelihood on the calibration split, found by scanning a grid rather than by another gradient descent: one scalar, forty candidates from 0.25 to 10, and nothing to go wrong.";
+  best = 1;
+  best_nll = u:td_nll(softmax(logits, 1), y, k);
+  i = 1;
+  while lt(i, 41) {
+    t = i / 4;
+    nll = u:td_nll(softmax(logits / t, 1), y, k);
+    best = if lt(nll, best_nll) {
+      t
+    } else {
+      best
+    };
+    best_nll = if lt(nll, best_nll) {
+      nll
+    } else {
+      best_nll
+    };
+    i = i + 1
+  };
+  best
+}
+#+end_src
+
+* The program
+
+** Printing a decision
+
+A decision is printed as its whole distribution, because the distribution is the
+product and the label is only its argmax.
+
+#+begin_src mlpl :tangle ../../demos/typed-decisions/typed-decisions.mlpl
+def u:td_show_decision(d) {
+  "Print a typed decision as its label and its whole distribution, because the distribution is the product and the label is only its argmax.";
+  print("   ", d.question);
+  i = 0;
+  while lt(i, list_len(d.labels)) {
+    print("       ", u:text_lg(d.labels, i), floor(take(d.probs, 0, i) * 1000) / 1000);
+    i = i + 1
+  };
+  1
+}
+#+end_src
+
+** Stage 1: written down, not learned
+
+Three logits, softmaxed over a bounded domain. No model has been trained yet;
+the point is only that the /shape/ of the answer is a distribution over choices
+the caller supplied. This is the whole of what the widely-shared twenty-five
+lines of Python do, minus the language model they borrow it from.
+
+#+begin_src mlpl :tangle ../../demos/typed-decisions/typed-decisions.mlpl
+# Stage 1. A typed decision is a softmax over a bounded domain. No model yet:
+# these three logits are written down, not learned. The point is only that the
+# shape of the answer is a distribution over choices the caller supplied.
+print("Stage 1: a typed decision is a distribution over a bounded domain.");
+td_hand = u:choice("what kind of message is this?", td_categories, [1.2, 2.0, 4.1]);
+td_p1 = u:td_show_decision(td_hand);
+print("    selected:", u:decision_label(td_hand), " confidence", floor(td_hand.confidence * 1000) / 1000, " margin", floor(td_hand.margin * 1000) / 1000);
+print("");
+#+end_src
+
+** Stage 2: the same shape, learned
+
+Now the probabilities come from training rather than from being written down,
+which is the difference between a demonstration and a claim.
+
+#+begin_src mlpl :tangle ../../demos/typed-decisions/typed-decisions.mlpl
+# Stage 2 and 3. One encoder, three heads, trained together. Stage 2 is the
+# Choice alone; stage 3 is what the same forward pass already gave us.
+td_train_set = u:td_corpus(0);
+td_cal_set = u:td_corpus(1);
+td_test_set = u:td_corpus(2);
+td_vocab = u:text_vocab(td_train_set.texts, td_width);
+td_trf = u:td_featurize(td_train_set.texts, td_vocab);
+td_calf = u:td_featurize(td_cal_set.texts, td_vocab);
+td_tef = u:td_featurize(td_test_set.texts, td_vocab);
+td_rows_n = td_vocab.size + 1;
+td_n_train = list_len(td_train_set.texts);
+#+end_src
+
+Seven parameter arrays: one embedding and three heads. They start as seeded
+random numbers. Nothing is downloaded, and no pretrained weights exist anywhere
+in this repository.
+
+#+begin_src mlpl :tangle ../../demos/typed-decisions/typed-decisions.mlpl
+td_E = param[td_rows_n, 16];
+td_E = randn(7, [td_rows_n, 16]) * 0.1;
+td_Wc = param[16, 3];
+td_Wc = randn(8, [16, 3]) * 0.1;
+td_bc = param[3];
+td_bc = fill([3], 0);
+td_Wn = param[16, 1];
+td_Wn = randn(9, [16, 1]) * 0.1;
+td_bn = param[1];
+td_bn = fill([1], 0);
+td_Ws = param[16, 3];
+td_Ws = randn(10, [16, 3]) * 0.1;
+td_bs = param[3];
+td_bs = fill([3], 0);
+#+end_src
+
+#+begin_src mlpl :tangle ../../demos/typed-decisions/typed-decisions.mlpl
+print("Stage 2: the same shape, learned.", td_n_train, "training messages,", td_vocab.size, "known words,", td_rows_n * 16 + 16 * 7 + 7, "parameters.");
+td_final = u:td_train(td_trf.ids, td_trf.wmask, td_train_set.cat, reshape(td_train_set.cred, [td_n_train, 1]), td_train_set.urg, td_steps, td_lr);
+td_htr = u:td_state(td_trf.ids, td_trf.wmask);
+td_hte = u:td_state(td_tef.ids, td_tef.wmask);
+td_hcal = u:td_state(td_calf.ids, td_calf.wmask);
+td_cat_logits = u:td_logits(td_hte, td_Wc, td_bc);
+print("    loss", floor(td_final * 1000) / 1000, " category accuracy: train", floor(u:td_accuracy(u:td_logits(td_htr, td_Wc, td_bc), td_train_set.cat) * 1000) / 1000, " test", floor(u:td_accuracy(td_cat_logits, td_test_set.cat) * 1000) / 1000);
+print("");
+#+end_src
+
+** Stage 3: three decisions from one pass
+
+The same forward pass has already answered all three questions. What follows the
+model is ordinary code: a threshold on two of the three numbers, written in the
+program where a reader can see it and change it, rather than learned and hidden.
+
+That is the division this repository is about. The model reports belief; the
+program decides what to do about it.
+
+#+begin_src mlpl :tangle ../../demos/typed-decisions/typed-decisions.mlpl
+print("Stage 3: one state, three typed decisions, one forward pass.");
+td_example = "payroll asks you to confirm your password on this page";
+td_exf = u:td_featurize(str_split(td_example, "\n"), td_vocab);
+td_exh = u:td_state(td_exf.ids, td_exf.wmask);
+print("   \"", td_example, "\"");
+td_kind = u:choice("what kind of message is this?", td_categories, reshape(u:td_logits(td_exh, td_Wc, td_bc), [3]));
+td_asks = u:noul("does it ask for credentials?", take(reshape(u:td_logits(td_exh, td_Wn, td_bn), [1]), 0, 0));
+td_urgency = u:scale("how urgent is it?", td_levels, reshape(u:td_logits(td_exh, td_Ws, td_bs), [3]));
+td_p2 = u:td_show_decision(td_kind);
+print("    credentials?", floor(td_asks.p * 1000) / 1000);
+td_p3 = u:td_show_decision(td_urgency);
+print("    urgency expectation", floor(td_urgency.expectation * 1000) / 1000, "on 0 low to 2 high");
+print("    all three are well-formed decisions:", u:decision_valid(td_kind) * u:decision_valid(td_asks) * u:decision_valid(td_urgency));
+print("");
+print("    the program, not the model, decides what to do:");
+print("    quarantine when phishing is at least 0.80 and credentials at least 0.90 ->", ge(u:decision_prob_of(td_kind, "phishing"), 0.8) * ge(td_asks.p, 0.9));
+print("");
+#+end_src
+
+** Stage 4: classification is not calibration
+
+This is the stage a repurposed chat model cannot honestly claim, and the one the
+thread under the original article kept asking about: normalizing the logits of a
+bounded set makes the numbers /sum to one/, which does not make them
+probabilities in any sense you can act on.
+
+Here the model is measurably overconfident -- it claims 0.91 and is right 0.75 of
+the time -- and one fitted scalar moves the claim most of the way to the truth
+without changing a single answer.
+
+#+begin_src mlpl :tangle ../../demos/typed-decisions/typed-decisions.mlpl
+print("Stage 4: classification is not calibration.");
+td_cal_logits = u:td_logits(td_hcal, td_Wc, td_bc);
+td_t = u:td_best_temperature(td_cal_logits, td_cal_set.cat, 3);
+td_raw = softmax(td_cat_logits, 1);
+td_cooled = softmax(td_cat_logits / td_t, 1);
+print("    temperature fitted on", list_len(td_cal_set.texts), "calibration messages:", td_t);
+print("    on the", list_len(td_test_set.texts), "test messages the model has never seen:");
+print("                     accuracy   mean confidence   Brier    ECE");
+print("    as reported     ", floor(u:td_accuracy(td_cat_logits, td_test_set.cat) * 1000) / 1000, "     ", floor(mean(reduce(:max, td_raw, 1)) * 1000) / 1000, "          ", floor(u:td_brier(td_raw, td_test_set.cat, 3) * 1000) / 1000, "  ", floor(u:td_ece(td_raw, td_test_set.cat, 4) * 1000) / 1000);
+print("    after cooling   ", floor(u:td_accuracy(td_cooled, td_test_set.cat) * 1000) / 1000, "     ", floor(mean(reduce(:max, td_cooled, 1)) * 1000) / 1000, "          ", floor(u:td_brier(td_cooled, td_test_set.cat, 3) * 1000) / 1000, "  ", floor(u:td_ece(td_cooled, td_test_set.cat, 4) * 1000) / 1000);
+print("");
+print("    Temperature scaling changes no answer -- accuracy is identical, because");
+print("    dividing every logit by one number cannot reorder them. What it changes");
+print("    is what the numbers claim, and that is the part a program acts on.");
+print("");
+print("    The other two heads, on the same test messages:");
+print("       credentials? accuracy", floor(mean(eq(ge(sigmoid(u:td_logits(td_hte, td_Wn, td_bn)), 0.5), reshape(td_test_set.cred, [list_len(td_test_set.texts), 1]))) * 1000) / 1000);
+print("       urgency      accuracy", floor(u:td_accuracy(u:td_logits(td_hte, td_Ws, td_bs), td_test_set.urg) * 1000) / 1000);
+print("");
+print("Twenty-four test messages cannot pin an ECE to the third decimal; what this");
+print("stage shows is the procedure, and that the model was overconfident before it.");
+print("")
+#+end_src
+
+* Running it
+
+#+begin_example
+just typed-decisions          # run it here, about three seconds
+#+end_example
+
+The repository is [[https://github.com/sw-ml-study/demo-decision-model][sw-ml-study/demo-decision-model]]; this document's source is
+[[https://github.com/sw-ml-study/demo-decision-model/blob/main/docs/literate/typed-decisions.org][docs/literate/typed-decisions.org]], and the program it tangles is
+[[https://github.com/sw-ml-study/demo-decision-model/blob/main/demos/typed-decisions/typed-decisions.mlpl][demos/typed-decisions/typed-decisions.mlpl]]. The live demo of the full model is
+at [[https://sw-ml-study.github.io/demo-decision-model/][sw-ml-study.github.io/demo-decision-model]].
+
+It is also self-contained on purpose: the corpus is in the file and there is no
+IO, so ~scripts/bundle-program~ can flatten its includes and hand the result to
+[[https://sw-ml-study.github.io/sw-mlpl/][sw-MLPL's Live Editor]], where the same program trains in your browser with
+nothing installed.
+
+* What the four stages were for
+
+| Stage | Claim |
+|-------+-------|
+| 1 | a typed decision is a distribution over a domain the caller supplies |
+| 2 | those probabilities can be learned, from a corpus you can read |
+| 3 | one state answers several typed questions in one pass, and code owns the branch |
+| 4 | none of that makes the numbers calibrated; that is a separate, measurable step |
+
+The fourth is the one worth arguing about. A bounded softmax gives you numbers
+that sum to one after any amount of training, and the temptation is to read them
+as probabilities. On twenty-four messages this model had never seen, they were
+wrong by 0.162 of expected calibration error before one scalar was fitted, and
+0.097 after. Twenty-four messages cannot pin that to the third decimal, and the
+document says so where it prints it -- but the direction is not in doubt, and
+neither is the lesson: /classification is not calibration/.

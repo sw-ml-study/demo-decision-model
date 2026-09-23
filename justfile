@@ -16,11 +16,11 @@ transcript:
 web:
     cd crates/tdm-web && trunk serve --open
 
-# Re-export the literate document to docs/literate/literate.html (Emacs, batch, nothing evaluated).
+# Re-export every literate document under docs/literate/ to its published HTML (Emacs, batch, nothing evaluated).
 literate:
     ./scripts/publish-literate
 
-# Check the literate document: tangle parity, primer results, and a fresh export.
+# Check every literate document: tangle parity, primer results, and a fresh export.
 tangle:
     ./scripts/check-tangle
 
@@ -69,6 +69,10 @@ scorer-score:
 # Train demo 01's Choice model and rewrite its weights (about 25 seconds).
 eliza-train:
     ./scripts/run-eliza-train
+
+# Run the hello-world typed-decision demo (about three seconds).
+typed-decisions:
+    ../sw-mlpl/target/release/mlpl-repl --source-dir . -f demos/typed-decisions/typed-decisions.mlpl
 
 # Bundle the in-browser training program and run it standalone, as the gate does.
 browser-program:

@@ -56,6 +56,13 @@ pub fn footer(props: &FooterProps) -> Html {
                 { ", press Load, then Run. It is one self-contained file: the interpreter runs it in your browser, from random weights, in about half a minute." }
             </p>
             <p>
+                { "New here? " }
+                <a href="typed-decisions.html">{ "Typed decisions: the hello world" }</a>
+                { " — one state, three typed heads and a calibration measurement, in a literate document you can run ("}
+                <a href="typed-decisions.mlpl" download={"typed-decisions.mlpl"}>{ "the program" }</a>
+                { ")." }
+            </p>
+            <p>
                 <a href="literate.html">{ "How the MLPL code works — the literate document" }</a>
                 { " · " }
                 <a href={REPO}>{ "source repository" }</a>

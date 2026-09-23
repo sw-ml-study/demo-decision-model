@@ -1,9 +1,8 @@
 #!/bin/sh
-# Export docs/literate/demo-decision-model.org to HTML with Emacs in batch mode (nothing is evaluated: the header says :eval no-export; no timestamp, so the output is stable). usage: publish-literate [OUT] (default docs/literate/literate.html)
+# Export a literate document to HTML with Emacs in batch mode (nothing is evaluated: the header says :eval no-export; no timestamp, so the output is stable). With no arguments, exports every docs/literate/*.org to its published name. usage: publish-literate [ORG [OUT]]
 set -eu
 
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-out=${1:-$repo_root/docs/literate/literate.html}
 emacs=${EMACS:-}
 [ -n "$emacs" ] || ! command -v emacs >/dev/null 2>&1 || emacs=emacs
 [ -n "$emacs" ] || [ ! -x /Applications/Emacs.app/Contents/MacOS/Emacs ] || emacs=/Applications/Emacs.app/Contents/MacOS/Emacs
@@ -11,8 +10,35 @@ emacs=${EMACS:-}
 work="$repo_root/tmp/publish-literate.$$"
 rm -rf "$work"; mkdir -p "$work"
 trap 'rm -rf "$work"' EXIT HUP INT TERM
-cp "$repo_root/docs/literate/demo-decision-model.org" "$work/demo-decision-model.org"
-"$emacs" --batch -l org --eval "(progn (setq org-export-time-stamp-file nil org-html-validation-link nil org-export-with-broken-links 'mark org-confirm-babel-evaluate nil) (find-file \"$work/demo-decision-model.org\") (org-html-export-to-html))" >/dev/null 2>&1 || { echo "org-html-export-to-html failed" >&2; exit 1; }
-[ -s "$work/demo-decision-model.html" ] || { echo "export wrote nothing" >&2; exit 1; }
-cp "$work/demo-decision-model.html" "$out"
-echo "wrote $out ($(wc -c < "$out" | tr -d ' ') bytes)"
+
+# The first document published keeps its original output name.
+published_name() {
+    case "$(basename "$1" .org)" in
+        demo-decision-model) echo "$repo_root/docs/literate/literate.html" ;;
+        *) echo "$repo_root/docs/literate/$(basename "$1" .org).html" ;;
+    esac
+}
+
+export_one() {
+    org=$1
+    out=$2
+    name=$(basename "$org" .org)
+    cp "$org" "$work/$name.org"
+    "$emacs" --batch -l org --eval "(progn (setq org-export-time-stamp-file nil org-html-validation-link nil org-export-with-broken-links 'mark org-confirm-babel-evaluate nil) (find-file \"$work/$name.org\") (org-html-export-to-html))" >/dev/null 2>&1 || { echo "org-html-export-to-html failed for $name.org" >&2; exit 1; }
+    [ -s "$work/$name.html" ] || { echo "export of $name.org wrote nothing" >&2; exit 1; }
+    cp "$work/$name.html" "$out"
+    echo "wrote $out ($(wc -c < "$out" | tr -d ' ') bytes)"
+}
+
+if [ "$#" -eq 0 ]; then
+    for org in "$repo_root"/docs/literate/*.org; do
+        export_one "$org" "$(published_name "$org")"
+    done
+else
+    org=$1
+    case "$org" in
+        *.org) ;;
+        *) org="$repo_root/docs/literate/demo-decision-model.org"; set -- "$org" "$1" ;;
+    esac
+    export_one "$org" "${2:-$(published_name "$org")}"
+fi
