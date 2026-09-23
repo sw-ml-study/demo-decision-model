@@ -70,6 +70,10 @@ scorer-score:
 eliza-train:
     ./scripts/run-eliza-train
 
+# Bundle the in-browser training program and run it standalone, as the gate does.
+browser-program:
+    ./scripts/check-browser-program
+
 # The full pre-commit gate: structure, boundaries, links, catalog, style, tests, probes.
 check:
     ./scripts/check

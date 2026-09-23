@@ -1,0 +1,32 @@
+#!/bin/sh
+# The in-browser training program: it must flatten to one self-contained file
+# with no host call reachable from its top level, and it must still run and
+# still learn. Run here rather than trusted, because a change to any library it
+# includes could reintroduce a file read that only fails in the browser.
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+mlpl=$("$repo_root/scripts/select-mlpl")
+entry="$repo_root/demos/eliza/browser.mlpl"
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT HUP INT TERM
+
+"$repo_root/scripts/bundle-program" "$entry" "$work/program.mlpl" >/dev/null
+
+# No --source-dir: a program that still needed one would not run in an editor
+# that has no file system at all.
+if ! "$mlpl" "$work/program.mlpl" > "$work/out.txt" 2>&1; then
+    echo "browser program failed to run standalone:" >&2
+    tail -5 "$work/out.txt" >&2
+    exit 1
+fi
+
+# It has to learn: chance is about 0.11 over nine classes, and the run is
+# pinned to the accuracy it reached when it was measured.
+if ! grep -q "^15      1    0.81 " "$work/out.txt"; then
+    echo "browser program no longer reaches its measured accuracy:" >&2
+    sed -n '/^steps/,/^$/p' "$work/out.txt" >&2
+    exit 1
+fi
+
+echo "PASS browser training program (self-contained, host-call free, still learns)"

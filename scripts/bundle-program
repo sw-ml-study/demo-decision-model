@@ -1,0 +1,145 @@
+#!/usr/bin/env python3
+"""Inline an MLPL program's include tree into one self-contained file.
+
+The sw-MLPL Live Editor interprets a single program in the browser: there is no
+file system to resolve `include` against, and no host to read or write files.
+So a program that is to run there has to be flattened first, and it has to be
+proved free of host calls -- not by eyeballing it, but by walking the call graph
+from the program's top-level statements and checking every function it can
+actually reach.
+
+usage: bundle-program ENTRY.mlpl [OUT.mlpl]
+       bundle-program --check ENTRY.mlpl     (flatten, verify, print nothing)
+"""
+
+import re
+import sys
+from pathlib import Path
+
+# Calls that need a host: file system, clock, process arguments. A program that
+# reaches one of these cannot run in the Live Editor.
+HOST_CALLS = [
+    "read_text",
+    "read_bytes",
+    "write_atomic",
+    "write_bytes",
+    "parse_native",
+    "to_native",
+    "clock_ms",
+    "args",
+]
+
+INCLUDE = re.compile(r'^include\s+"([^"]+)"\s*;\s*$')
+DEF = re.compile(r"^def\s+(u:[A-Za-z0-9_]+)\s*\(")
+CALL = re.compile(r"\b(u:[A-Za-z0-9_]+)\s*\(")
+
+
+def flatten(entry: Path, seen: set[Path], out: list[str]) -> None:
+    """Append `entry`'s lines to `out`, with its includes inlined first."""
+    entry = entry.resolve()
+    if entry in seen:
+        return
+    seen.add(entry)
+    body: list[str] = []
+    for line in entry.read_text().splitlines():
+        m = INCLUDE.match(line)
+        if m:
+            flatten(entry.parent / m.group(1), seen, out)
+        else:
+            body.append(line)
+    while body and not body[-1].strip():
+        body.pop()
+    if out:
+        out.append("")
+    out.extend(body)
+
+
+def definitions(lines: list[str]) -> tuple[dict[str, list[str]], list[str]]:
+    """Every function's body, and the lines that are not inside one."""
+    defs: dict[str, list[str]] = {}
+    toplevel: list[str] = []
+    current: str | None = None
+    depth = 0
+    for line in lines:
+        if current is None:
+            m = DEF.match(line)
+            if m:
+                current = m.group(1)
+                defs[current] = [line]
+                depth = line.count("{") - line.count("}")
+                continue
+            toplevel.append(line)
+        else:
+            defs[current].append(line)
+            depth += line.count("{") - line.count("}")
+            if depth <= 0:
+                current = None
+    return defs, toplevel
+
+
+def reachable(defs: dict[str, list[str]], toplevel: list[str]) -> set[str]:
+    """Every function the top-level statements can reach, transitively."""
+    frontier = {c for line in toplevel for c in CALL.findall(line)}
+    seen: set[str] = set()
+    while frontier:
+        name = frontier.pop()
+        if name in seen or name not in defs:
+            continue
+        seen.add(name)
+        frontier |= {c for line in defs[name] for c in CALL.findall(line)}
+    return seen
+
+
+def host_calls_in(lines: list[str]) -> list[str]:
+    body = "\n".join(l for l in lines if not l.strip().startswith("#"))
+    # A docstring is prose, not code; a host call named in one is not a call.
+    body = re.sub(r'"(?:[^"\\]|\\.)*"', '""', body)
+    return [h for h in HOST_CALLS if re.search(rf"\b{h}\s*\(", body)]
+
+
+def main() -> int:
+    argv = sys.argv[1:]
+    check_only = argv and argv[0] == "--check"
+    if check_only:
+        argv = argv[1:]
+    if not argv:
+        print(__doc__, file=sys.stderr)
+        return 2
+    entry = Path(argv[0])
+    lines: list[str] = []
+    flatten(entry, set(), lines)
+    defs, toplevel = definitions(lines)
+    live = reachable(defs, toplevel)
+
+    problems: list[str] = []
+    for h in host_calls_in(toplevel):
+        problems.append(f"{entry.name}: top level calls {h}()")
+    for name in sorted(live):
+        for h in host_calls_in(defs[name]):
+            problems.append(f"{name} calls {h}()")
+    if problems:
+        print(
+            f"{entry}: not browser-safe, {len(problems)} host call(s) reachable:",
+            file=sys.stderr,
+        )
+        for p in problems:
+            print(f"  {p}", file=sys.stderr)
+        return 1
+
+    text = "\n".join(lines) + "\n"
+    if check_only:
+        return 0
+    if len(argv) > 1:
+        Path(argv[1]).write_text(text)
+        unreached = len(defs) - len(live)
+        print(
+            f"bundled {entry} -> {argv[1]}: {len(text)} bytes, "
+            f"{len(defs)} functions ({len(live)} reachable, {unreached} carried along)"
+        )
+    else:
+        sys.stdout.write(text)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

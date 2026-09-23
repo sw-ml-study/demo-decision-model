@@ -36,6 +36,10 @@ trunk build --release --public-url ./ --dist "$out"
 if [ -f "$repo_root/docs/literate/literate.html" ]; then
     cp "$repo_root/docs/literate/literate.html" "$out/literate.html"
 fi
+
+# The self-contained training program the page offers for sw-MLPL's Live
+# Editor: one file, no includes, no host calls (the bundler proves it).
+"$repo_root/scripts/bundle-program" "$repo_root/demos/eliza/browser.mlpl" "$out/demo01-train.mlpl" >/dev/null
 printf '{"host":"%s","sha":"%s","timestamp":"%s"}\n' \
     "$TDM_BUILD_HOST" "$TDM_BUILD_SHA" "$TDM_BUILD_TIME" > "$out/build-info.json"
 

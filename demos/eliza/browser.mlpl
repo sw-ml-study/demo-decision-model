@@ -1,0 +1,85 @@
+# Demo 01's Choice model, trained from random weights in the browser. This is the program the live demo hands you to run in sw-MLPL's own hosted Live Editor: paste it or Load it, press Run, and watch a model that starts at chance learn to pick a reply class -- the same library, the same corpus and the same optimizer the committed model was trained with, only smaller so an interpreter in WASM can finish it while you watch. Browser-safe by construction: no file IO, no clock, no arguments, and scripts/bundle-program proves it by walking the call graph before flattening the include tree into one file. The configuration is smaller than the shipped model's (512 slots, 24 dimensions, 30 steps against 1024, 32, 200) so that an interpreter in WASM finishes in seconds rather than minutes; it reaches 0.81 validation accuracy against the shipped model's 0.879, which is the honest price of the wait.
+include "../../lib/choice_model.mlpl";
+include "eliza.mlpl";
+
+bz_slots = 512;
+bz_width = 24;
+bz_dim = 24;
+bz_lr = 0.08;
+bz_stages = [0, 5, 15, 30];
+
+def u:bz_accuracy(weights, fz, y) {
+  "Share of rows whose highest-scoring class is the labelled one.";
+  mean(eq(argmax(u:cm_infer(weights, fz.ids, fz.wmask), 1), y))
+}
+
+def u:bz_confidence(weights, fz) {
+  "Mean probability the model gives its own pick -- how sure it is, which is a different question from whether it is right.";
+  mean(reduce(:max, softmax(u:cm_infer(weights, fz.ids, fz.wmask), 1), 1))
+}
+
+def u:bz_weights() {
+  "The globals as the plain record inference takes.";
+  {E: cm_E, W: cm_W, b: cm_b, labels: u:ez_labels(), slots: bz_slots, width: bz_width}
+}
+
+def u:bz_show(text, weights) {
+  "Print one input, the class the model picks for it, and how sure it is.";
+  d = u:cm_decide(weights, text, "what should the reply be?");
+  print("   ", text, "->", u:text_lg(d.decision.labels, d.decision.selected), floor(d.decision.confidence * 1000) / 1000);
+  1
+}
+
+bz_train = u:ez_corpus(0, 4);
+bz_val = u:ez_corpus(4, 5);
+bz_trf = u:cm_featurize(bz_train.texts, bz_slots, bz_width);
+bz_vaf = u:cm_featurize(bz_val.texts, bz_slots, bz_width);
+bz_k = u:ez_label_count();
+
+cm_E = param[512, 24];
+cm_E = randn(11, [512, 24]) * 0.1;
+cm_W = param[24, 9];
+cm_W = randn(12, [24, 9]) * 0.1;
+cm_b = param[9];
+cm_b = fill([9], 0);
+
+print("Demo 01's Choice model, trained here, in your browser.");
+print("");
+print(u:cm_param_count(u:bz_weights()), "parameters,", list_len(bz_train.texts), "training sentences,", bz_k, "reply classes.");
+print("The weights start as seeded random numbers. Nothing is downloaded.");
+print("");
+print("steps   train   val     confidence");
+
+bz_done = 0;
+bz_c = 0;
+while lt(bz_c, 4) {
+  bz_target = take(bz_stages, 0, bz_c);
+  bz_loss = if gt(bz_target, bz_done) {
+    u:cm_train(bz_trf.ids, bz_trf.wmask, bz_train.y, bz_target - bz_done, bz_lr)
+  } else {
+    0
+  };
+  bz_done = bz_target;
+  bz_w = u:bz_weights();
+  print(bz_target, "    ", floor(u:bz_accuracy(bz_w, bz_trf, bz_train.y) * 1000) / 1000, "  ", floor(u:bz_accuracy(bz_w, bz_vaf, bz_val.y) * 1000) / 1000, "  ", floor(u:bz_confidence(bz_w, bz_vaf) * 1000) / 1000);
+  bz_c = bz_c + 1
+};
+
+print("");
+print("At 0 steps every class scores about one ninth and the model is guessing.");
+print("Most of the accuracy arrives in the first few steps; after that, training");
+print("mostly buys confidence -- including confidence in wrong answers, which is");
+print("the problem the rest of this repository is about.");
+print("");
+print("What it says now, on sentences it was never trained on:");
+bz_final = u:bz_weights();
+bz_s1 = u:bz_show("my mother never listens to me", bz_final);
+bz_s2 = u:bz_show("i dreamed about my brother", bz_final);
+bz_s3 = u:bz_show("are you a computer", bz_final);
+bz_s4 = u:bz_show("i want a better job", bz_final);
+bz_s5 = u:bz_show("i bought a new car", bz_final);
+print("");
+print("The last one has no right answer among the nine: this model has no way to");
+print("say none of these, and says something anyway. Model 2 added that escape");
+print("hatch. Change a number above and press Run again to see what it does.");
+print("")

@@ -286,6 +286,42 @@ Actions workflow; CI builds nothing. The footer names the source commit it was
 built from, the host, and the time, and marks a build from uncommitted source
 as `-dirty`.
 
+### Train one yourself, in the browser, with nothing installed
+
+The live demo runs a model that was trained here. If you want to watch one
+learn instead, [`demo01-train.mlpl`](https://sw-ml-study.github.io/demo-decision-model/demo01-train.mlpl)
+is demo 01's **first** model — one Choice over nine reply classes, over the
+corpus the program generates for itself — as a single self-contained file: open
+[sw-MLPL's Live Editor](https://sw-ml-study.github.io/sw-mlpl/), press **Load**,
+choose the file, and press **Run**. The interpreter is already in your browser;
+nothing is downloaded but the program, and the weights start as seeded random
+numbers.
+
+```
+steps   train   val     confidence
+0       0.137   0.034   0.113
+5       1.000   0.724   0.234
+15      1.000   0.810   0.766
+30      1.000   0.793   0.880
+```
+
+It is deliberately not the model the page ships. Model 4 needs its featurized
+corpus (a 1.2 MB file of 7,595 oracle-labelled rows) and minutes of minibatch
+training; model 1 generates its own corpus in a second and still shows the
+finding in four lines: the accuracy arrives in
+the first few steps, and after that training mostly buys **confidence** —
+including confidence in wrong answers.
+
+The file is produced by [`scripts/bundle-program`](scripts/bundle-program),
+which inlines the `include` tree and then proves the result is browser-safe: it
+walks the call graph from the program's top-level statements and fails if any
+function it can actually reach touches a file, a clock, or process arguments.
+The gate re-bundles it, runs it with no source directory at all, and requires it
+to still reach the accuracy above. Its configuration is smaller than the shipped
+model's (512 slots, 24 dimensions, 30 steps against 1024, 32, 200) so an
+interpreter in WASM finishes while you watch; 0.81 validation against 0.879 is
+the price of the wait.
+
 ### Foundations under it
 
 - [`docs/plan.md`](docs/plan.md) — the delivery plan and the authority for scope.
