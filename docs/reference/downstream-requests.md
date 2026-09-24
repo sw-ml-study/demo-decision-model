@@ -59,6 +59,49 @@ corpus, where a query and a card do share content words. The harness shape is
 reusable, and the small all-cold field is the diagnostic that tells "weak" apart
 from "biased against new cards".
 
+### Measured for them: the hybrid, on their own data — **read this before building**
+
+Not a request they filed; work done here because `PR05`'s delivery came with a
+result ([`DC01`](../experiments/DC01-dynamic-choice-sets.md)) that their design
+depends on being wrong. [`AT01`](../experiments/AT01-atlas-rerank.md) asks the
+same question in their regime, against their built corpus (642 resources) and
+their frozen question sets (386 questions, 72 resources held out entirely).
+Nothing of theirs is copied into this repository; the harness reads a checkout.
+
+Three things they should know, in the order they matter:
+
+1. **A defect in `lib/scorer.mlpl` that they would have vendored.** Its unit
+   normalization guarded the zero case *after* `sqrt`, which is correct forward
+   and `NaN` backward. A card whose every word is unknown to the vocabulary —
+   which their catalog has and demo 01's hand-written cards did not — turns
+   every parameter into `NaN` on the first Adam step, silently: training
+   completes and prints results. Fixed here (epsilon inside the root), recorded
+   as `Q6`, pinned by a probe. **Re-vendor `lib/scorer.mlpl`.**
+2. **The rerank head does not work at 308 questions.** Reranking the matcher's
+   top 20, it scored 0.023 warm and 0.032 cold against 0.050 for choosing at
+   random, while training loss fell to 0.011 — memorized, transferred nothing.
+   The warm and cold columns are equally bad, so this is not the held-out cards
+   failing; it is 174 training questions failing to fit a 78,000-parameter
+   space. The next experiment, not yet run, is synthetic positives from the
+   cards' own titles and summaries.
+3. **The hybrid's ceiling is the matcher's recall@k.** On this set the matcher
+   reaches 0.63 at k=20, so no reranker can exceed 0.63 there. Whatever the
+   model does, the first stage sets the bound.
+
+Also measured, because their own scoreboard says matchers are weak at it: a
+five-class intent Choice scored 0.697 against a 0.737 always-`FindResource`
+baseline, and the is-off-topic Noul landed exactly on its always-false baseline.
+Their sets are 72% `FindResource`; a set drafted to test destinations does not
+teach intent.
+
+The design is not refuted — it is unfunded. What decides the rerank stage is a
+number nobody has yet: how many labelled questions per resource are needed
+before the scorer beats the matcher on the same split.
+
+One caveat stated plainly: those question sets are still marked `Unconfirmed`,
+the matcher here is ours rather than their `MB02`, and each head was trained in
+one configuration with no sweep. Read the direction, not the decimals.
+
 ### What sw-atlas offers back
 
 - A second demo for the abstraction gate, over several hundred resources rather

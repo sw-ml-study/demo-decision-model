@@ -70,6 +70,14 @@ scorer-score:
 eliza-train:
     ./scripts/run-eliza-train
 
+# Demo 02: measure the sw-atlas hybrid on its own catalog (needs a checkout beside this one).
+atlas:
+    python3 demos/atlas/extract.py
+    python3 demos/atlas/featurize.py
+    python3 demos/atlas/intent.py
+    ../sw-mlpl/target/release/mlpl-repl --source-dir . -f demos/atlas/intent.mlpl -- tmp/atlas/intent.json
+    ../sw-mlpl/target/release/mlpl-repl --source-dir . -f demos/atlas/train.mlpl -- tmp/atlas/data.json
+
 # Score local LLMs on the same held-out messages, by the same bounded-choice method (needs ollama).
 llm-baseline:
     ./scripts/llm-baseline

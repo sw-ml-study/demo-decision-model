@@ -227,50 +227,50 @@ pre.src, pre.example { background: #161b22; border-color: #30363d; color: #c9d1d
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org3705f0f">1. What this is</a></li>
-<li><a href="#org36d6cf0">2. A typed decision is a distribution</a></li>
-<li><a href="#orgf8de8ca">3. The program, in order</a>
+<li><a href="#org4a49817">1. What this is</a></li>
+<li><a href="#orge4220a3">2. A typed decision is a distribution</a></li>
+<li><a href="#org43d61f4">3. The program, in order</a>
 <ul>
-<li><a href="#org0f905da">3.1. The whole configuration</a></li>
-<li><a href="#org49374fd">3.2. The corpus, in full</a></li>
-<li><a href="#orga6a692e">3.3. Reading a row</a></li>
-<li><a href="#org973a745">3.4. The split is a position, not a coin</a></li>
-<li><a href="#org872289e">3.5. One split as arrays</a></li>
+<li><a href="#org58aec17">3.1. The whole configuration</a></li>
+<li><a href="#orgcbb80b1">3.2. The corpus, in full</a></li>
+<li><a href="#org518073b">3.3. Reading a row</a></li>
+<li><a href="#org8511d75">3.4. The split is a position, not a coin</a></li>
+<li><a href="#orgd0a1940">3.5. One split as arrays</a></li>
 </ul>
 </li>
-<li><a href="#orgfd4f68f">4. One state, three heads</a>
+<li><a href="#org6cf9695">4. One state, three heads</a>
 <ul>
-<li><a href="#org5f29c80">4.1. The shared state</a></li>
-<li><a href="#org0b71ff1">4.2. What training minimizes</a></li>
-<li><a href="#org8d302ec">4.3. The training loop</a></li>
+<li><a href="#org2837047">4.1. The shared state</a></li>
+<li><a href="#org3d1d803">4.2. What training minimizes</a></li>
+<li><a href="#orgef095f9">4.3. The training loop</a></li>
 </ul>
 </li>
-<li><a href="#orga23b6b9">5. Measuring it</a>
+<li><a href="#org39a9277">5. Measuring it</a>
 <ul>
-<li><a href="#orgc1eccd4">5.1. A head, and whether it was right</a></li>
-<li><a href="#org20e23bb">5.2. Three ways of scoring a probability</a></li>
-<li><a href="#org3c14f95">5.3. Fitting one number</a></li>
+<li><a href="#orgd1c21aa">5.1. A head, and whether it was right</a></li>
+<li><a href="#orgdd5fa16">5.2. Three ways of scoring a probability</a></li>
+<li><a href="#org625c56d">5.3. Fitting one number</a></li>
 </ul>
 </li>
-<li><a href="#org3e9418b">6. The program</a>
+<li><a href="#org4975a6d">6. The program</a>
 <ul>
-<li><a href="#org9b6edff">6.1. Printing a decision</a></li>
-<li><a href="#org402b72a">6.2. Stage 1: written down, not learned</a></li>
-<li><a href="#orgf000e14">6.3. Stage 2: the same shape, learned</a></li>
-<li><a href="#orge045fd2">6.4. Stage 3: three decisions from one pass</a></li>
-<li><a href="#orgae06e6a">6.5. Stage 4: classification is not calibration</a></li>
+<li><a href="#orgd01a435">6.1. Printing a decision</a></li>
+<li><a href="#org1d8174b">6.2. Stage 1: written down, not learned</a></li>
+<li><a href="#orgcee9681">6.3. Stage 2: the same shape, learned</a></li>
+<li><a href="#org98cd738">6.4. Stage 3: three decisions from one pass</a></li>
+<li><a href="#org2a2c94f">6.5. Stage 4: classification is not calibration</a></li>
 </ul>
 </li>
-<li><a href="#org8a44b5c">7. Running it</a></li>
-<li><a href="#orgafef4d8">8. What this page is not counting</a></li>
-<li><a href="#org127665d">9. Is this a fair comparison? No &#x2013; so here is the measured one</a></li>
-<li><a href="#orgb4fe5e1">10. What a sceptical reader will ask</a></li>
-<li><a href="#org7fa22bc">11. What the four stages were for</a></li>
+<li><a href="#org9b15e35">7. Running it</a></li>
+<li><a href="#org3d9aa19">8. What this page is not counting</a></li>
+<li><a href="#orgdcaf47e">9. Is this a fair comparison? No &#x2013; so here is the measured one</a></li>
+<li><a href="#org737b295">10. What a sceptical reader will ask</a></li>
+<li><a href="#org41feec6">11. What the four stages were for</a></li>
 </ul>
 </div>
 </div>
-<div id="outline-container-org3705f0f" class="outline-2">
-<h2 id="org3705f0f"><span class="section-number-2">1.</span> What this is</h2>
+<div id="outline-container-org4a49817" class="outline-2">
+<h2 id="org4a49817"><span class="section-number-2">1.</span> What this is</h2>
 <div class="outline-text-2" id="text-1">
 <nav style="margin:0 0 1.5em 0; padding:0.6em 0; border-bottom:1px solid #d0d7de; font-size:0.95em">
 <a href="https://sw-ml-study.github.io/demo-decision-model/">Live demo</a> ·
@@ -286,7 +286,7 @@ A typed decision model small enough to read in one sitting. It takes a short
 message and answers three bounded questions about it at once:
 </p>
 
-<pre class="example" id="orge4dd3c4">
+<pre class="example" id="orgea37424">
 "payroll asks you to confirm your password on this page"
 
   what kind of message?      legitimate .000  spam .000  phishing .999
@@ -324,8 +324,8 @@ open, and read <a href="literate.html">its own literate document</a>. This page 
 </p>
 </div>
 </div>
-<div id="outline-container-org36d6cf0" class="outline-2">
-<h2 id="org36d6cf0"><span class="section-number-2">2.</span> A typed decision is a distribution</h2>
+<div id="outline-container-orge4220a3" class="outline-2">
+<h2 id="orge4220a3"><span class="section-number-2">2.</span> A typed decision is a distribution</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 Before any model exists, the shape of the answer can be shown on its own. These
@@ -410,8 +410,8 @@ instead of written down.
 </p>
 </div>
 </div>
-<div id="outline-container-orgf8de8ca" class="outline-2">
-<h2 id="orgf8de8ca"><span class="section-number-2">3.</span> The program, in order</h2>
+<div id="outline-container-org43d61f4" class="outline-2">
+<h2 id="org43d61f4"><span class="section-number-2">3.</span> The program, in order</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 The module comment says what the file is for, and the two includes are the only
@@ -426,8 +426,8 @@ include <span class="org-string">"../../lib/choice_model.mlpl"</span><span class
 </pre>
 </div>
 </div>
-<div id="outline-container-org0f905da" class="outline-3">
-<h3 id="org0f905da"><span class="section-number-3">3.1.</span> The whole configuration</h3>
+<div id="outline-container-org58aec17" class="outline-3">
+<h3 id="org58aec17"><span class="section-number-3">3.1.</span> The whole configuration</h3>
 <div class="outline-text-3" id="text-3-1">
 <p>
 Sixteen features per message, sixteen dimensions of state, two hundred Adam
@@ -447,8 +447,8 @@ td_levels <span class="org-mlpl-operator">=</span> [<span class="org-string">"lo
 </div>
 </div>
 </div>
-<div id="outline-container-org49374fd" class="outline-3">
-<h3 id="org49374fd"><span class="section-number-3">3.2.</span> The corpus, in full</h3>
+<div id="outline-container-orgcbb80b1" class="outline-3">
+<h3 id="orgcbb80b1"><span class="section-number-3">3.2.</span> The corpus, in full</h3>
 <div class="outline-text-3" id="text-3-2">
 <p>
 One hundred and twenty short messages, each with three labels. It is printed
@@ -593,8 +593,8 @@ hurry it is in.
 </div>
 </div>
 </div>
-<div id="outline-container-orga6a692e" class="outline-3">
-<h3 id="orga6a692e"><span class="section-number-3">3.3.</span> Reading a row</h3>
+<div id="outline-container-org518073b" class="outline-3">
+<h3 id="org518073b"><span class="section-number-3">3.3.</span> Reading a row</h3>
 <div class="outline-text-3" id="text-3-3">
 <p>
 Two accessors, so the rest of the program never splits a string again.
@@ -617,8 +617,8 @@ Two accessors, so the rest of the program never splits a string again.
 </div>
 </div>
 </div>
-<div id="outline-container-org973a745" class="outline-3">
-<h3 id="org973a745"><span class="section-number-3">3.4.</span> The split is a position, not a coin</h3>
+<div id="outline-container-org8511d75" class="outline-3">
+<h3 id="org8511d75"><span class="section-number-3">3.4.</span> The split is a position, not a coin</h3>
 <div class="outline-text-3" id="text-3-4">
 <p>
 Three of every five messages train, the fourth calibrates, the fifth tests.
@@ -645,8 +645,8 @@ number measured here can be compared with a number measured somewhere else.
 </div>
 </div>
 </div>
-<div id="outline-container-org872289e" class="outline-3">
-<h3 id="org872289e"><span class="section-number-3">3.5.</span> One split as arrays</h3>
+<div id="outline-container-orgd0a1940" class="outline-3">
+<h3 id="orgd0a1940"><span class="section-number-3">3.5.</span> One split as arrays</h3>
 <div class="outline-text-3" id="text-3-5">
 <p>
 The messages of one split as a string list, and the three label arrays beside
@@ -699,14 +699,14 @@ them. Everything after this point is arithmetic.
 </div>
 </div>
 </div>
-<div id="outline-container-orgfd4f68f" class="outline-2">
-<h2 id="orgfd4f68f"><span class="section-number-2">4.</span> One state, three heads</h2>
+<div id="outline-container-org6cf9695" class="outline-2">
+<h2 id="org6cf9695"><span class="section-number-2">4.</span> One state, three heads</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 This is the architecture, and it is three functions long.
 </p>
 
-<pre class="example" id="orge4cbd6f">
+<pre class="example" id="org9535af2">
                        +--&gt; Choice: what kind of message?
                        |
 message -&gt; encoder -&gt; h +--&gt; Noul:   does it want credentials?
@@ -714,8 +714,8 @@ message -&gt; encoder -&gt; h +--&gt; Noul:   does it want credentials?
                        +--&gt; Scale:  how urgent?
 </pre>
 </div>
-<div id="outline-container-org5f29c80" class="outline-3">
-<h3 id="org5f29c80"><span class="section-number-3">4.1.</span> The shared state</h3>
+<div id="outline-container-org2837047" class="outline-3">
+<h3 id="org2837047"><span class="section-number-3">4.1.</span> The shared state</h3>
 <div class="outline-text-3" id="text-4-1">
 <p>
 The mean of the embedding rows this message's known words address. One vector,
@@ -732,8 +732,8 @@ forward pass rather than three.
 </div>
 </div>
 </div>
-<div id="outline-container-org0b71ff1" class="outline-3">
-<h3 id="org0b71ff1"><span class="section-number-3">4.2.</span> What training minimizes</h3>
+<div id="outline-container-org3d1d803" class="outline-3">
+<h3 id="org3d1d803"><span class="section-number-3">4.2.</span> What training minimizes</h3>
 <div class="outline-text-3" id="text-4-2">
 <p>
 Three losses added: cross-entropy for the Choice, cross-entropy for the Scale,
@@ -760,8 +760,8 @@ this repository therefore takes plain arrays.
 </div>
 </div>
 </div>
-<div id="outline-container-org8d302ec" class="outline-3">
-<h3 id="org8d302ec"><span class="section-number-3">4.3.</span> The training loop</h3>
+<div id="outline-container-orgef095f9" class="outline-3">
+<h3 id="orgef095f9"><span class="section-number-3">4.3.</span> The training loop</h3>
 <div class="outline-text-3" id="text-4-3">
 <p>
 Adam over the encoder and all three heads at once. This is the entire optimizer
@@ -782,12 +782,12 @@ operations carry the derivatives.
 </div>
 </div>
 </div>
-<div id="outline-container-orga23b6b9" class="outline-2">
-<h2 id="orga23b6b9"><span class="section-number-2">5.</span> Measuring it</h2>
+<div id="outline-container-org39a9277" class="outline-2">
+<h2 id="org39a9277"><span class="section-number-2">5.</span> Measuring it</h2>
 <div class="outline-text-2" id="text-5">
 </div>
-<div id="outline-container-orgc1eccd4" class="outline-3">
-<h3 id="orgc1eccd4"><span class="section-number-3">5.1.</span> A head, and whether it was right</h3>
+<div id="outline-container-orgd1c21aa" class="outline-3">
+<h3 id="orgd1c21aa"><span class="section-number-3">5.1.</span> A head, and whether it was right</h3>
 <div class="outline-text-3" id="text-5-1">
 <p>
 A head is a matrix multiply and a bias. Accuracy is the share of rows whose
@@ -825,8 +825,8 @@ for it to do.
 </div>
 </div>
 </div>
-<div id="outline-container-org20e23bb" class="outline-3">
-<h3 id="org20e23bb"><span class="section-number-3">5.2.</span> Three ways of scoring a probability</h3>
+<div id="outline-container-orgdd5fa16" class="outline-3">
+<h3 id="orgdd5fa16"><span class="section-number-3">5.2.</span> Three ways of scoring a probability</h3>
 <div class="outline-text-3" id="text-5-2">
 <p>
 Accuracy grades only the argmax. These grade the distribution.
@@ -886,8 +886,8 @@ is fitted to minimize.
 </div>
 </div>
 </div>
-<div id="outline-container-org3c14f95" class="outline-3">
-<h3 id="org3c14f95"><span class="section-number-3">5.3.</span> Fitting one number</h3>
+<div id="outline-container-org625c56d" class="outline-3">
+<h3 id="org625c56d"><span class="section-number-3">5.3.</span> Fitting one number</h3>
 <div class="outline-text-3" id="text-5-3">
 <p>
 Temperature scaling has exactly one parameter, so it is found by scanning a grid
@@ -924,12 +924,12 @@ cannot reorder them, so no answer changes &#x2013; only what the numbers claim.
 </div>
 </div>
 </div>
-<div id="outline-container-org3e9418b" class="outline-2">
-<h2 id="org3e9418b"><span class="section-number-2">6.</span> The program</h2>
+<div id="outline-container-org4975a6d" class="outline-2">
+<h2 id="org4975a6d"><span class="section-number-2">6.</span> The program</h2>
 <div class="outline-text-2" id="text-6">
 </div>
-<div id="outline-container-org9b6edff" class="outline-3">
-<h3 id="org9b6edff"><span class="section-number-3">6.1.</span> Printing a decision</h3>
+<div id="outline-container-orgd01a435" class="outline-3">
+<h3 id="orgd01a435"><span class="section-number-3">6.1.</span> Printing a decision</h3>
 <div class="outline-text-3" id="text-6-1">
 <p>
 A decision is printed as its whole distribution, because the distribution is the
@@ -951,8 +951,8 @@ product and the label is only its argmax.
 </div>
 </div>
 </div>
-<div id="outline-container-org402b72a" class="outline-3">
-<h3 id="org402b72a"><span class="section-number-3">6.2.</span> Stage 1: written down, not learned</h3>
+<div id="outline-container-org1d8174b" class="outline-3">
+<h3 id="org1d8174b"><span class="section-number-3">6.2.</span> Stage 1: written down, not learned</h3>
 <div class="outline-text-3" id="text-6-2">
 <p>
 Three logits, softmaxed over a bounded domain. No model has been trained yet;
@@ -974,8 +974,8 @@ print(<span class="org-string">""</span>)<span class="org-mlpl-operator">;</span
 </div>
 </div>
 </div>
-<div id="outline-container-orgf000e14" class="outline-3">
-<h3 id="orgf000e14"><span class="section-number-3">6.3.</span> Stage 2: the same shape, learned</h3>
+<div id="outline-container-orgcee9681" class="outline-3">
+<h3 id="orgcee9681"><span class="section-number-3">6.3.</span> Stage 2: the same shape, learned</h3>
 <div class="outline-text-3" id="text-6-3">
 <p>
 Now the probabilities come from training rather than from being written down,
@@ -1034,8 +1034,8 @@ print(<span class="org-string">""</span>)<span class="org-mlpl-operator">;</span
 </div>
 </div>
 </div>
-<div id="outline-container-orge045fd2" class="outline-3">
-<h3 id="orge045fd2"><span class="section-number-3">6.4.</span> Stage 3: three decisions from one pass</h3>
+<div id="outline-container-org98cd738" class="outline-3">
+<h3 id="org98cd738"><span class="section-number-3">6.4.</span> Stage 3: three decisions from one pass</h3>
 <div class="outline-text-3" id="text-6-4">
 <p>
 The same forward pass has already answered all three questions. What follows the
@@ -1070,8 +1070,8 @@ print(<span class="org-string">""</span>)<span class="org-mlpl-operator">;</span
 </div>
 </div>
 </div>
-<div id="outline-container-orgae06e6a" class="outline-3">
-<h3 id="orgae06e6a"><span class="section-number-3">6.5.</span> Stage 4: classification is not calibration</h3>
+<div id="outline-container-org2a2c94f" class="outline-3">
+<h3 id="org2a2c94f"><span class="section-number-3">6.5.</span> Stage 4: classification is not calibration</h3>
 <div class="outline-text-3" id="text-6-5">
 <p>
 This is the stage a repurposed chat model cannot honestly claim, and the one the
@@ -1114,10 +1114,10 @@ print(<span class="org-string">""</span>)
 </div>
 </div>
 </div>
-<div id="outline-container-org8a44b5c" class="outline-2">
-<h2 id="org8a44b5c"><span class="section-number-2">7.</span> Running it</h2>
+<div id="outline-container-org9b15e35" class="outline-2">
+<h2 id="org9b15e35"><span class="section-number-2">7.</span> Running it</h2>
 <div class="outline-text-2" id="text-7">
-<pre class="example" id="orgb804ecc">
+<pre class="example" id="orgc41b416">
 just typed-decisions          # run it here, about three seconds
 </pre>
 
@@ -1136,8 +1136,8 @@ nothing installed.
 </p>
 </div>
 </div>
-<div id="outline-container-orgafef4d8" class="outline-2">
-<h2 id="orgafef4d8"><span class="section-number-2">8.</span> What this page is not counting</h2>
+<div id="outline-container-org3d9aa19" class="outline-2">
+<h2 id="org3d9aa19"><span class="section-number-2">8.</span> What this page is not counting</h2>
 <div class="outline-text-2" id="text-8">
 <p>
 The program says <code>include</code> twice and then calls itself a hello world, so here is
@@ -1157,8 +1157,8 @@ its labels from a program written in 1966 by someone else.
 </p>
 </div>
 </div>
-<div id="outline-container-org127665d" class="outline-2">
-<h2 id="org127665d"><span class="section-number-2">9.</span> Is this a fair comparison? No &#x2013; so here is the measured one</h2>
+<div id="outline-container-orgdcaf47e" class="outline-2">
+<h2 id="orgdcaf47e"><span class="section-number-2">9.</span> Is this a fair comparison? No &#x2013; so here is the measured one</h2>
 <div class="outline-text-2" id="text-9">
 <p>
 The honest objection to everything above is that it compares two different
@@ -1313,8 +1313,8 @@ with, and running the baseline is how that became visible.
 </p>
 </div>
 </div>
-<div id="outline-container-orgb4fe5e1" class="outline-2">
-<h2 id="orgb4fe5e1"><span class="section-number-2">10.</span> What a sceptical reader will ask</h2>
+<div id="outline-container-org737b295" class="outline-2">
+<h2 id="org737b295"><span class="section-number-2">10.</span> What a sceptical reader will ask</h2>
 <div class="outline-text-2" id="text-10">
 <p>
 <b>Twenty-four test messages is nothing.</b>
@@ -1369,8 +1369,8 @@ the smallest thing that can hold it up while the measurements are honest.
 </p>
 </div>
 </div>
-<div id="outline-container-org7fa22bc" class="outline-2">
-<h2 id="org7fa22bc"><span class="section-number-2">11.</span> What the four stages were for</h2>
+<div id="outline-container-org41feec6" class="outline-2">
+<h2 id="org41feec6"><span class="section-number-2">11.</span> What the four stages were for</h2>
 <div class="outline-text-2" id="text-11">
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 

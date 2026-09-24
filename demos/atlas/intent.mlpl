@@ -1,0 +1,59 @@
+# Demo 02, the other half: what the visitor wants, and two yes-or-no questions the program needs before it answers. sw-atlas's own history says a deterministic matcher is good at finding a resource and bad at reading intent, so this measures the part the model is supposed to own -- a Choice over five intents, and Nouls for "is this about the docent itself" and "is this outside the catalog" -- over 386 questions from six frozen sets, split by a stable hash of the question. lib/choice_model.mlpl is used unchanged; the encoder and the heads are demo 01's, pointed at someone else's problem.
+include "../../lib/choice_model.mlpl";
+
+it_lr = 0.05;
+it_steps = 300;
+it_eps = 0.05;
+
+def u:it_batch(b, w) {
+  "A featurized split: ids, pooling weights, the intent label and the two Noul labels.";
+  n = b.n;
+  mask = reshape(b.mask, [n, w]);
+  {n: n, ids: reshape(b.ids, [n, w]), wmask: u:cm_pool_weights(mask), intent: b.intent, nouls: reshape(b.nouls, [n, 2])}
+}
+
+def u:it_noul_accuracy(p, y, n, j) {
+  "Accuracy of one Noul column at the half-way threshold.";
+  col = reshape(gather_rows(transpose(ge(p, 0.5)), [j]), [n]);
+  truth = reshape(gather_rows(transpose(y), [j]), [n]);
+  mean(eq(col, truth))
+}
+
+it_d = unwrap(parse_json(unwrap(read_text(unwrap(list_get(args(), 0))))));
+it_w = it_d.width;
+it_k = list_len(it_d.intents);
+it_rows = list_len(it_d.vocab) + 1;
+it_tr = u:it_batch(it_d.train, it_w);
+it_te = u:it_batch(it_d.test, it_w);
+
+cm_E = param[it_rows, 32];
+cm_E = randn(41, [it_rows, 32]) * 0.1;
+cm_W = param[32, 5];
+cm_W = randn(42, [32, 5]) * 0.1;
+cm_b = param[5];
+cm_b = fill([5], 0);
+cm_N = param[32, 2];
+cm_N = randn(43, [32, 2]) * 0.1;
+cm_nb = param[2];
+cm_nb = fill([2], 0);
+
+print("sw-atlas intent and Nouls");
+print("  ", it_tr.n, "training questions,", it_te.n, "test,", it_rows - 1, "vocabulary,", it_rows * 32 + 32 * 7 + 7, "parameters");
+it_loss = u:cm_train_joint(it_tr.ids, it_tr.wmask, it_tr.intent, it_tr.nouls, it_steps, it_lr, it_eps);
+it_weights = {E: cm_E, W: cm_W, b: cm_b, N: cm_N, nb: cm_nb};
+it_pred = argmax(u:cm_infer(it_weights, it_te.ids, it_te.wmask), 1);
+it_np = u:cm_infer_nouls(it_weights, it_te.ids, it_te.wmask);
+print("  trained", it_steps, "steps, final loss", floor(it_loss * 1000) / 1000);
+print("");
+print("   intent accuracy      ", floor(mean(eq(it_pred, it_te.intent)) * 1000) / 1000, " over", it_te.n, "questions");
+print("   is-meta Noul         ", floor(u:it_noul_accuracy(it_np, it_te.nouls, it_te.n, 0) * 1000) / 1000);
+print("   is-off-topic Noul    ", floor(u:it_noul_accuracy(it_np, it_te.nouls, it_te.n, 1) * 1000) / 1000);
+it_acc = u:cm_accuracy_by_label(it_pred, it_te.intent, it_k);
+print("");
+print("   per intent:");
+it_c = 0;
+while lt(it_c, it_k) {
+  print("      ", u:text_lg(it_d.intents, it_c), " n", take(it_acc.count, 0, it_c), " accuracy", floor(take(it_acc.acc, 0, it_c) * 1000) / 1000);
+  it_c = it_c + 1
+};
+print("")

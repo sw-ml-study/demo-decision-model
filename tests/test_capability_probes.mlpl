@@ -70,6 +70,23 @@ def u:p5_pool(ids, wmask) {
   reduce_add(reduce_add(gather_rows(p5_E, ids) * wmask, 1))
 }
 
+p6_W = param[2, 3];
+p6_W = reshape([1.0, 0.0, 0.0, 0.0, 1.0, 0.0], [2, 3]);
+p6_rows = reshape([1.0, 2.0, 0.0, 0.0], [2, 2]);
+
+def u:p6_guarded() {
+  "Unit-normalized rows with the guard after the root.";
+  p = matmul(p6_rows, p6_W);
+  n = sqrt(reduce_add(p * p, 1));
+  reduce_add(p / reshape(n + eq(n, 0), [2, 1]))
+}
+
+def u:p6_eps() {
+  "The same, with the epsilon inside the root.";
+  p = matmul(p6_rows, p6_W);
+  reduce_add(p / reshape(sqrt(reduce_add(p * p, 1) + 0.000000001), [2, 1]))
+}
+
 @test {name: "Q1 freeze holds an encoder fixed while a separate head trains", tags: ["probe", "calibration"]}
 def u:test_q1_freeze() {
   "The shape the calibration lessons need: fit a post-hoc map over a frozen state representation. A vacuous pass is the risk here, so the head is asserted to have moved.";
@@ -124,6 +141,15 @@ def u:test_q5_record_field_in_grad() {
   u:assert_shape(g, [10, 4], "the gradient has the embedding's shape")?;
   rows = reduce_add(ge(reduce_add(abs(g), 1), 0.0001));
   u:assert_eq(rows, 4, "and only the four addressed rows receive it")
+}
+
+@test {name: "Q6 a guard after sqrt does not survive differentiation", tags: ["probe", "numerics"]}
+def u:test_q6_sqrt_zero_gradient() {
+  "Found by demo 02. A row of zeros -- a catalog card whose every word is unknown -- makes sqrt(0) finite, so a forward pass guarded with eq(n, 0) looks correct; the derivative at zero is not finite, and one Adam step turns every parameter into NaN. Demo 01's hand-written cards never had a zero row, which is why 642 real ones found it.";
+  g = grad(u:p6_guarded(), p6_W);
+  e = grad(u:p6_eps(), p6_W);
+  u:assert_eq(eq(reduce_add(g), reduce_add(g)), 0, "the guarded form's gradient is not a number")?;
+  u:assert_eq(eq(reduce_add(e), reduce_add(e)), 1, "the epsilon form's gradient is")
 }
 
 u:run_registered_tests()

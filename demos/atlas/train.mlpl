@@ -1,0 +1,124 @@
+# Demo 02: the sw-atlas rerank question, measured. A downstream project proposes a hybrid docent -- a deterministic matcher proposes candidate resources, a typed decision model reranks them -- and its design rests on one claim: because the rerank head scores cards rather than label ids, a resource published after training can still be chosen. DC01 measured that claim failing badly on demo 01's data, where a card is a 1966 decomposition rule sharing nothing with the input but function words. This asks the same question in the regime that matters to them: 642 real resources with titles, aliases, concepts and summaries, and 308 questions written so that no title word and no alias of the answer appears in them. Seventy-two resources are held out entirely -- their cards are never offered during training -- and the 91 questions pointing at those resources are the measurement. Nothing here is demo 01: lib/scorer.mlpl and lib/choice_model.mlpl are used unchanged, which is also NV01, the test of whether this repository's abstractions are real or ELIZA-shaped.
+include "../../lib/scorer.mlpl";
+include "../../lib/choice_model.mlpl";
+
+at_dim = 32;
+at_lr = 0.02;
+at_steps = 250;
+
+def u:at_rows1(v, idx) {
+  "Elements idx of a rank-1 array (gather_rows wants a table).";
+  reshape(gather_rows(reshape(v, [reduce_mul(shape(v)), 1]), idx), [reduce_mul(shape(idx))])
+}
+
+def u:at_batch(b, w) {
+  "A featurized split: query ids and pooling weights, and the card each one is asking for.";
+  n = b.n;
+  mask = reshape(b.mask, [n, w]);
+  {n: n, ids: reshape(b.ids, [n, w]), mask: mask, wmask: u:cm_pool_weights(mask), gold: b.gold}
+}
+
+def u:at_onehot(gold, n, k) {
+  "A [n, k] indicator of the answer, for reading a row's own score out of a score matrix.";
+  eq(reshape(iota(k), [1, k]) + fill([n, k], 0), reshape(gold, [n, 1]))
+}
+
+def u:at_scores(w, q, cards, cand, k, qs) {
+  "Scores [n, k] of every offered card for every query.";
+  u:sc_infer(w, q.ids, q.wmask, qs.ids, qs.wmask, fill([q.n], 0), cards.ids, cards.wmask, cand, k)
+}
+
+def u:at_accuracy(sc, q, k) {
+  "Share of queries whose highest-scoring offered card is the one asked for.";
+  mean(eq(argmax(sc, 1), q.gold))
+}
+
+def u:at_mrr(sc, q, cand, k) {
+  "Mean reciprocal rank of the answer among the offered cards: the number a reranker is really judged by, because a visitor sees a list.";
+  ans = reduce_add(sc * u:at_onehot(q.gold, q.n, k), 1);
+  better = reduce_add(gt(sc, reshape(ans, [q.n, 1])) * cand, 1);
+  mean(1 / (better + 1))
+}
+
+def u:at_topk_mask(top, n, k, depth) {
+  "A candidate mask [n, k] holding each query's first `depth` matcher candidates: the hybrid's actual choice set.";
+  rows = reshape(top, [n, 50]);
+  acc = fill([n, k], 0);
+  j = 0;
+  while lt(j, depth) {
+    col = reshape(gather_rows(transpose(rows), [j]), [n]);
+    acc = acc + u:at_onehot(col, n, k);
+    j = j + 1
+  };
+  ge(acc, 1)
+}
+
+def u:at_report(name, w, q, cards, cand, k, qs, label) {
+  "One line of results for one split under one choice set.";
+  sc = u:at_scores(w, q, cards, cand, k, qs);
+  print("   ", name, label, " accuracy", floor(u:at_accuracy(sc, q, k) * 1000) / 1000, " MRR", floor(u:at_mrr(sc, q, cand, k) * 1000) / 1000, " over", q.n, "questions");
+  1
+}
+
+at_d = unwrap(parse_json(unwrap(read_text(unwrap(list_get(args(), 0))))));
+at_qw = at_d.query_width;
+at_cw = at_d.card_width;
+at_k = at_d.cards.n;
+at_rows = list_len(at_d.vocab) + 1;
+
+at_cmask = reshape(at_d.cards.mask, [at_k, at_cw]);
+at_cards = {ids: reshape(at_d.cards.ids, [at_k, at_cw]), wmask: u:cm_pool_weights(at_cmask)};
+at_tr = u:at_batch(at_d.train, at_qw);
+at_warm = u:at_batch(at_d.warm, at_qw);
+at_cold = u:at_batch(at_d.cold, at_qw);
+
+at_qmask = reshape(at_d.question.mask, [1, at_qw]);
+at_qs = {ids: reshape(at_d.question.ids, [1, at_qw]), wmask: u:cm_pool_weights(at_qmask)};
+
+sc_E = param[at_rows, 32];
+sc_E = randn(31, [at_rows, 32]) * 0.1;
+sc_Ws = param[32, 32];
+sc_Ws = randn(32, [32, 32]) * 0.1;
+sc_Wq = param[32, 32];
+sc_Wq = randn(33, [32, 32]) * 0.1;
+sc_Wc = param[32, 32];
+sc_Wc = randn(34, [32, 32]) * 0.1;
+sc_g = param[1];
+sc_g = fill([1], 8);
+
+def u:at_cand_mask(flat, n, k, per) {
+  "A candidate mask [n, k] from a flat list of `per` card indices per row.";
+  rows = reshape(flat, [n, per]);
+  acc = fill([n, k], 0);
+  j = 0;
+  while lt(j, per) {
+    acc = acc + u:at_onehot(reshape(gather_rows(transpose(rows), [j]), [n]), n, k);
+    j = j + 1
+  };
+  ge(acc, 1)
+}
+
+at_tr_cand = u:at_cand_mask(at_d.train.candidates, at_tr.n, at_k, at_d.train.per_query);
+at_warm_all = fill([at_warm.n, at_k], 1);
+at_cold_all = fill([at_cold.n, at_k], 1);
+at_warm_20 = u:at_topk_mask(at_d.warm.top50, at_warm.n, at_k, 20);
+at_cold_20 = u:at_topk_mask(at_d.cold.top50, at_cold.n, at_k, 20);
+
+print("sw-atlas rerank benchmark");
+print("  ", at_k, "cards,", reduce_mul(shape(at_d.cards.held_out)), "resources held out of training entirely");
+print("  ", at_tr.n, "training questions,", at_warm.n, "warm and", at_cold.n, "cold test questions");
+print("  ", at_rows - 1, "vocabulary,", at_rows * 32 + 32 * 32 * 3 + 1, "parameters");
+print("");
+
+at_loss = u:sc_train(at_tr.ids, at_tr.wmask, at_qs.ids, at_qs.wmask, fill([at_tr.n], 0), at_cards.ids, at_cards.wmask, at_tr_cand, at_k, at_tr.gold, at_steps, at_lr);
+at_w = {E: sc_E, Ws: sc_Ws, Wq: sc_Wq, Wc: sc_Wc, g: sc_g};
+print("trained", at_steps, "steps, final loss", floor(at_loss * 1000) / 1000);
+print("");
+print("  the whole catalog offered (642 cards):");
+at_r1 = u:at_report("warm", at_w, at_warm, at_cards, at_warm_all, at_k, at_qs, "");
+at_r2 = u:at_report("cold", at_w, at_cold, at_cards, at_cold_all, at_k, at_qs, "");
+print("");
+print("  reranking the matcher's top 20, which is the hybrid sw-atlas proposes:");
+at_r3 = u:at_report("warm", at_w, at_warm, at_cards, at_warm_20, at_k, at_qs, "");
+at_r4 = u:at_report("cold", at_w, at_cold, at_cards, at_cold_20, at_k, at_qs, "");
+print("")

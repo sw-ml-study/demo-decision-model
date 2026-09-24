@@ -138,3 +138,17 @@ memory = "the models are downloaded, not built here: qwen3:0.6b, llama3.2:3b and
 speed = "0.17 to 1.24 s per decision depending on model size, against microseconds for the trained model; 24 messages per arm, five arms"
 quality = "On TD01's 24 held-out messages, by first-token top_logprobs renormalized over the legal answers: qwen3:0.6b 0.458 zero-shot and 0.500 with six examples, llama3.2:3b 0.792 and 0.750, gemma4:31b 1.000, against TD01's own 0.750. A 3B model beats the trained model without training; a 31B model answers every message correctly. Two secondary findings matter more: six in-prompt examples pushed qwen3:0.6b's first-token mass off the legal answer set entirely (0.34 legal mass), which is the objection raised under the original post and which a fixed three-column head cannot have; and llama3.2:3b is better calibrated untouched (ECE 0.006) than the trained model is after temperature scaling (0.097)."
 status = "accepted"
+
+[[lesson]]
+id = "AT01"
+slug = "atlas-rerank"
+title = "Demo 02: a second domain, someone else's catalog, and what lib/ needed to survive it"
+source = "demos/atlas/train.mlpl"
+library = ["lib/scorer.mlpl", "lib/choice_model.mlpl", "demos/atlas/extract.py", "demos/atlas/featurize.py"]
+test = ["probes/q6_sqrt_zero_gradient.mlpl", "tests/test_capability_probes.mlpl"]
+fixture = "docs/experiments/AT01-atlas-rerank.md"
+implementation = "from-scratch"
+memory = "77,985 parameters for the rerank scorer over a 2,340-word vocabulary; 17,351 for the intent Choice and two Nouls. The catalog it scores over is 642 real resources, read from a downstream checkout and never copied here."
+speed = "250 steps in 17.5 minutes: every step re-encodes all 642 cards at 64 features each, which is the cost of scoring cards rather than label columns."
+quality = "Negative, and useful. Reranking the matcher's top 20: 0.023 warm and 0.032 cold against 0.050 for random, while training loss fell to 0.011 -- memorized 174 questions, transferred nothing. Intent 0.697 against a 0.737 majority baseline; the is-off-topic Noul landed exactly on its always-false baseline. The matcher it was meant to improve scores 0.233 and 0.209 accuracy@1 with recall@20 of 0.63, which is also the hybrid's ceiling. One configuration per head, no sweep, against question sets the downstream project still marks Unconfirmed. The durable result is the defect this found in lib/scorer.mlpl (Q6): a zero-norm row made every gradient NaN, silently."
+status = "accepted"

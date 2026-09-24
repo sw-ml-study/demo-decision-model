@@ -14,9 +14,9 @@ def u:sc_query(sids, swm, qids, qwm, qi) {
 }
 
 def u:sc_unit(a, k) {
-  "The k rows of [k, d] scaled to unit length; a row of zeros is left alone. The caller passes k because shape() may not be called inside grad (probes/q5_record_field_in_grad.mlpl). Measured, not assumed: scoring by plain inner product gives a card that trained as an answer a magnitude no unseen card can match, and unseen cards then never win. Direction is what a card should be compared on.";
-  n = sqrt(reduce_add(a * a, 1));
-  a / reshape(n + eq(n, 0), [k, 1])
+  "The k rows of [k, d] scaled to unit length. The epsilon is inside the square root rather than a guard after it: a row of zeros -- a card whose every word is unknown, which a real catalog has -- makes sqrt(0) finite but its derivative infinite, and one Adam step turns every weight into NaN. The caller passes k because shape() may not be called inside grad (probes/q5_record_field_in_grad.mlpl). Measured, not assumed: scoring by plain inner product gives a card that trained as an answer a magnitude no unseen card can match, and unseen cards then never win. Direction is what a card should be compared on.";
+  n = sqrt(reduce_add(a * a, 1) + 0.000000001);
+  a / reshape(n, [k, 1])
 }
 
 def u:sc_cards(cids, cwm, k) {

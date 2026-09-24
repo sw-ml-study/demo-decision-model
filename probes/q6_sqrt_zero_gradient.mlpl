@@ -1,0 +1,33 @@
+# Q6 reproducer: a guard placed after sqrt does not survive differentiation. sqrt(0) is 0, so a forward pass that divides by (n + eq(n, 0)) looks safe, but d/dx sqrt(x) is unbounded at zero and one Adam step turns every parameter into NaN. Found by demo 02: a catalog of 642 real resources contains cards whose every word is unknown to the vocabulary, so their pooled state is exactly zero, while demo 01's hand-written cards never were. The fix is an epsilon inside the root. Checked by scripts/run-probes and asserted in tests/test_capability_probes.mlpl.
+q6_W = param[2, 3];
+q6_W = reshape([1.0, 0.0, 0.0, 0.0, 1.0, 0.0], [2, 3]);
+q6_rows = reshape([1.0, 2.0, 0.0, 0.0], [2, 2]);
+
+def u:q6_norm_guarded(a) {
+  "Row norms with the guard after the root: finite forward, infinite derivative at zero.";
+  sqrt(reduce_add(a * a, 1))
+}
+
+def u:q6_norm_eps(a) {
+  "Row norms with the epsilon inside the root: finite forward and finite derivative.";
+  sqrt(reduce_add(a * a, 1) + 0.000000001)
+}
+
+def u:q6_loss_guarded() {
+  "A unit-normalized projection, guarded after the root.";
+  p = matmul(q6_rows, q6_W);
+  n = u:q6_norm_guarded(p);
+  reduce_add(p / reshape(n + eq(n, 0), [2, 1]))
+}
+
+def u:q6_loss_eps() {
+  "The same, with the epsilon inside the root.";
+  p = matmul(q6_rows, q6_W);
+  reduce_add(p / reshape(u:q6_norm_eps(p), [2, 1]))
+}
+
+q6_guarded = reduce_add(grad(u:q6_loss_guarded(), q6_W));
+q6_eps = reduce_add(grad(u:q6_loss_eps(), q6_W));
+print("Q6 gradient through a guard after sqrt:", q6_guarded);
+print("Q6 gradient through an epsilon inside sqrt:", q6_eps);
+print("Q6 answer: the guarded form is not finite, the epsilon form is", eq(q6_eps, q6_eps) * (1 - eq(q6_guarded, q6_guarded)))

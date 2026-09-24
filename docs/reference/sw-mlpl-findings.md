@@ -140,6 +140,43 @@ Worth filing upstream as a diagnostics issue rather than a feature request: the
 silent form is the expensive one, and it would cost little to say "a record
 field was read inside grad" instead of blaming the parameter.
 
+## Q6 — a guard after `sqrt` does not survive differentiation
+
+Found by demo 02, on a catalog of 642 real resources. `lib/scorer.mlpl`
+normalizes each card to unit length, and wrote the zero case the obvious way:
+
+```
+n = sqrt(reduce_add(a * a, 1));
+a / reshape(n + eq(n, 0), [k, 1])
+```
+
+Forward, that is correct: a row of zeros stays a row of zeros. Backward it is
+not. `d/dx sqrt(x)` is unbounded at zero, so a single zero row makes the
+gradient `NaN`, and one Adam step turns every parameter in the model into
+`NaN`. The symptom is not an error: training runs to completion, the loss
+prints as `NaN`, and every downstream number degenerates quietly — here, an
+accuracy of 0.000 and a mean reciprocal rank of exactly 1.000, which is what
+comparisons against `NaN` produce.
+
+Demo 01 never hit it, because every hand-written card contained at least one
+word the vocabulary knew. A real catalog has cards whose every word is unknown.
+
+**The fix is an epsilon inside the root**, not a guard after it:
+
+```
+n = sqrt(reduce_add(a * a, 1) + 0.000000001);
+a / reshape(n, [k, 1])
+```
+
+`probes/q6_sqrt_zero_gradient.mlpl` reduces it to two rows and one weight
+matrix, and shows the guarded form producing `NaN` where the epsilon form
+produces a finite gradient.
+
+Not filed upstream: this is ordinary floating-point practice rather than a
+defect in the language. It is recorded because the failure is silent, the
+numbers it produces look like results, and it survived every test this
+repository had until a second domain met it.
+
 ## Gate note
 
 `mlpl-repl` exits non-zero on an evaluation error, so `scripts/run-probes`
