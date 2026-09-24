@@ -1,0 +1,9 @@
+number = 24
+slug = "atlas-rerank-benchmark"
+status = "completed"
+description = "Make progress on the sw-atlas problem by answering the question that blocks i..."
+role = "production"
+context_files = []
+created_at = "2026-09-24T10:52:20"
+completed_at = "2026-09-24T13:49:51"
+commits = ["b78a2e17f5f2fe73956072f4cb195dd7c83a03db"]
