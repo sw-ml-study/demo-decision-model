@@ -1,0 +1,1 @@
+Before running AT01's recommended synthetic-positives experiment, check the downstream project's own repository for recent and planned work so nothing is duplicated. Record what they did with AT01, correct anything this repository says about their data that has since become untrue, and link the collaboration from the README and the live demo.
