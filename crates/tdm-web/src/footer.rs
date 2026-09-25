@@ -65,6 +65,13 @@ pub fn footer(props: &FooterProps) -> Html {
                 { "." }
             </p>
             <p>
+                { "These primitives are vendored downstream, and " }
+                <a href={format!("{REPO}/blob/main/docs/experiments/AT01-atlas-rerank.md")}>
+                    { "measured on someone else's catalog" }
+                </a>
+                { " — 642 resources, where they found a defect this demo never could." }
+            </p>
+            <p>
                 <a href="literate.html">{ "How the MLPL code works — the literate document" }</a>
                 { " · " }
                 <a href={REPO}>{ "source repository" }</a>

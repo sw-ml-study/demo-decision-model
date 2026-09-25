@@ -71,6 +71,36 @@ counting, print the evidence against yourself, quote a baseline, answer the
 obvious objection in the page — is
 [`docs/reference/claims-discipline.md`](docs/reference/claims-discipline.md).
 
+## Used downstream, and measured there
+
+These primitives are vendored by [sw-atlas](https://github.com/software-wrighter-lab/sw-atlas),
+which is building a *hybrid docent*: a deterministic matcher proposes candidate
+resources from a catalog of 642, and a typed decision model reads intent,
+answers Nouls, and reranks. That makes it this repository's `NV01` — a second
+domain, with `lib/` unchanged, and the test of whether these abstractions are
+real or ELIZA-shaped.
+
+[`AT01`](docs/experiments/AT01-atlas-rerank.md) measured their design on their
+own catalog and frozen question sets, and returned four findings, of which the
+first paid for the exercise:
+
+1. **A `NaN` defect in `lib/scorer.mlpl` they would have vendored.** Its
+   zero-norm case was guarded *after* `sqrt` — correct forward, infinite
+   derivative backward, so one card whose every word is unknown turned every
+   parameter into `NaN` on the first Adam step, silently. A 642-card catalog
+   has such cards; twelve hand-written ELIZA rules never did.
+2. **The rerank head does not work at 308 questions** — 0.023 warm against
+   0.050 for choosing at random, with training loss 0.011.
+3. **The hybrid's ceiling is the matcher's recall@k**, 0.63 at k=20.
+4. **Intent scored 0.697 against a 0.737 majority baseline.**
+
+What came back is recorded in
+[`downstream-requests.md`](docs/reference/downstream-requests.md): they pinned
+the fix, queued the supervision experiment as their own step, made recall@k a
+release criterion, and now print a majority baseline beside every accuracy. A
+request answered with a negative result was worth more than one answered with a
+feature.
+
 ## What is on the slide
 
 **ELIZA is demo 01, not the point.** It is a forcing function: the smallest

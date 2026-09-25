@@ -35,10 +35,11 @@ Two programs, both using `lib/` unchanged: `demos/atlas/train.mlpl` (the rerank
 scorer, 77,985 parameters) and `demos/atlas/intent.mlpl` (the intent Choice and
 two Nouls, 17,351 parameters).
 
-**These question sets are marked `Unconfirmed` in sw-atlas.** They were drafted
-by a model and have not yet been passed over by their author. Every number below
-is against a draft yardstick, which is a reason to read the direction and not
-the decimals.
+**The question sets were marked `Unconfirmed` when this ran.** They had been
+drafted by a model and not yet passed over by their author; sw-atlas confirmed
+all 386 rows the following day, so the numbers below are against what has since
+become a real yardstick. Read the direction rather than the decimals anyway:
+the splits are small.
 
 ## Finding 1: a guard after `sqrt` is not a guard
 
@@ -131,11 +132,36 @@ trained from the question sets that exist today.
    That number, not an architecture, decides whether the rerank stage is worth
    its place.
 
+## What happened next, on their side
+
+sw-atlas received this and acted on it within a day, which is recorded here
+because the value of a measurement is what it changes:
+
+- **The defect was accepted and the vendoring pinned** at or after `b78a2e1`.
+- **The rerank head moved behind a supervision step.** Their Saga 3 now begins
+  with synthetic positives — a card's title and summary as pseudo-queries —
+  before the rerank head is trained at all. That experiment is *theirs*, and is
+  deliberately not repeated here.
+- **The design changed shape.** After `DC01` they had already rewritten
+  `hybrid-docent.md` so that concepts, not a scorer, carry a newly indexed
+  resource: every head is a fixed label set, reranking is confined to
+  candidates the model trained on, and cold candidates keep the matcher's
+  order. The cold-card question this experiment asked is, for them, now closed
+  by design rather than by measurement.
+- **The ceiling finding became a headline.** Their Saga 2 exit criterion is now
+  `MB02`'s own recall@k rather than its accuracy, and they have since measured
+  it with their real matcher.
+- **The baseline criticism was taken further than it was made.** Their harness
+  now prints a majority-class baseline beside every accuracy, and an
+  intent-balanced question supplement is queued as owner work: 78 intent rows
+  where a constant answer scores 18% rather than 74%.
+
 ## Honest limits of this experiment
 
 - The matcher is ours, not sw-atlas's `MB02`; a better first stage changes every
   row of the table.
-- The question sets are `Unconfirmed` drafts.
+- The question sets were `Unconfirmed` drafts at the time, and their matcher
+  did not exist yet.
 - One configuration was tried for each head: 250 steps at lr 0.02 for the
   scorer, 300 at 0.05 for intent. No sweep, no early stopping, no dropout, no
   synthetic positives. A negative result from one configuration is a weaker

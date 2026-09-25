@@ -102,6 +102,34 @@ One caveat stated plainly: those question sets are still marked `Unconfirmed`,
 the matcher here is ours rather than their `MB02`, and each head was trained in
 one configuration with no sweep. Read the direction, not the decimals.
 
+### What they did with it, and what is therefore *not* ours to run
+
+Recorded so that nobody here repeats their work. Within a day of `AT01`
+sw-atlas:
+
+- **accepted the `NaN` defect** and pinned its vendoring at or after `b78a2e1`;
+- **queued the synthetic-positives experiment as its own Saga 3 step** — card
+  title and summary as pseudo-queries, before the rerank head is trained at
+  all. *That is theirs. Do not run it here.*
+- **had already redesigned around `DC01`**: concepts, not a scorer, carry a
+  newly indexed resource; every head is a fixed label set; reranking is
+  confined to candidates the model trained on, and cold candidates keep the
+  matcher's order. The cold-card question is closed for them by design;
+- **made the ceiling finding a Saga 2 exit criterion** — `MB02`'s own recall@k
+  ahead of its accuracy — and has since measured it with their real matcher;
+- **went further than the baseline criticism**: their harness now prints a
+  majority-class baseline beside every accuracy, and an intent-balanced
+  supplement of 78 rows, where a constant answer scores 18% rather than 74%,
+  is queued as owner work.
+
+They also confirmed all 386 question rows, so the "Unconfirmed drafts" caveat
+in `AT01` describes the sets as they were on the day, not as they are.
+
+**The channel works in both directions now.** That file and this one cite each
+other, which is how their conclusions reached this page without anyone relaying
+them by hand. Neither file is a notification, so a session that changes one
+should still say so out loud.
+
 ### What sw-atlas offers back
 
 - A second demo for the abstraction gate, over several hundred resources rather
