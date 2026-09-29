@@ -1,0 +1,9 @@
+number = 26
+slug = "lib-robustness"
+status = "completed"
+description = "lib/ is vendored by another project and Q6 reached them only by luck. Feed ev..."
+role = "production"
+context_files = []
+created_at = "2026-09-29T11:29:00"
+completed_at = "2026-09-29T11:29:00"
+commits = ["d108cb7222032db5c2dbd82c111ab64323b3fb0f"]
