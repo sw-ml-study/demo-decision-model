@@ -127,9 +127,9 @@ def u:cm_dropout(fz, p, seed) {
 }
 
 def u:cm_smooth_loss(ids, wmask, y, eps) {
-  "Label-smoothed cross-entropy over the caller's global params: (1 - eps) times the loss on the true label plus eps times the mean loss over all labels, so no answer is ever worth pushing to probability one.";
+  "Label-smoothed cross-entropy over the caller's global params: (1 - eps) times the loss on the true label plus eps times the mean loss over all labels, so no answer is ever worth pushing to probability one. The epsilon inside the log is not decoration: cross_entropy is stable for a logit far below the maximum, this hand-written term is not, and softmax underflowing to exactly zero would otherwise make the whole loss NaN.";
   logits = u:cm_logits(ids, wmask);
-  (1 - eps) * cross_entropy(logits, y) + eps * (0 - mean(log(softmax(logits, 1))))
+  (1 - eps) * cross_entropy(logits, y) + eps * (0 - mean(log(softmax(logits, 1) + 0.000000001)))
 }
 
 def u:cm_train_smooth(ids, wmask, y, steps, lr, eps) {

@@ -292,11 +292,14 @@ impl<'a> Scorer<'a> {
         let mut v: Vec<f64> = (0..d)
             .map(|j| (0..d).map(|i| h[i] * self.weights.card[i * d + j]).sum())
             .collect();
-        let norm = v.iter().map(|x| x * x).sum::<f64>().sqrt();
-        if norm > 0.0 {
-            for x in &mut v {
-                *x /= norm;
-            }
+        // The epsilon is inside the root, and divides unconditionally, because
+        // that is what the trainer does: a card whose every word is unknown
+        // projects to exactly zero, and guarding after the root leaves the
+        // forward pass right while making the trainer's gradient infinite.
+        // Mirroring it here is also what keeps the parity test exact.
+        let norm = (v.iter().map(|x| x * x).sum::<f64>() + 1e-9).sqrt();
+        for x in &mut v {
+            *x /= norm;
         }
         v
     }

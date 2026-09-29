@@ -62,13 +62,24 @@ quality claim, and `docs/reference/results.md` is where the row lives.
 Not in a footnote, not in an issue. The concise hello says outright that a
 pretrained model carries knowledge about the world while this one carries
 knowledge about twelve sentences, and that this asymmetry cuts against the page.
-`DC01` leads with the fact that its scorer picks the right card 0.4% of the time
-when that card was held out of training.
+`DC01` leads with the fact that its scorer picks the right card 0.2% of the time
+when that card was held out of training — and now also records that two of its
+other numbers moved when the same budget bought more steps on a quieter
+machine.
 
-## 7. Name the version, the command, and the seed
+## 7. Name the version, the command, the seed — and, for anything timed, the machine
 
 `mlpl-repl 0.22.0`; `just concise-hello`; `randn(3, ...)`. A result nobody can
 re-run is an anecdote.
+
+A budget measured in seconds is the sharp case. `DC01` first reported that its
+scorer was at chance on cold candidates; it was not, and the architecture had
+nothing to do with it. That run shared a machine with other training, so its
+ten-minute budget bought 147 minibatch steps where a quiet machine buys 3,738 —
+and the number moved from 18.6% to 33.0% when it was re-run alone. **A number
+measured against a clock is a number measured against everything else the clock
+was carrying.** Where a lesson trains to a wall-clock budget, say what else the
+machine was doing, or train it on an idle one and say that.
 
 ## 8. Link the artifact, not just its description
 

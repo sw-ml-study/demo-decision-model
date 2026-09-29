@@ -348,14 +348,29 @@ def u:decision_probs(logits) {
 }
 #+end_src
 
+*** ~u:decision_temperature(t)~
+
+The temperature that will actually be applied. A temperature of zero divides by zero and a negative one inverts the ranking, so neither is a temperature: both are a caller's bug, and both become 1, the identity. The constructors record this value rather than the requested one, so a trace never claims a scaling that was not performed.
+
+#+begin_src mlpl :tangle ../../lib/decision.mlpl
+def u:decision_temperature(t) {
+  "The temperature that will actually be applied. A temperature of zero divides by zero and a negative one inverts the ranking, so neither is a temperature: both are a caller's bug, and both become 1, the identity. The constructors record this value rather than the requested one, so a trace never claims a scaling that was not performed.";
+  if gt(t, 0) {
+    t
+  } else {
+    1
+  }
+}
+#+end_src
+
 *** ~u:decision_temper(logits, t)~
 
 Temperature-scaled logits: t above 1 softens the distribution, t below 1 sharpens it, t of 1 is the identity. The cheapest calibration map there is, and the baseline every other one must beat.
 
 #+begin_src mlpl :tangle ../../lib/decision.mlpl
 def u:decision_temper(logits, t) {
-  "Temperature-scaled logits: t above 1 softens the distribution, t below 1 sharpens it, t of 1 is the identity. The cheapest calibration map there is, and the baseline every other one must beat.";
-  logits / t
+  "Temperature-scaled logits: t above 1 softens the distribution, t below 1 sharpens it, t of 1 is the identity. The cheapest calibration map there is, and the baseline every other one must beat. A non-positive t is refused by u:decision_temperature rather than producing infinities.";
+  logits / u:decision_temperature(t)
 }
 #+end_src
 
@@ -471,7 +486,7 @@ A Choice decision with temperature scaling applied, recording the scalar it used
 #+begin_src mlpl :tangle ../../lib/decision.mlpl
 def u:choice_tempered(question, labels, logits, t) {
   "A Choice decision with temperature scaling applied, recording the scalar it used.";
-  u:choice_from_probs(question, labels, u:decision_probs(u:decision_temper(logits, t)), u:decision_temperature_map(t))
+  u:choice_from_probs(question, labels, u:decision_probs(u:decision_temper(logits, t)), u:decision_temperature_map(u:decision_temperature(t)))
 }
 #+end_src
 
@@ -505,7 +520,7 @@ A Noul decision with temperature scaling applied, recording the scalar it used.
 #+begin_src mlpl :tangle ../../lib/decision.mlpl
 def u:noul_tempered(proposition, logit, t) {
   "A Noul decision with temperature scaling applied, recording the scalar it used.";
-  u:noul_from_p(proposition, sigmoid(logit / t), u:decision_temperature_map(t))
+  u:noul_from_p(proposition, sigmoid(logit / u:decision_temperature(t)), u:decision_temperature_map(u:decision_temperature(t)))
 }
 #+end_src
 
@@ -539,7 +554,7 @@ A Scale decision with temperature scaling applied, recording the scalar it used.
 #+begin_src mlpl :tangle ../../lib/decision.mlpl
 def u:scale_tempered(question, levels, logits, t) {
   "A Scale decision with temperature scaling applied, recording the scalar it used.";
-  u:scale_from_probs(question, levels, u:decision_probs(u:decision_temper(logits, t)), u:decision_temperature_map(t))
+  u:scale_from_probs(question, levels, u:decision_probs(u:decision_temper(logits, t)), u:decision_temperature_map(u:decision_temperature(t)))
 }
 #+end_src
 
@@ -1109,9 +1124,9 @@ Label-smoothed cross-entropy over the caller's global params: (1 - eps) times th
 
 #+begin_src mlpl :tangle ../../lib/choice_model.mlpl
 def u:cm_smooth_loss(ids, wmask, y, eps) {
-  "Label-smoothed cross-entropy over the caller's global params: (1 - eps) times the loss on the true label plus eps times the mean loss over all labels, so no answer is ever worth pushing to probability one.";
+  "Label-smoothed cross-entropy over the caller's global params: (1 - eps) times the loss on the true label plus eps times the mean loss over all labels, so no answer is ever worth pushing to probability one. The epsilon inside the log is not decoration: cross_entropy is stable for a logit far below the maximum, this hand-written term is not, and softmax underflowing to exactly zero would otherwise make the whole loss NaN.";
   logits = u:cm_logits(ids, wmask);
-  (1 - eps) * cross_entropy(logits, y) + eps * (0 - mean(log(softmax(logits, 1))))
+  (1 - eps) * cross_entropy(logits, y) + eps * (0 - mean(log(softmax(logits, 1) + 0.000000001)))
 }
 #+end_src
 
@@ -1369,9 +1384,9 @@ The selected card per row and the full distribution over the offered cards: {sel
 
 #+begin_src mlpl :tangle ../../lib/scorer.mlpl
 def u:sc_choose(w, sids, swm, qids, qwm, qi, cids, cwm, cand, k) {
-  "The selected card per row and the full distribution over the offered cards: {selected [N], probs [N, K]}.";
+  "The selected card per row, the full distribution over the offered cards, and how many cards each row was actually offered: {selected [N], probs [N, K], offered [N]}. The count matters because a row offered nothing still returns a selection -- every masked score is equally impossible, so the softmax is uniform and the argmax is card zero. A caller that can produce an empty candidate set must check `offered` before believing `selected`.";
   p = softmax(u:sc_infer(w, sids, swm, qids, qwm, qi, cids, cwm, cand, k), 1);
-  {selected: argmax(p, 1), probs: p}
+  {selected: argmax(p, 1), probs: p, offered: reduce_add(cand, 1)}
 }
 #+end_src
 

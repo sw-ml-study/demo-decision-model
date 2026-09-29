@@ -57,9 +57,9 @@ def u:sc_infer(w, sids, swm, qids, qwm, qi, cids, cwm, cand, k) {
 }
 
 def u:sc_choose(w, sids, swm, qids, qwm, qi, cids, cwm, cand, k) {
-  "The selected card per row and the full distribution over the offered cards: {selected [N], probs [N, K]}.";
+  "The selected card per row, the full distribution over the offered cards, and how many cards each row was actually offered: {selected [N], probs [N, K], offered [N]}. The count matters because a row offered nothing still returns a selection -- every masked score is equally impossible, so the softmax is uniform and the argmax is card zero. A caller that can produce an empty candidate set must check `offered` before believing `selected`.";
   p = softmax(u:sc_infer(w, sids, swm, qids, qwm, qi, cids, cwm, cand, k), 1);
-  {selected: argmax(p, 1), probs: p}
+  {selected: argmax(p, 1), probs: p, offered: reduce_add(cand, 1)}
 }
 
 def u:sc_param_count(w) {

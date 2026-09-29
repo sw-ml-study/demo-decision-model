@@ -1,0 +1,102 @@
+# Hostile inputs to every library entry point. This file exists because of Q6: a zero-norm row made every gradient NaN, the training run completed, and the numbers it printed looked like results until a second domain produced a card whose every word was unknown. A library another project vendors has to fail loudly or not at all, so each case below is a degenerate input a real caller can produce -- an empty message, a word the vocabulary never saw, a candidate set with nothing in it, a temperature of zero -- and each assertion says the answer is a number rather than that the answer is right.
+include "lib/scorer.mlpl";
+include "lib/choice_model.mlpl";
+
+def u:rb_finite(x) {
+  "1 when every element of x is a number and none is infinite. NaN is the only value that differs from itself, and an infinity is the only number that survives the bound.";
+  eq(reduce_add(x), reduce_add(x)) * lt(abs(reduce_add(x)), 1000000000)
+}
+
+rb_ids = reshape([1, 2, 0, 0], [2, 2]);
+rb_wm = u:cm_pool_weights(reshape([1, 1, 0, 0], [2, 2]));
+rb_qids = reshape([3, 0], [1, 2]);
+rb_qwm = u:cm_pool_weights(reshape([1, 0], [1, 2]));
+rb_cids = reshape([4, 5, 0, 0, 1, 2], [3, 2]);
+rb_cwm = u:cm_pool_weights(reshape([1, 1, 0, 0, 1, 1], [3, 2]));
+
+cm_E = param[6, 4];
+cm_E = randn(11, [6, 4]) * 0.1;
+cm_W = param[4, 3];
+cm_W = randn(12, [4, 3]) * 0.1;
+cm_b = param[3];
+cm_b = fill([3], 0);
+cm_N = param[4, 2];
+cm_N = randn(13, [4, 2]) * 0.1;
+cm_nb = param[2];
+cm_nb = fill([2], 0);
+sc_E = param[6, 4];
+sc_E = randn(14, [6, 4]) * 0.1;
+sc_Ws = param[4, 4];
+sc_Ws = randn(15, [4, 4]) * 0.1;
+sc_Wq = param[4, 4];
+sc_Wq = randn(16, [4, 4]) * 0.1;
+sc_Wc = param[4, 4];
+sc_Wc = randn(17, [4, 4]) * 0.1;
+sc_g = param[1];
+sc_g = fill([1], 8);
+
+@test {name: "a non-positive temperature is refused rather than divided by", tags: ["robustness", "decision"]}
+def u:test_rb_temperature() {
+  "A temperature of zero divides by zero and a negative one silently inverts the ranking. Both are a caller's bug; neither may reach a trace as an infinity or as a reversed answer.";
+  u:assert_eq(u:rb_finite(u:decision_temper([1.0, 2.0, 3.0], 0)), 1, "zero temperature stays finite")?;
+  u:assert_eq(u:rb_finite(u:decision_temper([1.0, 2.0, 3.0], 0 - 2)), 1, "a negative one too")?;
+  d = u:choice_tempered("q", ["a", "b"], [1.0, 2.0], 0);
+  u:assert_eq(u:decision_valid(d), 1, "the decision is still well formed")?;
+  u:assert_approx(d.calibration.t, 1, 0.000001, "and the record carries the temperature actually applied, not the one asked for")
+}
+
+@test {name: "label smoothing survives a logit that underflows the softmax", tags: ["robustness", "loss"]}
+def u:test_rb_smooth_loss() {
+  "cross_entropy is stable for a logit far below the maximum; the hand-written smoothing term is not. Without an epsilon inside its log, softmax underflowing to exactly zero makes the whole loss NaN, and training then runs to completion producing nothing.";
+  cm_W = fill([4, 3], 0);
+  cm_b = reshape([0.0, 0 - 2000.0, 0.0], [3]);
+  u:assert_eq(u:rb_finite(u:cm_smooth_loss(rb_ids, rb_wm, [0, 0], 0.1)), 1, "the loss is a number")
+}
+
+@test {name: "an input whose every word is unknown decides on the bias alone", tags: ["robustness", "featurizer"]}
+def u:test_rb_all_unknown() {
+  "The commonest degenerate input in production: a message written in words the training split never used. It must pool to zero and fall back to the bias, not divide by a count of zero.";
+  empty = u:text_features("", 32, 8);
+  u:assert_eq(empty.n, 0, "an empty text has no features")?;
+  zero_wm = u:cm_pool_weights(fill([1, 8], 0));
+  u:assert_eq(u:rb_finite(zero_wm), 1, "its pooling weights are finite")?;
+  cm_W = randn(18, [4, 3]) * 0.1;
+  cm_b = reshape([1.0, 0 - 1.0, 0.5], [3]);
+  logits = reshape(u:cm_logits(fill([1, 8], 0), zero_wm), [3]);
+  u:assert_approx(logits, [1.0, 0 - 1.0, 0.5], 0.000001, "and the logits are exactly the bias")
+}
+
+@test {name: "a card whose every word is unknown does not poison the gradient", tags: ["robustness", "scorer"]}
+def u:test_rb_zero_norm_card() {
+  "Q6, pinned where the library can see it. The middle card below has no known word, so its projected row is exactly zero; normalizing it must stay differentiable.";
+  u:assert_eq(u:rb_finite(u:sc_cards(rb_cids, rb_cwm, 3)), 1, "the unit cards are finite")?;
+  g = grad(u:sc_loss(rb_ids, rb_wm, rb_qids, rb_qwm, [0, 0], rb_cids, rb_cwm, fill([2, 3], 1), 3, [0, 2]), sc_Wc);
+  u:assert_eq(u:rb_finite(g), 1, "and so is the gradient through them")
+}
+
+@test {name: "a row offered no candidates says so", tags: ["robustness", "scorer"]}
+def u:test_rb_no_candidates() {
+  "A first stage can return nothing. Every masked score is then equally impossible, the softmax is uniform, and the argmax is card zero -- a confident-looking answer to a question that was never asked. The count of offered cards is what a caller checks.";
+  w = {E: sc_E, Ws: sc_Ws, Wq: sc_Wq, Wc: sc_Wc, g: sc_g};
+  r = u:sc_choose(w, rb_ids, rb_wm, rb_qids, rb_qwm, [0, 0], rb_cids, rb_cwm, fill([2, 3], 0), 3);
+  u:assert_eq(u:rb_finite(r.probs), 1, "the probabilities are still numbers")?;
+  u:assert_approx(r.offered, [0, 0], 0.000001, "and the row reports that it was offered nothing")
+}
+
+@test {name: "a Noul batch with nothing labelled contributes nothing", tags: ["robustness", "loss"]}
+def u:test_rb_nothing_labelled() {
+  "Model 4 masks the Noul labels it does not have. A batch where every cell is masked divides by a count of zero unless the guard holds.";
+  ny = reshape([1, 0, 0, 1], [2, 2]);
+  u:assert_eq(u:rb_finite(u:cm_masked_joint_loss(rb_ids, rb_wm, [0, 1], ny, fill([2, 2], 0), 0.1)), 1, "nothing labelled is still a number")?;
+  u:assert_eq(u:rb_finite(u:cm_masked_joint_loss(rb_ids, rb_wm, [0, 1], ny, fill([2, 2], 1), 0.1)), 1, "and so is everything labelled")
+}
+
+@test {name: "dropping every feature leaves a usable batch", tags: ["robustness", "featurizer"]}
+def u:test_rb_total_dropout() {
+  "Word dropout at probability one is a caller's mistake, and it produces exactly the all-unknown row above for every input at once.";
+  d = u:cm_dropout({ids: fill([2, 8], 1), mask: fill([2, 8], 1)}, 1, 5);
+  u:assert_eq(u:rb_finite(d.wmask), 1, "its pooling weights are finite")?;
+  u:assert_approx(d.counts, [0, 0], 0.000001, "and it reports that nothing survived")
+}
+
+u:run_registered_tests()

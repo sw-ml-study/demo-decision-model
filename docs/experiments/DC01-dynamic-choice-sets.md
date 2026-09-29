@@ -46,13 +46,14 @@ question, which is the point.
 
 ## Results
 
-Default snapshot, 5 minutes of measured training (674 minibatch steps, 21
-epochs). Chance in a five-card field is 20%.
+Default snapshot, 1 minute of measured training (3,738 minibatch steps, 115
+epochs), chosen by validation accuracy over both questions. Chance in a
+five-card field is 20%.
 
 | Rows | n | full field (51 cards) | five cards, four trained | five cards, all held out |
 |---|---:|---:|---:|---:|
-| cards that trained (validation) | 812 | **85.3%** | 97.4% | 95.9% |
-| cards held out of training | 479 | **0.4%** | 36.5% | 18.6% |
+| cards that trained (validation) | 812 | **85.5%** | 96.2% | 96.4% |
+| cards held out of training | 479 | **0.2%** | 45.3% | **33.0%** |
 
 ### The generality cost, which is the cheap half of the answer
 
@@ -61,21 +62,30 @@ On the 812 validation rows model 4's fixed head has a column for:
 | | accuracy |
 |---|---|
 | model 4, fixed head over 35 merged classes | 86.1% |
-| the card scorer, over all 51 unmerged rules | 85.3% |
+| the card scorer, over all 51 unmerged rules | 85.5% |
 
-**About one point**, and the scorer is answering the harder question — 51
+**About half a point**, and the scorer is answering the harder question — 51
 unmerged rules against 35 merged classes — with one set of weights that also
 answers a second question entirely. Generality is close to free *where the
 candidates are ones it trained on*.
 
 ### The part that does not work
 
-0.4% on cards held out of training is not a soft result. In a full field the
-right-but-unseen card essentially never wins; its mean rank is 17.9 of 51,
-against 0.56 for a card that trained. Narrowing the field to five helps
-(36.5%), and against four other *equally cold* cards it drops to chance
-(18.6%) — so among candidates that all lack training, the model cannot tell
-which one fits.
+0.2% on cards held out of training is not a soft result: in a full field of 51
+the right-but-unseen card essentially never wins. Narrowing the field to five
+helps a great deal (45.3%), and against four other *equally cold* cards it
+scores 33.0% where chance is 20% — so among candidates that all lack training
+there is real signal, just not much of it.
+
+**These numbers moved once, and the reason is worth recording.** The first
+version of this page reported 36.5% and 18.6% for those two columns, and
+concluded that among equally cold cards the model was at chance. It was not:
+that run shared a machine with other training, so its ten-minute budget bought
+147 minibatch steps where a quiet machine buys 3,738. The architecture did not
+change and the data did not change; the same wall-clock budget simply bought
+twenty-five times the training. A number measured against a clock is a number
+measured against everything else the clock was carrying, and this repository
+now knows to say so.
 
 Two things were tried and did not rescue it:
 
@@ -109,8 +119,8 @@ What the result does say, and what a downstream reader should take:
    The harness shape here — hold candidates out entirely, then report full
    field, small warm field, and small cold field — is reusable, and the small
    cold field is the diagnostic that separates "weak" from "biased".
-2. **Where candidates did train, the generality costs about a point.** That
-   part transfers.
+2. **Where candidates did train, the generality costs about half a point.**
+   That part transfers.
 3. **Nothing was silently absorbed into the label set.** The 12 held-out rules
    include all six that model 4 had to merge away for want of examples; the
    scorer at least offers them.

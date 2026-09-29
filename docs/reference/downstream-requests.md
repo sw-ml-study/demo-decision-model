@@ -48,9 +48,9 @@ lesson [`DC01`](../experiments/DC01-dynamic-choice-sets.md).
 
 The measurement is the part to read. Where candidates trained, generality costs
 about one point against the fixed head (85.3% against 86.1%). Where candidates
-were **held out of training entirely**, the right card wins 0.4% of the time in
-a full field and 36.5% in a five-card field — and against four equally untrained
-cards, chance. On this corpus a card is a rule's pattern and replies, which
+were **held out of training entirely**, the right card wins 0.2% of the time in
+a full field and 45.3% in a five-card field — and 33.0% against four equally
+untrained ones, where chance is 20% (corrected 2026-09-29; see below). On this corpus a card is a rule's pattern and replies, which
 shares little but function words with an input, so this is a lower bound in an
 unfriendly regime rather than a verdict on card scorers. It is not, however,
 evidence for the claim that a resource published after training can be chosen
@@ -101,6 +101,49 @@ before the scorer beats the matcher on the same split.
 One caveat stated plainly: those question sets are still marked `Unconfirmed`,
 the matcher here is ours rather than their `MB02`, and each head was trained in
 one configuration with no sweep. Read the direction, not the decimals.
+
+### Two corrections they should carry, 2026-09-29
+
+A robustness pass over `lib/` — prompted by the `Q6` defect this collaboration
+surfaced — changed two things a vendoring project needs to know, and corrected a
+number this file reported to them.
+
+**Re-vendor `lib/`.** Three hardening changes, each with a regression test in
+`tests/test_robustness.mlpl`:
+
+- `u:cm_smooth_loss` now has an epsilon inside its log. `cross_entropy` is
+  stable for a logit far below the maximum; that hand-written smoothing term was
+  not, and a softmax underflowing to exactly zero made the whole loss `NaN`.
+  Same silent-failure shape as `Q6`.
+- `u:decision_temper` refuses a non-positive temperature rather than dividing by
+  it, and the tempered constructors record the temperature actually applied, so
+  a trace cannot claim a scaling that was not performed.
+- `u:sc_choose` now also returns `offered`, the number of candidates each row
+  was given. A row offered nothing still returns a selection — every masked
+  score is equally impossible, so the softmax is uniform and the argmax is card
+  zero. **A reranker whose first stage can return an empty candidate list must
+  check `offered` before believing `selected`.** That is a live hazard for the
+  hybrid, not a hypothetical.
+
+`crates/tdm-model` matches the trainer's normalization exactly again; pin at or
+after the commit that carries this section.
+
+**And a correction to `DC01`'s numbers, which this file quoted to them.** The
+scorer bundle was re-exported with the fixed library on an idle machine, and two
+of the three held-out columns moved:
+
+| held-out cards | as reported to sw-atlas | corrected |
+|---|---:|---:|
+| full field, 51 cards | 0.4% | 0.2% |
+| five cards, four trained | 36.5% | 45.3% |
+| five cards, all cold | 18.6% (chance) | **33.0%** (chance 20%) |
+
+The first run shared a machine with other training, so its budget bought 147
+minibatch steps where a quiet one buys 3,738. **The claim that the scorer is at
+chance among equally cold candidates was wrong** — there is real signal, just
+little of it. The full-field number, which is the one their "pick a new post out
+of the whole catalog" case depends on, is unchanged in substance at 0.2%, so
+their redesign stands on the finding that actually mattered.
 
 ### What they did with it, and what is therefore *not* ours to run
 
