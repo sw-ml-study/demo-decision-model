@@ -227,15 +227,15 @@ pre.src, pre.example { background: #161b22; border-color: #30363d; color: #c9d1d
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#orgbd86609">The program this answers</a></li>
-<li><a href="#org975be22">The same shape, when the model is yours</a></li>
-<li><a href="#org8327999">The corpus it is given</a></li>
-<li><a href="#org73d1360">The program, annotated</a></li>
-<li><a href="#orgae0152d">Running it</a></li>
-<li><a href="#org30e2321">What it prints</a></li>
-<li><a href="#org13bf46c">What the include drags in</a></li>
-<li><a href="#org9a7b7fd">What a sceptical reader will ask</a></li>
-<li><a href="#org85bf011">Where to go next</a></li>
+<li><a href="#org7460d3a">The program this answers</a></li>
+<li><a href="#org3d4287d">The same shape, when the model is yours</a></li>
+<li><a href="#org3d01126">The corpus it is given</a></li>
+<li><a href="#orga61513c">The program, annotated</a></li>
+<li><a href="#org8ab6a29">Running it</a></li>
+<li><a href="#org042e8d3">What it prints</a></li>
+<li><a href="#org881c389">What the include drags in</a></li>
+<li><a href="#org99bb6d5">What a sceptical reader will ask</a></li>
+<li><a href="#orgb6bb9a5">Where to go next</a></li>
 </ul>
 </div>
 </div>
@@ -246,15 +246,15 @@ pre.src, pre.example { background: #161b22; border-color: #30363d; color: #c9d1d
 <a href="literate.html">The full model</a> ·
 <a href="https://github.com/sw-ml-study/demo-decision-model">Repository</a>
 </nav>
-<div id="outline-container-orgbd86609" class="outline-2">
-<h2 id="orgbd86609">The program this answers</h2>
-<div class="outline-text-2" id="text-orgbd86609">
+<div id="outline-container-org7460d3a" class="outline-2">
+<h2 id="org7460d3a">The program this answers</h2>
+<div class="outline-text-2" id="text-org7460d3a">
 <p>
 A widely-shared post shows a "typed decision model" in about twenty-five lines
 of Python. Its shape is:
 </p>
 
-<pre class="example" id="org6144a72">
+<pre class="example" id="org60179ad">
 prompt -&gt; a pretrained causal language model
        -&gt; the logits at one position
        -&gt; keep the three that correspond to the tokens A, B and C
@@ -280,16 +280,16 @@ only counts the other side's costs is not worth reading.
 </p>
 </div>
 </div>
-<div id="outline-container-org975be22" class="outline-2">
-<h2 id="org975be22">The same shape, when the model is yours</h2>
-<div class="outline-text-2" id="text-org975be22">
+<div id="outline-container-org3d4287d" class="outline-2">
+<h2 id="org3d4287d">The same shape, when the model is yours</h2>
+<div class="outline-text-2" id="text-org3d4287d">
 <p>
 The model is the arrays this file declares, and the answer's domain is named in
 the data: column 0 <i>is</i> phishing. There is no tokenizer to mislead and no
 letters to permute. Inference is five lines:
 </p>
 
-<pre class="example" id="org975e18d">
+<pre class="example" id="org738e634">
 h    = mean of the embedding rows this message's known words address
 kind = softmax(apply(os_kind, h))        -- Choice over three categories
 asks = sigmoid(apply(os_asks, h))        -- Noul: does it want credentials?
@@ -303,9 +303,9 @@ train the thing.
 </p>
 </div>
 </div>
-<div id="outline-container-org8327999" class="outline-2">
-<h2 id="org8327999">The corpus it is given</h2>
-<div class="outline-text-2" id="text-org8327999">
+<div id="outline-container-org3d01126" class="outline-2">
+<h2 id="org3d01126">The corpus it is given</h2>
+<div class="outline-text-2" id="text-org3d01126">
 <p>
 Twelve messages and their three labels, in a separate file passed in on the
 command line &#x2013; because the program this is measured against does not carry a
@@ -339,9 +339,9 @@ one. Tangling this document writes it:
 </div>
 </div>
 </div>
-<div id="outline-container-org73d1360" class="outline-2">
-<h2 id="org73d1360">The program, annotated</h2>
-<div class="outline-text-2" id="text-org73d1360">
+<div id="outline-container-orga61513c" class="outline-2">
+<h2 id="orga61513c">The program, annotated</h2>
+<div class="outline-text-2" id="text-orga61513c">
 <p>
 The module comment, and the include. That one line is not free, and the section
 after the program counts what it costs.
@@ -457,16 +457,16 @@ print(<span class="org-string">""</span>)
 </div>
 </div>
 </div>
-<div id="outline-container-orgae0152d" class="outline-2">
-<h2 id="orgae0152d">Running it</h2>
-<div class="outline-text-2" id="text-orgae0152d">
+<div id="outline-container-org8ab6a29" class="outline-2">
+<h2 id="org8ab6a29">Running it</h2>
+<div class="outline-text-2" id="text-org8ab6a29">
 <p>
 Both files are published beside this page: <a href="https://sw-ml-study.github.io/demo-decision-model/concise-hello.mlpl">concise-hello.mlpl</a> and
 <a href="https://sw-ml-study.github.io/demo-decision-model/messages.json">messages.json</a>. With sw-MLPL's interpreter (measured against <code>mlpl-repl 0.22.0</code>)
 on your path:
 </p>
 
-<pre class="example" id="org1ba0cf7">
+<pre class="example" id="orga7caef8">
 mlpl-repl concise-hello.mlpl -- messages.json
 </pre>
 
@@ -478,10 +478,10 @@ program</a> it will not run in a browser: a corpus passed in means <code>read_te
 </p>
 </div>
 </div>
-<div id="outline-container-org30e2321" class="outline-2">
-<h2 id="org30e2321">What it prints</h2>
-<div class="outline-text-2" id="text-org30e2321">
-<pre class="example" id="org1a9ed76">
+<div id="outline-container-org042e8d3" class="outline-2">
+<h2 id="org042e8d3">What it prints</h2>
+<div class="outline-text-2" id="text-org042e8d3">
+<pre class="example" id="org7f71078">
 6 known  phishing 0.999  credentials 0.999  urgency high    &lt;- hr asks you to confirm your password
 2 known  phishing 0.999  credentials 0.999  urgency high    &lt;- please re-enter your credentials to avoid suspension
 3 known  phishing 0.999  credentials 0.999  urgency high    &lt;- your mailbox is full, log in to restore delivery
@@ -505,9 +505,9 @@ it is why the confidence numbers on this page should not be believed.
 </p>
 </div>
 </div>
-<div id="outline-container-org13bf46c" class="outline-2">
-<h2 id="org13bf46c">What the include drags in</h2>
-<div class="outline-text-2" id="text-org13bf46c">
+<div id="outline-container-org881c389" class="outline-2">
+<h2 id="org881c389">What the include drags in</h2>
+<div class="outline-text-2" id="text-org881c389">
 <p>
 The program says <code>include "../../lib/choice_model.mlpl"</code> and then claims to be
 thirty-eight lines. That include is not free, so here is the bill, produced by
@@ -597,9 +597,9 @@ Neither number is impressive on its own. The difference is what you can open.
 </p>
 </div>
 </div>
-<div id="outline-container-org9a7b7fd" class="outline-2">
-<h2 id="org9a7b7fd">What a sceptical reader will ask</h2>
-<div class="outline-text-2" id="text-org9a7b7fd">
+<div id="outline-container-org99bb6d5" class="outline-2">
+<h2 id="org99bb6d5">What a sceptical reader will ask</h2>
+<div class="outline-text-2" id="text-org99bb6d5">
 <p>
 <b>Isn't this just logistic regression over a bag of words?</b>
 </p>
@@ -692,9 +692,9 @@ was typed into prose from memory.
 </p>
 </div>
 </div>
-<div id="outline-container-org85bf011" class="outline-2">
-<h2 id="org85bf011">Where to go next</h2>
-<div class="outline-text-2" id="text-org85bf011">
+<div id="outline-container-orgb6bb9a5" class="outline-2">
+<h2 id="orgb6bb9a5">Where to go next</h2>
+<div class="outline-text-2" id="text-orgb6bb9a5">
 <ul class="org-ul">
 <li><a href="typed-decisions.html">Typed decisions: the hello world</a> &#x2013; the same three heads over 120 messages,
 with held-out splits and the calibration measurement this page deliberately

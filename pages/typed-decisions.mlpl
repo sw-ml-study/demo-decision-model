@@ -15,9 +15,18 @@ def u:decision_probs(logits) {
   softmax(logits, 0)
 }
 
+def u:decision_temperature(t) {
+  "The temperature that will actually be applied. A temperature of zero divides by zero and a negative one inverts the ranking, so neither is a temperature: both are a caller's bug, and both become 1, the identity. The constructors record this value rather than the requested one, so a trace never claims a scaling that was not performed.";
+  if gt(t, 0) {
+    t
+  } else {
+    1
+  }
+}
+
 def u:decision_temper(logits, t) {
-  "Temperature-scaled logits: t above 1 softens the distribution, t below 1 sharpens it, t of 1 is the identity. The cheapest calibration map there is, and the baseline every other one must beat.";
-  logits / t
+  "Temperature-scaled logits: t above 1 softens the distribution, t below 1 sharpens it, t of 1 is the identity. The cheapest calibration map there is, and the baseline every other one must beat. A non-positive t is refused by u:decision_temperature rather than producing infinities.";
+  logits / u:decision_temperature(t)
 }
 
 def u:decision_selected(probs) {
@@ -73,7 +82,7 @@ def u:choice(question, labels, logits) {
 
 def u:choice_tempered(question, labels, logits, t) {
   "A Choice decision with temperature scaling applied, recording the scalar it used.";
-  u:choice_from_probs(question, labels, u:decision_probs(u:decision_temper(logits, t)), u:decision_temperature_map(t))
+  u:choice_from_probs(question, labels, u:decision_probs(u:decision_temper(logits, t)), u:decision_temperature_map(u:decision_temperature(t)))
 }
 
 def u:noul_from_p(proposition, p, calibration) {
@@ -89,7 +98,7 @@ def u:noul(proposition, logit) {
 
 def u:noul_tempered(proposition, logit, t) {
   "A Noul decision with temperature scaling applied, recording the scalar it used.";
-  u:noul_from_p(proposition, sigmoid(logit / t), u:decision_temperature_map(t))
+  u:noul_from_p(proposition, sigmoid(logit / u:decision_temperature(t)), u:decision_temperature_map(u:decision_temperature(t)))
 }
 
 def u:scale_from_probs(question, levels, probs, calibration) {
@@ -105,7 +114,7 @@ def u:scale(question, levels, logits) {
 
 def u:scale_tempered(question, levels, logits, t) {
   "A Scale decision with temperature scaling applied, recording the scalar it used.";
-  u:scale_from_probs(question, levels, u:decision_probs(u:decision_temper(logits, t)), u:decision_temperature_map(t))
+  u:scale_from_probs(question, levels, u:decision_probs(u:decision_temper(logits, t)), u:decision_temperature_map(u:decision_temperature(t)))
 }
 
 def u:decision_label(d) {
@@ -489,9 +498,9 @@ def u:cm_dropout(fz, p, seed) {
 }
 
 def u:cm_smooth_loss(ids, wmask, y, eps) {
-  "Label-smoothed cross-entropy over the caller's global params: (1 - eps) times the loss on the true label plus eps times the mean loss over all labels, so no answer is ever worth pushing to probability one.";
+  "Label-smoothed cross-entropy over the caller's global params: (1 - eps) times the loss on the true label plus eps times the mean loss over all labels, so no answer is ever worth pushing to probability one. The epsilon inside the log is not decoration: cross_entropy is stable for a logit far below the maximum, this hand-written term is not, and softmax underflowing to exactly zero would otherwise make the whole loss NaN.";
   logits = u:cm_logits(ids, wmask);
-  (1 - eps) * cross_entropy(logits, y) + eps * (0 - mean(log(softmax(logits, 1))))
+  (1 - eps) * cross_entropy(logits, y) + eps * (0 - mean(log(softmax(logits, 1) + 0.000000001)))
 }
 
 def u:cm_train_smooth(ids, wmask, y, steps, lr, eps) {
